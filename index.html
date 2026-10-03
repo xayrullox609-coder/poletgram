@@ -1,1034 +1,1557 @@
 <!DOCTYPE html>
 <html lang="uz">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0,
+      maximum-scale=1.0,user-scalable=no">
 
-  <title>poletgram</title>
+<title>Poletgram</title>
 
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <style>
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    -webkit-tap-highlight-color:transparent;
+}
+
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    background:#f5f5f7;
+    color:#171717;
+    min-height:100vh;
+    padding-bottom:90px;
+}
+
+button,input{
+    font-family:inherit;
+}
+
+button{
+    border:0;
+    cursor:pointer;
+}
+
+.page{
+    display:none;
+    padding:18px 16px 30px;
+    animation:fade .18s ease;
+}
+
+.page.active{
+    display:block;
+}
+
+@keyframes fade{
+    from{
+        opacity:0;
+        transform:translateY(5px);
     }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Arial, sans-serif;
-      color: #142d49;
-      background:
-        radial-gradient(circle at 10% 10%, rgba(255,255,255,.9), transparent 30%),
-        radial-gradient(circle at 90% 90%, rgba(255,255,255,.9), transparent 35%),
-        linear-gradient(145deg, #dff7ff, #eefaff 50%, #d9f3fb);
-      overflow-x: hidden;
+    to{
+        opacity:1;
+        transform:translateY(0);
     }
+}
 
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      opacity: .28;
-      background:
-        radial-gradient(circle at 5% 15%, #8dcde0 0 2px, transparent 3px),
-        radial-gradient(circle at 90% 25%, #7ebed4 0 2px, transparent 3px),
-        radial-gradient(circle at 15% 85%, #83bdd0 0 2px, transparent 3px),
-        radial-gradient(circle at 85% 90%, #9ccddd 0 2px, transparent 3px);
+/* =========================
+   TOP
+========================= */
+
+.top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:18px;
+}
+
+.brand{
+    font-size:25px;
+    font-weight:800;
+}
+
+.user-mini{
+    display:flex;
+    align-items:center;
+    gap:9px;
+}
+
+.avatar{
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    object-fit:cover;
+    background:#ddd;
+}
+
+.username{
+    font-size:14px;
+    font-weight:700;
+}
+
+/* =========================
+   BALANCE
+========================= */
+
+.balance-card{
+    background:#171717;
+    color:white;
+    border-radius:24px;
+    padding:20px;
+    margin-bottom:18px;
+    box-shadow:0 10px 30px rgba(0,0,0,.12);
+}
+
+.balance-title{
+    color:#aaa;
+    font-size:13px;
+    margin-bottom:6px;
+}
+
+.balance-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.gem{
+    width:38px;
+    height:38px;
+    object-fit:contain;
+    mix-blend-mode:screen;
+    filter:contrast(1.25);
+}
+
+.balance{
+    font-size:31px;
+    font-weight:800;
+}
+
+.balance-name{
+    font-size:12px;
+    color:#aaa;
+}
+
+/* =========================
+   SECTION
+========================= */
+
+.section-title{
+    font-size:20px;
+    font-weight:800;
+    margin:22px 0 12px;
+}
+
+/* =========================
+   BOOST
+========================= */
+
+.service-card{
+    background:white;
+    border-radius:22px;
+    padding:18px;
+    margin-bottom:14px;
+    box-shadow:0 5px 20px rgba(0,0,0,.06);
+}
+
+.service-head{
+    display:flex;
+    align-items:center;
+    gap:13px;
+}
+
+.telegram-logo{
+    width:48px;
+    height:48px;
+    border-radius:15px;
+    background:#229ed9;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    font-size:25px;
+}
+
+.service-title{
+    font-size:18px;
+    font-weight:800;
+}
+
+.service-sub{
+    font-size:13px;
+    color:#777;
+    margin-top:4px;
+}
+
+.input-label{
+    font-size:13px;
+    font-weight:700;
+    margin:17px 0 7px;
+}
+
+.input{
+    width:100%;
+    border:1px solid #e1e1e1;
+    background:#f7f7f8;
+    border-radius:14px;
+    padding:14px;
+    font-size:15px;
+    outline:none;
+}
+
+.input:focus{
+    border-color:#222;
+    background:white;
+}
+
+.price-box{
+    margin-top:15px;
+    background:#171717;
+    color:white;
+    border-radius:17px;
+    padding:15px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.price-left{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+}
+
+.price-small{
+    font-size:12px;
+    color:#aaa;
+}
+
+.price-big{
+    font-size:21px;
+    font-weight:800;
+}
+
+.buy-btn{
+    background:white;
+    color:#111;
+    padding:12px 16px;
+    border-radius:13px;
+    font-weight:800;
+}
+
+.buy-btn:active{
+    transform:scale(.96);
+}
+
+/* =========================
+   TASKS
+========================= */
+
+.task-card{
+    background:white;
+    border-radius:20px;
+    padding:16px;
+    margin-bottom:12px;
+    box-shadow:0 5px 20px rgba(0,0,0,.05);
+}
+
+.task-top{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.task-icon{
+    width:48px;
+    height:48px;
+    border-radius:15px;
+    background:#229ed9;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    color:white;
+    font-size:23px;
+}
+
+.task-info{
+    flex:1;
+}
+
+.task-title{
+    font-weight:800;
+    font-size:15px;
+}
+
+.task-reward{
+    margin-top:5px;
+    font-size:13px;
+    font-weight:700;
+}
+
+.task-bottom{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-top:15px;
+}
+
+.reward{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-weight:800;
+}
+
+.small-gem{
+    width:22px;
+    height:22px;
+    object-fit:contain;
+    mix-blend-mode:screen;
+}
+
+.do-btn{
+    background:#171717;
+    color:white;
+    padding:11px 18px;
+    border-radius:12px;
+    font-weight:800;
+}
+
+.done-btn{
+    background:#ddd;
+    color:#777;
+    padding:11px 18px;
+    border-radius:12px;
+    font-weight:800;
+}
+
+/* =========================
+   PROFILE
+========================= */
+
+.profile-card{
+    background:white;
+    border-radius:24px;
+    padding:22px;
+    text-align:center;
+    box-shadow:0 5px 20px rgba(0,0,0,.05);
+}
+
+.profile-avatar{
+    width:78px;
+    height:78px;
+    border-radius:50%;
+    object-fit:cover;
+    background:#ddd;
+}
+
+.profile-name{
+    margin-top:10px;
+    font-size:20px;
+    font-weight:800;
+}
+
+.profile-username{
+    margin-top:4px;
+    color:#777;
+    font-size:14px;
+}
+
+.profile-balance{
+    margin-top:18px;
+    background:#f4f4f5;
+    border-radius:17px;
+    padding:14px;
+}
+
+.profile-menu{
+    margin-top:15px;
+}
+
+.menu-item{
+    width:100%;
+    background:white;
+    padding:17px;
+    border-radius:17px;
+    margin-bottom:10px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-weight:700;
+    box-shadow:0 3px 15px rgba(0,0,0,.04);
+}
+
+.menu-arrow{
+    color:#999;
+}
+
+/* =========================
+   BOTTOM NAV
+========================= */
+
+.bottom-nav{
+    position:fixed;
+    left:12px;
+    right:12px;
+    bottom:12px;
+    height:72px;
+    background:rgba(255,255,255,.94);
+    backdrop-filter:blur(15px);
+    border-radius:23px;
+    box-shadow:0 8px 35px rgba(0,0,0,.14);
+    display:flex;
+    align-items:center;
+    justify-content:space-around;
+    z-index:999;
+}
+
+.nav-btn{
+    width:30%;
+    height:64px;
+    background:transparent;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    gap:2px;
+    border-radius:18px;
+    color:#888;
+}
+
+.nav-btn.active{
+    color:#111;
+    background:#f0f0f1;
+}
+
+.nav-img{
+    width:29px;
+    height:29px;
+    object-fit:contain;
+    mix-blend-mode:multiply;
+}
+
+.nav-text{
+    font-size:11px;
+    font-weight:800;
+}
+
+/* =========================
+   MODAL
+========================= */
+
+.overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.5);
+    display:none;
+    align-items:flex-end;
+    z-index:2000;
+}
+
+.overlay.show{
+    display:flex;
+}
+
+.modal{
+    width:100%;
+    background:white;
+    border-radius:28px 28px 0 0;
+    padding:23px 18px 30px;
+    animation:up .2s ease;
+}
+
+@keyframes up{
+    from{
+        transform:translateY(100%);
     }
-
-    .app {
-      width: 100%;
-      max-width: 700px;
-      min-height: 100vh;
-      margin: auto;
-      padding: 18px 18px 105px;
+    to{
+        transform:translateY(0);
     }
-
-    /* HEADER */
-
-    .profile-card {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-
-      padding: 15px 18px;
-      margin-bottom: 24px;
-
-      border-radius: 30px;
-      background: rgba(255,255,255,.70);
-      border: 1px solid rgba(255,255,255,.95);
-      box-shadow: 0 12px 30px rgba(67,137,177,.12);
-      backdrop-filter: blur(15px);
-    }
-
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 0;
-    }
-
-    .avatar {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      overflow: hidden;
-      flex-shrink: 0;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      background: linear-gradient(135deg,#eef7ff,#d8ebfa);
-      border: 4px solid white;
-      box-shadow: 0 3px 12px rgba(54,113,166,.20);
-      font-weight: 800;
-      color: #4c83bf;
-    }
-
-    .username {
-      font-size: 17px;
-      font-weight: 800;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .balance {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-
-      padding: 9px 13px;
-      border-radius: 20px;
-
-      background: rgba(221,239,255,.85);
-      color: #1e65a8;
-      font-size: 17px;
-      font-weight: 800;
-      white-space: nowrap;
-    }
-
-    /* TITLES */
-
-    .section-title {
-      font-size: 25px;
-      font-weight: 900;
-      margin: 15px 5px 18px;
-    }
-
-    .section-subtitle {
-      color: #7191aa;
-      font-size: 14px;
-      margin: -10px 5px 18px;
-    }
-
-    /* CARDS */
-
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 18px;
-    }
-
-    .service-card {
-      min-height: 270px;
-      padding: 22px;
-
-      border-radius: 30px;
-
-      background: rgba(255,255,255,.68);
-      border: 1px solid rgba(255,255,255,.95);
-      box-shadow: 0 15px 35px rgba(75,135,170,.12);
-
-      backdrop-filter: blur(16px);
-
-      transition: transform .15s;
-    }
-
-    .service-card:active {
-      transform: scale(.97);
-    }
-
-    .service-icon {
-      width: 75px;
-      height: 75px;
-      border-radius: 22px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      font-size: 42px;
-      margin-bottom: 22px;
-
-      background: linear-gradient(145deg,#ffffff,#e8f4ff);
-      box-shadow: 0 7px 20px rgba(64,128,180,.13);
-    }
-
-    .service-name {
-      font-size: 21px;
-      font-weight: 900;
-      margin-bottom: 7px;
-    }
-
-    .service-desc {
-      color: #718ba2;
-      font-size: 15px;
-      line-height: 1.35;
-    }
-
-    .status {
-      display: inline-block;
-      margin-top: 17px;
-      padding: 7px 13px;
-
-      border-radius: 15px;
-      border: 1px solid #65c9c1;
-
-      color: #38b5aa;
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    .status.blue {
-      color: #4f9ed1;
-      border-color: #83cbe8;
-    }
-
-    .status.pink {
-      color: #e57391;
-      border-color: #f1a3b7;
-    }
-
-    /* TASKS */
-
-    .task {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-
-      padding: 16px;
-      margin-bottom: 14px;
-
-      border-radius: 25px;
-
-      background: rgba(255,255,255,.73);
-      border: 1px solid rgba(255,255,255,.95);
-      box-shadow: 0 10px 25px rgba(75,135,170,.10);
-      backdrop-filter: blur(14px);
-    }
-
-    .task-icon {
-      width: 54px;
-      height: 54px;
-      flex-shrink: 0;
-
-      border-radius: 50%;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      font-size: 26px;
-
-      background: #e7f6fc;
-    }
-
-    .task-content {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .task-title {
-      font-size: 16px;
-      font-weight: 900;
-      margin-bottom: 6px;
-    }
-
-    .task-desc {
-      color: #8196a8;
-      font-size: 13px;
-    }
-
-    .reward {
-      display: inline-block;
-      margin-top: 7px;
-
-      padding: 4px 9px;
-      border: 1px solid #42b99b;
-      border-radius: 12px;
-
-      color: #2da886;
-      font-weight: 800;
-      font-size: 12px;
-    }
-
-    .task-button {
-      border: none;
-      border-radius: 20px;
-
-      padding: 11px 17px;
-
-      background: linear-gradient(135deg,#5b91d8,#477fc4);
-      color: white;
-
-      font-size: 14px;
-      font-weight: 800;
-
-      box-shadow: 0 6px 15px rgba(69,126,190,.22);
-    }
-
-    .task-button:active {
-      transform: scale(.95);
-    }
-
-    /* PROFILE */
-
-    .profile-menu {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-
-      padding: 20px;
-      margin-bottom: 15px;
-
-      border-radius: 25px;
-
-      background: rgba(255,255,255,.72);
-      border: 1px solid rgba(255,255,255,.95);
-      box-shadow: 0 10px 25px rgba(75,135,170,.10);
-    }
-
-    .menu-icon {
-      width: 55px;
-      height: 55px;
-      border-radius: 18px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      font-size: 28px;
-
-      background: linear-gradient(145deg,#fff,#e8f4ff);
-    }
-
-    .menu-text {
-      flex: 1;
-    }
-
-    .menu-title {
-      font-size: 18px;
-      font-weight: 900;
-    }
-
-    .menu-desc {
-      margin-top: 5px;
-      color: #7890a4;
-      font-size: 14px;
-    }
-
-    .arrow {
-      color: #5188c9;
-      font-size: 27px;
-      font-weight: bold;
-    }
-
-    /* BOTTOM NAV */
-
-    .bottom-nav {
-      position: fixed;
-      left: 18px;
-      right: 18px;
-      bottom: 14px;
-
-      max-width: 664px;
-      margin: auto;
-
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-
-      padding: 7px;
-
-      border-radius: 30px;
-
-      background: rgba(240,249,255,.88);
-      border: 1px solid rgba(255,255,255,.95);
-      box-shadow: 0 10px 35px rgba(51,112,155,.20);
-
-      backdrop-filter: blur(18px);
-
-      z-index: 100;
-    }
-
-    .nav-button {
-      border: none;
-      background: transparent;
-
-      padding: 10px 5px;
-
-      border-radius: 25px;
-
-      color: #7593af;
-      font-size: 14px;
-      font-weight: 800;
-    }
-
-    .nav-button span {
-      display: block;
-      font-size: 27px;
-      line-height: 28px;
-      margin-bottom: 3px;
-    }
-
-    .nav-button.active {
-      background: rgba(255,255,255,.90);
-      color: #182f49;
-      box-shadow: 0 5px 18px rgba(77,127,170,.13);
-    }
-
-    /* PAGE */
-
-    .page {
-      display: none;
-      animation: fade .2s ease;
-    }
-
-    .page.active {
-      display: block;
-    }
-
-    @keyframes fade {
-      from {
-        opacity: 0;
-        transform: translateY(5px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* TAP */
-
-    .tap-box {
-      min-height: 430px;
-
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-
-      padding: 30px;
-
-      border-radius: 35px;
-
-      background: rgba(255,255,255,.68);
-      border: 1px solid rgba(255,255,255,.95);
-      box-shadow: 0 15px 40px rgba(75,135,170,.12);
-    }
-
-    .tap-button {
-      width: 220px;
-      height: 220px;
-
-      border: none;
-      border-radius: 50%;
-
-      background: linear-gradient(145deg,#fff,#dcefff);
-
-      box-shadow:
-        0 20px 45px rgba(61,125,181,.20),
-        inset 0 0 0 10px rgba(255,255,255,.7);
-
-      font-size: 32px;
-      font-weight: 900;
-      color: #397abb;
-
-      transition: transform .1s;
-    }
-
-    .tap-button:active {
-      transform: scale(.92);
-    }
-
-    .tap-count {
-      margin-top: 25px;
-      font-size: 18px;
-      font-weight: 800;
-      color: #7190aa;
-    }
-
-    /* RESPONSIVE */
-
-    @media(max-width:420px) {
-      .cards {
-        gap: 12px;
-      }
-
-      .service-card {
-        padding: 17px;
-        min-height: 245px;
-      }
-
-      .service-icon {
-        width: 65px;
-        height: 65px;
-        font-size: 35px;
-      }
-
-      .service-name {
-        font-size: 18px;
-      }
-
-      .task {
-        padding: 13px;
-        gap: 10px;
-      }
-
-      .task-button {
-        padding: 10px 12px;
-      }
-    }
-  </style>
+}
+
+.modal-title{
+    font-size:21px;
+    font-weight:800;
+}
+
+.modal-text{
+    margin-top:8px;
+    color:#777;
+    line-height:1.5;
+}
+
+.modal-btn{
+    width:100%;
+    margin-top:18px;
+    padding:15px;
+    border-radius:15px;
+    background:#171717;
+    color:white;
+    font-weight:800;
+}
+
+.close-btn{
+    width:100%;
+    margin-top:9px;
+    padding:14px;
+    border-radius:15px;
+    background:#eee;
+    font-weight:800;
+}
+
+/* =========================
+   TOAST
+========================= */
+
+.toast{
+    position:fixed;
+    left:50%;
+    bottom:100px;
+    transform:translateX(-50%) translateY(20px);
+    background:#171717;
+    color:white;
+    padding:12px 17px;
+    border-radius:13px;
+    font-size:13px;
+    font-weight:700;
+    opacity:0;
+    pointer-events:none;
+    transition:.25s;
+    z-index:3000;
+    white-space:nowrap;
+}
+
+.toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+}
+
+/* =========================
+   EMPTY
+========================= */
+
+.empty{
+    background:white;
+    border-radius:20px;
+    padding:35px 20px;
+    text-align:center;
+    color:#777;
+}
+
+.empty-icon{
+    font-size:40px;
+    margin-bottom:10px;
+}
+</style>
 </head>
 
 <body>
 
-<div class="app">
+<!-- =========================
+     BOOST PAGE
+========================= -->
 
-  <!-- BOOST -->
-  <section id="boost" class="page active">
+<div id="boostPage" class="page active">
 
-    <div class="profile-card">
-      <div class="user-info">
-        <div class="avatar" id="avatar">👤</div>
+    <div class="top">
+        <div class="brand">Poletgram</div>
 
-        <div class="username" id="username">
-          @username
+        <div class="user-mini">
+            <img id="topAvatar"
+                 class="avatar"
+                 src="">
+            <span id="topUsername"
+                  class="username">
+                Foydalanuvchi
+            </span>
         </div>
-      </div>
-
-      <div class="balance">
-        <span id="balance">0.00</span>
-        $
-      </div>
     </div>
 
-    <div class="section-title">
-      Xizmatlar
-    </div>
+    <div class="balance-card">
 
-    <div class="section-subtitle">
-      Tezkor & kafolatli
-    </div>
-
-    <div class="cards">
-
-      <div class="service-card" onclick="service('Instagram')">
-        <div class="service-icon">❤️‍🔥</div>
-
-        <div class="service-name">
-          Instagram
+        <div class="balance-title">
+            Sizning balansingiz
         </div>
 
-        <div class="service-desc">
-          Prasmotr, Like, Share
+        <div class="balance-row">
+
+            <img class="gem"
+                 src="https://i.ibb.co/zh43p9kW/1791041176264.jpg">
+
+            <div>
+                <div id="balance"
+                     class="balance">
+                    0
+                </div>
+
+                <div class="balance-name">
+                    kristall
+                </div>
+            </div>
+
         </div>
-
-        <div class="status">
-          AKTIV
-        </div>
-      </div>
-
-      <div class="service-card" onclick="service('Telegram')">
-        <div class="service-icon">✈️</div>
-
-        <div class="service-name">
-          Telegram
-        </div>
-
-        <div class="service-desc">
-          Prasmotr & Reaksiya
-        </div>
-
-        <div class="status blue">
-          TEZKOR
-        </div>
-      </div>
-
-      <div class="service-card" onclick="service('TikTok')">
-        <div class="service-icon">🎯</div>
-
-        <div class="service-name">
-          TikTok
-        </div>
-
-        <div class="service-desc">
-          Video Rivoj
-        </div>
-
-        <div class="status pink">
-          TREND
-        </div>
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- TASKS -->
-  <section id="tasks" class="page">
-
-    <div class="profile-card">
-      <div class="user-info">
-        <div class="avatar">👤</div>
-
-        <div class="username" id="username2">
-          @username
-        </div>
-      </div>
-
-      <div class="balance">
-        <span id="balance2">0.00</span>
-        $
-      </div>
-    </div>
-
-    <div class="section-title">
-      Vazifalar Ro'yxati
-    </div>
-
-    <div class="task">
-
-      <div class="task-icon">
-        🅿️
-      </div>
-
-      <div class="task-content">
-        <div class="task-title">
-          https://t.me/JasurPremyumBot?start=8377033647 🚀
-        </div>
-
-        <div class="reward">
-          +5 $
-        </div>
-      </div>
-
-      <button class="task-button" onclick="doTask(this)">
-        Bajarish
-      </button>
-
-    </div>
-
-    <div class="task">
-
-      <div class="task-icon">
-        📺
-      </div>
-
-      <div class="task-content">
-        <div class="task-title">
-          Reklama Ko'rish
-        </div>
-
-        <div class="task-desc">
-          0/5
-        </div>
-
-        <div class="reward">
-          +5 $
-        </div>
-      </div>
-
-      <button class="task-button" onclick="doTask(this)">
-        Ko'rish
-      </button>
-
-    </div>
-
-    <div class="task">
-
-      <div class="task-icon">
-        ✅
-      </div>
-
-      <div class="task-content">
-        <div class="task-title">
-          Do'st Taklif Qilish
-        </div>
-
-        <div class="task-desc">
-          Har bir faol do'stingiz uchun
-        </div>
-
-        <div class="reward">
-          +100 $
-        </div>
-      </div>
-
-      <button class="task-button" onclick="invite()">
-        Taklif
-      </button>
-
-    </div>
-
-  </section>
-
-
-  <!-- PROFILE -->
-  <section id="profile" class="page">
-
-    <div class="profile-card">
-
-      <div class="user-info">
-
-        <div class="avatar" id="profileAvatar">
-          👤
-        </div>
-
-        <div>
-          <div class="username" id="username3">
-            @username
-          </div>
-
-          <div style="color:#7890a4;margin-top:4px;font-size:13px;">
-            username
-          </div>
-        </div>
-
-      </div>
-
-      <div class="balance">
-        <span id="balance3">0.00</span>
-        $
-      </div>
-
-    </div>
-
-
-    <div class="profile-menu" onclick="alert('Pul yuborish bo‘limi keyingi bosqichda ulanadi.')">
-      <div class="menu-icon">✈️</div>
-
-      <div class="menu-text">
-        <div class="menu-title">
-          Pul Yuborish
-        </div>
-
-        <div class="menu-desc">
-          Boshqa foydalanuvchiga $ o'tkazish
-        </div>
-      </div>
-
-      <div class="arrow">
-        →
-      </div>
-    </div>
-
-
-    <div class="profile-menu" onclick="alert('Musobaqa bo‘limi keyingi bosqichda ulanadi.')">
-      <div class="menu-icon">🏁</div>
-
-      <div class="menu-text">
-        <div class="menu-title">
-          Musobaqa
-        </div>
-
-        <div class="menu-desc">
-          Eng ko'p do'st taklif qilganlar va sovrinlar
-        </div>
-      </div>
-
-      <div class="arrow">
-        →
-      </div>
-    </div>
-
-
-    <div class="profile-menu" onclick="promo()">
-      <div class="menu-icon">🏷️</div>
-
-      <div class="menu-text">
-        <div class="menu-title">
-          Promokod
-        </div>
-
-        <div class="menu-desc">
-          Promokod kiriting va bonuslarga ega bo'ling
-        </div>
-      </div>
-
-      <div class="arrow">
-        →
-      </div>
-    </div>
-
-
-    <div class="profile-menu" onclick="withdraw()">
-      <div class="menu-icon">💰</div>
-
-      <div class="menu-text">
-        <div class="menu-title">
-          Pul Yechish
-        </div>
-
-        <div class="menu-desc">
-          Balansingizni yechib oling
-        </div>
-      </div>
-
-      <div class="arrow">
-        →
-      </div>
-    </div>
-
-  </section>
-
-
-  <!-- TAP -->
-  <section id="tap" class="page">
-
-    <div class="profile-card">
-
-      <div class="user-info">
-        <div class="avatar">👤</div>
-
-        <div class="username" id="username4">
-          @username
-        </div>
-      </div>
-
-      <div class="balance">
-        <span id="balance4">0.00</span>
-        $
-      </div>
 
     </div>
 
     <div class="section-title">
-      Bosish
+        Boost
     </div>
 
-    <div class="tap-box">
+    <div class="service-card">
 
-      <button class="tap-button" onclick="tapCoin()">
-        $
-      </button>
+        <div class="service-head">
 
-      <div class="tap-count">
-        Har bosishda +1 $
-      </div>
+            <div class="telegram-logo">
+                ✈
+            </div>
+
+            <div>
+                <div class="service-title">
+                    Telegram
+                </div>
+
+                <div class="service-sub">
+                    Obunachi qo‘shish
+                </div>
+            </div>
+
+        </div>
+
+        <div class="input-label">
+            Kanal username
+        </div>
+
+        <input
+            id="channel"
+            class="input"
+            type="text"
+            placeholder="@kanal_username"
+        >
+
+        <div class="input-label">
+            Nechta obunachi kerak?
+        </div>
+
+        <input
+            id="quantity"
+            class="input"
+            type="number"
+            min="1"
+            placeholder="Masalan: 100"
+            oninput="calculatePrice()"
+        >
+
+        <div class="price-box">
+
+            <div class="price-left">
+
+                <div class="price-small">
+                    Narxi
+                </div>
+
+                <div id="price"
+                     class="price-big">
+                    0 kristall
+                </div>
+
+            </div>
+
+            <button
+                class="buy-btn"
+                onclick="createOrder()">
+                Buyurtma
+            </button>
+
+        </div>
 
     </div>
-
-  </section>
 
 </div>
 
 
-<!-- NAVIGATION -->
+<!-- =========================
+     TASKS PAGE
+========================= -->
 
-<nav class="bottom-nav">
+<div id="tasksPage" class="page">
 
-  <button class="nav-button active" onclick="openPage('boost', this)">
-    <span>https://ibb.co/5hm5pCf9</span>
-    Boost
-  </button>
+    <div class="top">
+        <div class="brand">
+            Vazifalar
+        </div>
+    </div>
 
-  <button class="nav-button" onclick="openPage('tasks', this)">
-    <span>https://ibb.co/7hKTQpJ</span>
-    Vazifalar
-  </button>
+    <div class="section-title">
+        Mavjud vazifalar
+    </div>
 
-  <button class="nav-button" onclick="openPage('profile', this)">
-    <span>https://ibb.co/Jw33wtG0</span>
-    Profil
-  </button>
+    <div id="tasksList">
 
-</nav>
+        <div class="task-card">
+
+            <div class="task-top">
+
+                <div class="task-icon">
+                    ✈
+                </div>
+
+                <div class="task-info">
+
+                    <div class="task-title">
+                        Telegram kanalga obuna bo‘lish
+                    </div>
+
+                    <div class="task-reward">
+                        Kanalga obuna bo‘ling
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="task-bottom">
+
+                <div class="reward">
+
+                    <img
+                        class="small-gem"
+                        src="https://i.ibb.co/zh43p9kW/1791041176264.jpg">
+
+                    +5
+
+                </div>
+
+                <button
+                    class="do-btn"
+                    onclick="doTelegramTask(this)">
+                    Bajarish
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     PROFILE PAGE
+========================= -->
+
+<div id="profilePage" class="page">
+
+    <div class="top">
+        <div class="brand">
+            Profil
+        </div>
+    </div>
+
+    <div class="profile-card">
+
+        <img
+            id="profileAvatar"
+            class="profile-avatar"
+            src="">
+
+        <div
+            id="profileName"
+            class="profile-name">
+            Foydalanuvchi
+        </div>
+
+        <div
+            id="profileUsername"
+            class="profile-username">
+            @username
+        </div>
+
+        <div class="profile-balance">
+
+            <div class="balance-title">
+                Balans
+            </div>
+
+            <div class="balance-row"
+                 style="justify-content:center">
+
+                <img
+                    class="small-gem"
+                    src="https://i.ibb.co/zh43p9kW/1791041176264.jpg">
+
+                <b id="profileBalance">
+                    0
+                </b>
+
+                <span>
+                    kristall
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="profile-menu">
+
+        <button
+            class="menu-item"
+            onclick="showToast('Tez orada')">
+
+            <span>
+                💸 Pul yuborish
+            </span>
+
+            <span class="menu-arrow">
+                ›
+            </span>
+
+        </button>
+
+        <button
+            class="menu-item"
+            onclick="showToast('Tez orada')">
+
+            <span>
+                🏆 Musobaqa
+            </span>
+
+            <span class="menu-arrow">
+                ›
+            </span>
+
+        </button>
+
+        <button
+            class="menu-item"
+            onclick="openPromo()">
+
+            <span>
+                🎁 Promokod
+            </span>
+
+            <span class="menu-arrow">
+                ›
+            </span>
+
+        </button>
+
+        <button
+            class="menu-item"
+            onclick="showToast('Tez orada')">
+
+            <span>
+                💰 Pul yechish
+            </span>
+
+            <span class="menu-arrow">
+                ›
+            </span>
+
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     BOTTOM NAV
+========================= -->
+
+<div class="bottom-nav">
+
+    <button
+        id="navBoost"
+        class="nav-btn active"
+        onclick="openPage('boost')">
+
+        <img
+            class="nav-img"
+            src="https://i.ibb.co/ch0NfR7v/1790692456844.jpg">
+
+        <span class="nav-text">
+            Boost
+        </span>
+
+    </button>
+
+
+    <button
+        id="navTasks"
+        class="nav-btn"
+        onclick="openPage('tasks')">
+
+        <img
+            class="nav-img"
+            src="https://i.ibb.co/2JdLSM7/1790687856557.jpg">
+
+        <span class="nav-text">
+            Vazifalar
+        </span>
+
+    </button>
+
+
+    <button
+        id="navProfile"
+        class="nav-btn"
+        onclick="openPage('profile')">
+
+        <img
+            class="nav-img"
+            src="https://i.ibb.co/ksmmsBwk/1790688417910.jpg">
+
+        <span class="nav-text">
+            Profil
+        </span>
+
+    </button>
+
+</div>
+
+
+<!-- =========================
+     MODAL
+========================= -->
+
+<div id="overlay"
+     class="overlay">
+
+    <div class="modal">
+
+        <div
+            id="modalTitle"
+            class="modal-title">
+            Promokod
+        </div>
+
+        <div
+            id="modalText"
+            class="modal-text">
+            Promokodingizni kiriting.
+        </div>
+
+        <input
+            id="promoInput"
+            class="input"
+            placeholder="Promokod">
+
+        <button
+            class="modal-btn"
+            onclick="usePromo()">
+            Tasdiqlash
+        </button>
+
+        <button
+            class="close-btn"
+            onclick="closeModal()">
+            Yopish
+        </button>
+
+    </div>
+
+</div>
+
+
+<div id="toast"
+     class="toast">
+</div>
 
 
 <script>
 
-  const tg = window.Telegram?.WebApp;
+const tg = window.Telegram.WebApp;
 
-  if (tg) {
-    tg.ready();
-    tg.expand();
-  }
+tg.ready();
+tg.expand();
 
 
-  /*
-    HOZIRCHA TEST MA'LUMOTLARI.
-    Keyingi bosqichda Supabase bilan ulanadi.
-  */
+/* =========================
+   SETTINGS
+========================= */
 
-  let balance = 115.00;
+const CRYSTAL_PER_USER = 5;
+
+const TASK_BOT =
+    "https://t.me/JasurPremyumBot?start=8377033647";
 
 
-  function getTelegramUser() {
+let balance =
+    Number(localStorage.getItem("poletgram_balance") || 0);
 
-    if (
-      tg &&
-      tg.initDataUnsafe &&
-      tg.initDataUnsafe.user
-    ) {
 
-      const user = tg.initDataUnsafe.user;
+/* =========================
+   TELEGRAM USER
+========================= */
 
-      let name =
-        user.username
-          ? "@" + user.username
-          : user.first_name || "Foydalanuvchi";
+function loadTelegramUser(){
 
-      document.getElementById("username").textContent = name;
-      document.getElementById("username2").textContent = name;
-      document.getElementById("username3").textContent = name;
-      document.getElementById("username4").textContent = name;
+    const user =
+        tg.initDataUnsafe?.user;
 
-      const avatar = user.first_name
-        ? user.first_name.charAt(0).toUpperCase()
-        : "👤";
+    if(!user){
 
-      document.getElementById("avatar").textContent = avatar;
-      document.getElementById("profileAvatar").textContent = avatar;
+        setUser(
+            "Foydalanuvchi",
+            "@username",
+            ""
+        );
 
+        return;
     }
 
-  }
-
-
-  function updateBalance() {
-
-    const value = balance.toFixed(2);
-
-    document.getElementById("balance").textContent = value;
-    document.getElementById("balance2").textContent = value;
-    document.getElementById("balance3").textContent = value;
-    document.getElementById("balance4").textContent = value;
-
-  }
-
-
-  function openPage(page, button) {
-
-    document.querySelectorAll(".page")
-      .forEach(p => p.classList.remove("active"));
-
-    document.getElementById(page)
-      .classList.add("active");
-
-    document.querySelectorAll(".nav-button")
-      .forEach(b => b.classList.remove("active"));
-
-    button.classList.add("active");
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
-
-  }
-
-
-  function service(name) {
-
-    if (tg) {
-      tg.HapticFeedback?.impactOccurred("light");
-    }
-
-    alert(
-      name +
-      " xizmatlari keyingi bosqichda buyurtma qilish tizimi bilan ulanadi."
-    );
-
-  }
-
-
-  function doTask(button) {
-
-    if (tg) {
-      tg.HapticFeedback?.impactOccurred("medium");
-    }
-
-    button.textContent = "Bajarildi";
-    button.disabled = true;
-
-    balance += 5;
-
-    updateBalance();
-
-  }
-
-
-  function tapCoin() {
-
-    balance += 1;
-
-    updateBalance();
-
-    if (tg) {
-      tg.HapticFeedback?.impactOccurred("light");
-    }
-
-  }
-
-
-  function invite() {
+    const name =
+        (
+            user.first_name || ""
+        ) +
+        (
+            user.last_name
+                ? " " + user.last_name
+                : ""
+        );
 
     const username =
-      tg?.initDataUnsafe?.user?.username || "";
+        user.username
+            ? "@" + user.username
+            : "@username";
 
-    const link =
-      "https://t.me/share/url?url=" +
-      encodeURIComponent(
-        "https://t.me/poletgram_bot?start=" + username
-      ) +
-      "&text=" +
-      encodeURIComponent(
-        "poletgram'ga qo'shiling!"
-      );
+    setUser(
+        name || "Foydalanuvchi",
+        username,
+        user.photo_url || ""
+    );
+}
 
-    if (tg) {
-      tg.openTelegramLink(link);
-    } else {
-      window.open(link, "_blank");
+
+function setUser(name,username,photo){
+
+    document.getElementById(
+        "profileName"
+    ).textContent = name;
+
+    document.getElementById(
+        "profileUsername"
+    ).textContent = username;
+
+    document.getElementById(
+        "topUsername"
+    ).textContent = username;
+
+    if(photo){
+
+        document.getElementById(
+            "topAvatar"
+        ).src = photo;
+
+        document.getElementById(
+            "profileAvatar"
+        ).src = photo;
+
+    }
+}
+
+
+/* =========================
+   BALANCE
+========================= */
+
+function updateBalance(){
+
+    document.getElementById(
+        "balance"
+    ).textContent =
+        balance.toLocaleString();
+
+    document.getElementById(
+        "profileBalance"
+    ).textContent =
+        balance.toLocaleString();
+
+    localStorage.setItem(
+        "poletgram_balance",
+        balance
+    );
+}
+
+
+/* =========================
+   NAVIGATION
+========================= */
+
+function openPage(page){
+
+    document
+        .querySelectorAll(".page")
+        .forEach(p => {
+            p.classList.remove("active");
+        });
+
+    document
+        .querySelectorAll(".nav-btn")
+        .forEach(b => {
+            b.classList.remove("active");
+        });
+
+
+    if(page === "boost"){
+
+        document
+            .getElementById("boostPage")
+            .classList.add("active");
+
+        document
+            .getElementById("navBoost")
+            .classList.add("active");
+
     }
 
-  }
+
+    if(page === "tasks"){
+
+        document
+            .getElementById("tasksPage")
+            .classList.add("active");
+
+        document
+            .getElementById("navTasks")
+            .classList.add("active");
+
+    }
 
 
-  function promo() {
+    if(page === "profile"){
+
+        document
+            .getElementById("profilePage")
+            .classList.add("active");
+
+        document
+            .getElementById("navProfile")
+            .classList.add("active");
+
+    }
+
+    window.scrollTo(0,0);
+}
+
+
+/* =========================
+   PRICE
+========================= */
+
+function calculatePrice(){
+
+    const quantity =
+        Number(
+            document.getElementById(
+                "quantity"
+            ).value
+        );
+
+    const price =
+        quantity > 0
+            ? quantity * CRYSTAL_PER_USER
+            : 0;
+
+    document.getElementById(
+        "price"
+    ).textContent =
+        price.toLocaleString()
+        + " kristall";
+}
+
+
+/* =========================
+   BOOST ORDER
+========================= */
+
+function createOrder(){
+
+    const channel =
+        document.getElementById(
+            "channel"
+        ).value.trim();
+
+    const quantity =
+        Number(
+            document.getElementById(
+                "quantity"
+            ).value
+        );
+
+    if(!channel){
+
+        showToast(
+            "Kanal username kiriting"
+        );
+
+        return;
+    }
+
+
+    if(!channel.startsWith("@")){
+
+        showToast(
+            "Username @ bilan boshlansin"
+        );
+
+        return;
+    }
+
+
+    if(!quantity || quantity < 1){
+
+        showToast(
+            "Obunachilar sonini kiriting"
+        );
+
+        return;
+    }
+
+    const price =
+        quantity * CRYSTAL_PER_USER;
+
+    if(balance < price){
+
+        showToast(
+            "Kristall yetarli emas"
+        );
+
+        return;
+    }
+
+    balance -= price;
+
+    updateBalance();
+
+    const order = {
+
+        id:
+            Date.now(),
+
+        channel:
+            channel,
+
+        quantity:
+            quantity,
+
+        price:
+            price,
+
+        status:
+            "pending"
+
+    };
+
+    const orders =
+        JSON.parse(
+            localStorage.getItem(
+                "poletgram_orders"
+            ) || "[]"
+        );
+
+    orders.push(order);
+
+    localStorage.setItem(
+        "poletgram_orders",
+        JSON.stringify(orders)
+    );
+
+    showToast(
+        "Buyurtma Vazifalarga qo‘shildi"
+    );
+
+    document.getElementById(
+        "channel"
+    ).value = "";
+
+    document.getElementById(
+        "quantity"
+    ).value = "";
+
+    document.getElementById(
+        "price"
+    ).textContent =
+        "0 kristall";
+
+    loadOrders();
+
+    setTimeout(
+        () => openPage("tasks"),
+        700
+    );
+}
+
+
+/* =========================
+   LOAD ORDERS
+========================= */
+
+function loadOrders(){
+
+    const orders =
+        JSON.parse(
+            localStorage.getItem(
+                "poletgram_orders"
+            ) || "[]"
+        );
+
+    const list =
+        document.getElementById(
+            "tasksList"
+        );
+
+    list.innerHTML = "";
+
+    if(!orders.length){
+
+        list.innerHTML = `
+            <div class="empty">
+                <div class="empty-icon">
+                    📋
+                </div>
+
+                Hozircha vazifalar yo‘q
+            </div>
+        `;
+
+        return;
+    }
+
+    orders
+        .slice()
+        .reverse()
+        .forEach(order => {
+
+            const card =
+                document.createElement(
+                    "div"
+                );
+
+            card.className =
+                "task-card";
+
+            card.innerHTML = `
+
+                <div class="task-top">
+
+                    <div class="task-icon">
+                        ✈
+                    </div>
+
+                    <div class="task-info">
+
+                        <div class="task-title">
+                            ${escapeHtml(order.channel)}
+                        </div>
+
+                        <div class="task-reward">
+                            ${Number(order.quantity).toLocaleString()}
+                            ta Telegram obunachi
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="task-bottom">
+
+                    <div class="reward">
+
+                        <img
+                            class="small-gem"
+                            src="https://i.ibb.co/zh43p9kW/1791041176264.jpg">
+
+                        ${Number(order.price).toLocaleString()}
+
+                    </div>
+
+                    <button
+                        class="do-btn"
+                        onclick="doTelegramTask(this)">
+                        Bajarish
+                    </button>
+
+                </div>
+            `;
+
+            list.appendChild(card);
+
+        });
+}
+
+
+/* =========================
+   TELEGRAM TASK
+========================= */
+
+function doTelegramTask(button){
+
+    if(
+        window.Telegram &&
+        Telegram.WebApp
+    ){
+
+        Telegram.WebApp.openTelegramLink(
+            TASK_BOT
+        );
+
+    }else{
+
+        window.open(
+            TASK_BOT,
+            "_blank"
+        );
+
+    }
+
+    button.textContent =
+        "Bajarildi";
+
+    button.className =
+        "done-btn";
+
+    button.disabled =
+        true;
+
+    showToast(
+        "Bot ochildi"
+    );
+}
+
+
+/* =========================
+   PROMOKOD
+========================= */
+
+function openPromo(){
+
+    document
+        .getElementById(
+            "overlay"
+        )
+        .classList.add(
+            "show"
+        );
+
+}
+
+
+function closeModal(){
+
+    document
+        .getElementById(
+            "overlay"
+        )
+        .classList.remove(
+            "show"
+        );
+
+}
+
+
+function usePromo(){
 
     const code =
-      prompt("Promokodni kiriting:");
+        document
+            .getElementById(
+                "promoInput"
+            )
+            .value
+            .trim();
 
-    if (!code) return;
+    if(!code){
 
-    alert(
-      "Promokod tekshirish tizimi keyingi bosqichda ulanadi."
+        showToast(
+            "Promokod kiriting"
+        );
+
+        return;
+    }
+
+    showToast(
+        "Promokod tekshirilmoqda..."
     );
 
-  }
+    closeModal();
+
+}
 
 
-  function withdraw() {
+/* =========================
+   TOAST
+========================= */
 
-    alert(
-      "Pul yechish tizimi keyingi bosqichda ulanadi."
+let toastTimer;
+
+
+function showToast(message){
+
+    const toast =
+        document.getElementById(
+            "toast"
+        );
+
+    toast.textContent =
+        message;
+
+    toast.classList.add(
+        "show"
     );
 
-  }
+    clearTimeout(
+        toastTimer
+    );
+
+    toastTimer =
+        setTimeout(
+            () => {
+
+                toast.classList.remove(
+                    "show"
+                );
+
+            },
+            2200
+        );
+
+}
 
 
-  getTelegramUser();
-  updateBalance();
+/* =========================
+   HTML SECURITY
+========================= */
+
+function escapeHtml(text){
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+    div.textContent =
+        text;
+
+    return div.innerHTML;
+
+}
+
+
+/* =========================
+   START
+========================= */
+
+loadTelegramUser();
+
+updateBalance();
+
+loadOrders();
 
 </script>
 
