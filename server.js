@@ -15,6 +15,8 @@ const BASE_URL = (process.env.WEBAPP_URL || process.env.RENDER_EXTERNAL_URL || '
 // Brauzerda sinash uchun "dev" kirish. Tokensiz avtomatik yoqiladi; productionda ALLOW_DEV=0 qiling.
 const ALLOW_DEV = process.env.ALLOW_DEV ? process.env.ALLOW_DEV === '1' : !BOT_TOKEN;
 // Admin panel paroli (/admin). Sozlanmasa: faqat sinov rejimida 'admin', productionda panel o'chiq.
+// Adminlarning Telegram ID'lari (vergul bilan): ADMIN_IDS=12345,67890. Botda /id yozsangiz ID'ingizni ko'rasiz.
+const ADMIN_IDS = (process.env.ADMIN_IDS || '').split(',').map((x) => x.trim()).filter(Boolean);
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || (ALLOW_DEV && !BOT_TOKEN ? 'admin' : '');
 
 const STAKES = [3, 20, 100, 300, 1000];
@@ -244,6 +246,8 @@ app.post('/api/tasks/claim', auth, async (req, res) => {
 const adminFails = new Map();
 function admin(req, res, next) {
   const fail = (code, msg) => { res.writeHead(code, { 'content-type': 'application/json' }); res.end(JSON.stringify({ error: msg })); };
+  const tv = verifyInit(req.get('x-init-data')); // Telegram ichida: imzosi tekshirilgan admin ID
+  if (tv && ADMIN_IDS.includes(String(tv.user.id))) return next();
   if (!ADMIN_PASSWORD) return fail(403, 'disabled');
   const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress).split(',')[0].trim();
   const f = adminFails.get(ip) || { n: 0, t: Date.now() };
@@ -343,7 +347,7 @@ app.get('/api/admin/ledger', admin, (req, res) => {
 app.get('/diag', async (req, res) => {
   const d = {
     tokenSet: !!BOT_TOKEN, tokenFormatOk: /^\d{6,}:[\w-]{30,}$/.test(BOT_TOKEN), botState, botUsername: BOT_USERNAME,
-    baseUrl: BASE_URL || null, allowDev: ALLOW_DEV, adminPasswordSet: !!process.env.ADMIN_PASSWORD, users: Object.keys(db.users).length,
+    baseUrl: BASE_URL || null, allowDev: ALLOW_DEV, adminPasswordSet: !!process.env.ADMIN_PASSWORD, adminIds: ADMIN_IDS.length, users: Object.keys(db.users).length,
   };
   if (bot) {
     try {
@@ -407,6 +411,11 @@ if (BOT_TOKEN) {
       await ctx.reply(plain, { reply_markup: openKb(url) });
     }
   });
+  bot.command('id', (ctx) => ctx.reply(`Sizning Telegram ID: ${ctx.from.id}`));
+  bot.command('admin', async (ctx) => {
+    if (!ADMIN_IDS.includes(String(ctx.from.id))) return ctx.reply("Bu buyruq faqat adminlar uchun.\nAdmin bo'lish uchun ID'ingizni (/id) egasiga yuboring.");
+    await ctx.reply('🛠 Admin panel', { reply_markup: new InlineKeyboard().webApp('Admin panelni ochish', BASE_URL + '/admin') });
+  });
   bot.catch((e) => console.error('bot error', e.message));
   const hook = HOOK = '/tg/' + crypto.createHash('sha256').update(BOT_TOKEN).digest('hex').slice(0, 24);
   if (BASE_URL) webhook = { path: hook, fn: webhookCallback(bot, 'http') };
@@ -420,7 +429,7 @@ if (BOT_TOKEN) {
       } else {
         bot.start();
       }
-      await bot.api.setMyCommands([{ command: 'start', description: 'Boshlash' }]);
+      await bot.api.setMyCommands([{ command: 'start', description: 'Boshlash' }, { command: 'id', description: 'Mening Telegram ID raqamim' }]);
       botState = 'ok'; console.log('Bot tayyor: @' + BOT_USERNAME);
     } catch (e) { botState = 'XATO: ' + e.message; console.error('bot init error', e.message); }
   }, 500);

@@ -13,5 +13,7 @@ services:
         value: Poletgram_bot
       - key: ADMIN_PASSWORD
         sync: false
+      - key: ADMIN_IDS
+        sync: false
       - key: ALLOW_DEV
         value: "1"   # sinov uchun brauzerdan kirish. Productionda "0" qiling

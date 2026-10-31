@@ -39,6 +39,8 @@ Testlar: `npm test` (shashka qoidalari), `node e2e.js` (server, ws kerak).
 - Reklama vazifasi "Tez orada" (reklama tarmog'i ulanmagan).
 
 ## Admin panel (`/admin`)
+**Telegram ichida:** botga `/id` yozing → raqamni oling → Render'da `ADMIN_IDS=sizning_id` (bir nechta bo'lsa vergul bilan) → botga `/admin` yozing → "Admin panelni ochish" tugmasi parolsiz ochadi (Telegram imzosi bilan tekshiriladi). Brauzerda esa `ADMIN_PASSWORD` bilan kiriladi.
+
 - **Vazifalar:** reklama, sayt yoki Telegram kanal vazifasi qo'shish/tahrirlash/o'chirish; mukofot, kutish vaqti, kunlik limit, "bir marta" va faol/o'chiq. Kanal vazifasida botni kanalga admin qiling, a'zolik avtomatik tekshiriladi.
 - **Foydalanuvchilar:** qidirish, tanga qo'shish/ayirish (jurnalga yoziladi), bloklash.
 - **Xabar yuborish:** botdan hammaga xabar.
