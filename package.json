@@ -1,0 +1,9 @@
+{
+  "name": "poletgram",
+  "version": "1.0.0",
+  "description": "Poletgram - Telegram Mini App: shashka, vazifalar, reyting",
+  "main": "server.js",
+  "scripts": { "start": "node server.js", "test": "node test.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": { "grammy": "^1.30.0", "ws": "^8.18.0" }
+}

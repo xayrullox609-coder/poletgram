@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: poletgram
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: BOT_USERNAME
+        sync: false
+      - key: ALLOW_DEV
+        value: "1"   # sinov uchun brauzerdan kirish. Productionda "0" qiling
