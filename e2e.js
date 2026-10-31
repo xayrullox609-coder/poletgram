@@ -5,13 +5,13 @@ const assert = require('assert');
 const PORT = 3999;
 const srv = spawn('node', ['server.js'], { env: { ...process.env, PORT, DB_FILE: '/tmp/e2e-db.json' }, stdio: 'inherit' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const api = (p, id, m = 'GET') => fetch(`http://localhost:${PORT}${p}`, { method: m, headers: { 'x-init-data': `dev:${id}:${id}` } }).then((r) => r.json());
+const api = (p, id, m = 'GET') => fetch(`http://localhost:${PORT}${p}`, { method: m, headers: { 'x-init-data': `dev:${id}::${id}` } }).then((r) => r.json());
 function client(id) {
   const ws = new WebSocket(`ws://localhost:${PORT}/ws`); const c = { ws, msgs: [], id };
   ws.on('message', (d) => { const m = JSON.parse(d); c.msgs.push(m); if (m.t === 'state') c.state = m; if (m.t === 'balance') c.coins = m.coins; });
   c.send = (o) => ws.send(JSON.stringify(o));
   c.wait = async (t, ms = 3000) => { const s = Date.now(); while (Date.now() - s < ms) { const i = c.msgs.findIndex((m) => m.t === t); if (i >= 0) return c.msgs.splice(i, 1)[0]; await sleep(30); } throw new Error('kutildi: ' + t); };
-  return new Promise((r) => ws.on('open', () => { c.send({ t: 'auth', initData: `dev:${id}:${id}` }); c.wait('auth_ok').then(() => r(c)); }));
+  return new Promise((r) => ws.on('open', () => { c.send({ t: 'auth', initData: `dev:${id}::${id}` }); c.wait('auth_ok').then(() => r(c)); }));
 }
 (async () => {
   await sleep(700);
@@ -49,8 +49,8 @@ function client(id) {
   a.send({ t: 'resign' });
   const oa = await a.wait('over'), ob = await b.wait('over');
   assert.strictEqual(oa.result, 'lose'); assert.strictEqual(ob.result, 'win');
-  assert.strictEqual(oa.coins, 80); assert.strictEqual(ob.coins, 116); // 100-20 | 100-20+36
-  console.log("ok - taslim: yutqazgan 80, g'olib 116 (x1.8)");
+  assert.strictEqual(oa.coins, 80); assert.strictEqual(ob.coins, 120); // 100-20 | 100-20+40
+  console.log("ok - taslim: yutqazgan 80, g'olib 120 (x2)");
 
   // taklif havolasi
   a.send({ t: 'invite', stake: 3 }); const inv = await a.wait('invite');
@@ -74,16 +74,49 @@ function client(id) {
   b.send({ t: 'resign' }); const op = await b.wait('over'); assert.strictEqual(op.coins, pb);
   console.log('ok - sinov o\'yini tanga o\'zgartirmaydi');
 
-  // vazifalar va reyting
-  const tk = await api('/api/tasks', 'alice'); assert.strictEqual(tk.site.max, 20);
-  const st = await api('/api/tasks/site/start', 'alice', 'POST'); assert.ok(st.url);
-  assert.strictEqual((await api('/api/tasks/site/claim', 'alice', 'POST')).error, 'wait');
-  const rt = await api('/api/rating?type=wins', 'alice'); assert.ok(rt.list.length >= 2);
-  console.log('ok - vazifalar (erta olib bo\'lmaydi) va reyting');
+  // vazifalar (admin boshqaradi)
+  const adm = (p, m = 'GET', body, pass = 'admin') => fetch(`http://localhost:${PORT}${p}`, { method: m, headers: { 'x-admin-pass': pass, 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined }).then(async (r) => ({ s: r.status, ...(await r.json()) }));
+  assert.strictEqual((await adm('/api/admin/stats', 'GET', null, 'xato')).s, 401);
+  const nt = await adm('/api/admin/tasks', 'POST', { title: 'Sinov kanal', type: 'link', reward: 2.5, url: 'https://example.com', wait: 1, limit: 2, active: true });
+  assert.ok(nt.ok, JSON.stringify(nt));
+  assert.strictEqual((await adm('/api/admin/tasks', 'POST', { title: 'x', type: 'link', url: 'javascript:1', active: true })).error !== undefined, true);
+  const tk = await api('/api/tasks', 'alice'); const task = tk.list.find((x) => x.id === nt.task.id); assert.ok(task);
+  assert.strictEqual((await api('/api/tasks/claim?id=' + task.id, 'alice', 'POST')).error, 'wait');
+  assert.ok((await api('/api/tasks/start?id=' + task.id, 'alice', 'POST')).url);
+  assert.strictEqual((await api('/api/tasks/claim?id=' + task.id, 'alice', 'POST')).error, 'wait');
+  await sleep(1100);
+  const bal0 = (await api('/api/me', 'alice')).user.coins;
+  const cl = await api('/api/tasks/claim?id=' + task.id, 'alice', 'POST'); assert.ok(cl.ok); assert.strictEqual(cl.coins, bal0 + 2.5);
+  for (let k = 0; k < 2; k++) { await api('/api/tasks/start?id=' + task.id, 'alice', 'POST'); await sleep(1100); await api('/api/tasks/claim?id=' + task.id, 'alice', 'POST'); }
+  assert.strictEqual((await api('/api/tasks/start?id=' + task.id, 'alice', 'POST')).error, 'limit');
+  await adm('/api/admin/tasks', 'POST', { ...nt.task, active: false });
+  assert.ok(!(await api('/api/tasks', 'alice')).list.some((x) => x.id === task.id));
+  console.log('ok - admin vazifa yaratadi; foydalanuvchi oladi; limit va faolsizlantirish ishlaydi');
 
-  // referal
-  const c = await client('carol');
-  console.log('ok - 3-o\'yinchi ulandi');
+  const rt = await api('/api/rating?type=wins', 'alice'); assert.ok(rt.list.length >= 2);
+  console.log('ok - reyting');
+
+  // referal: carol alice'ning havolasi bilan kiradi
+  const a0 = (await api('/api/me', 'alice')).user.coins;
+  const cu = await fetch(`http://localhost:${PORT}/api/me`, { headers: { 'x-init-data': 'dev:carol:alice:Carol' } }).then((r) => r.json());
+  assert.strictEqual(cu.user.coins, 100);
+  assert.strictEqual((await api('/api/me', 'alice')).user.coins, a0 + 20);
+  assert.strictEqual((await api('/api/tasks', 'alice')).ref.count, 1);
+  assert.ok((await api('/api/me', 'alice')).user.refLink.startsWith('https://t.me/Poletgram_bot?start=ref_'));
+  console.log('ok - referal: +20, hisoblagich 1, havola t.me/Poletgram_bot?start=ref_...');
+
+  // admin: tanga, ban, sozlama, statistika
+  assert.ok((await adm('/api/admin/users/coins', 'POST', { id: 'devcarol', amount: 5 })).ok);
+  assert.strictEqual((await adm('/api/admin/users/coins', 'POST', { id: 'devcarol', amount: -9999 })).error !== undefined, true);
+  assert.ok((await adm('/api/admin/users/ban', 'POST', { id: 'devcarol', banned: true })).banned);
+  assert.strictEqual((await fetch(`http://localhost:${PORT}/api/me`, { headers: { 'x-init-data': 'dev:carol::Carol' } })).status, 403);
+  await adm('/api/admin/users/ban', 'POST', { id: 'devcarol', banned: false });
+  assert.strictEqual((await adm('/api/admin/settings', 'POST', { welcomeCoins: 50, referralReward: 7 })).welcomeCoins, 50);
+  const dd = await fetch(`http://localhost:${PORT}/api/me`, { headers: { 'x-init-data': 'dev:dave:alice:Dave' } }).then((r) => r.json());
+  assert.strictEqual(dd.user.coins, 50);
+  const st = await adm('/api/admin/stats'); assert.ok(st.users >= 4);
+  assert.ok((await fetch(`http://localhost:${PORT}/admin`).then((r) => r.text())).includes('Poletgram admin'));
+  console.log('ok - admin: tanga, ban, sozlamalar, statistika, /admin sahifa');
   console.log('\nHAMMA SINOVLAR O\'TDI');
   srv.kill(); process.exit(0);
 })().catch((e) => { console.error('XATO:', e.message); srv.kill(); process.exit(1); });
