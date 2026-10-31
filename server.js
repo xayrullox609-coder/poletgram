@@ -208,19 +208,45 @@ function notify(uid, text) {
   bot.api.sendMessage(uid, text).catch(() => {});
 }
 if (BOT_TOKEN) {
-  const { Bot, InlineKeyboard, webhookCallback } = require('grammy');
+  const { Bot, InlineKeyboard, InputFile, webhookCallback } = require('grammy');
   bot = new Bot(BOT_TOKEN);
   const openKb = (url) => new InlineKeyboard().webApp("🎮 O'ynash", url);
+  // Premium (custom) emojilar: .env/Render'da CE_<NOM>=<custom_emoji_id> qo'ying. Berilmasa oddiy emoji ishlatiladi.
+  // Eslatma: botlar custom emoji'ni faqat bot egasi Fragment'da qo'shimcha username sotib olgan bo'lsagina yubora oladi.
+  const CE = { game: ['🎮', process.env.CE_GAME], coin: ['🪙', process.env.CE_COIN], shop: ['🏪', process.env.CE_SHOP],
+    star: ['⭐️', process.env.CE_STAR], gem: ['💎', process.env.CE_GEM], fire: ['🔥', process.env.CE_FIRE], check: ['♟', process.env.CE_CHECK] };
+  function rich(tpl) { // {game} kabi belgilarni emoji/custom_emoji'ga almashtiradi
+    let text = '', entities = [];
+    for (const part of tpl.split(/(\{\w+\})/)) {
+      const m = part.match(/^\{(\w+)\}$/);
+      if (m && CE[m[1]]) {
+        const [fallback, id] = CE[m[1]];
+        if (id) entities.push({ type: 'custom_emoji', offset: text.length, length: fallback.length, custom_emoji_id: id });
+        text += fallback;
+      } else text += part;
+    }
+    return { text, entities };
+  }
+  const WELCOME = (name) => rich(
+    `{game} Shashka o'ynab tanga yuting, ${name}!\n\n` +
+    `{coin} Tangalarni g'alabalar, vazifalar va do'stlarni taklif qilish orqali to'plang.\n\n` +
+    `{shop} Tez orada: tangalarni {star} Stars | {game} PUBG UC | {gem} FreeFire olmos va boshqa xizmatlarga almashtirasiz.\n\n` +
+    `{fire} Pastdagi tugmani bosing va o'yinni boshlang!`);
   bot.command('start', async (ctx) => {
     const p = (ctx.match || '').trim();
     const id = String(ctx.from.id);
     let url = BASE_URL;
     if (p.startsWith('ref_') && !db.users[id]) { db.pendingRef[id] = p.slice(4); save(); }
     if (p.startsWith('g_')) url = `${BASE_URL}/?join=${encodeURIComponent(p.slice(2))}`;
-    await ctx.reply(
-      `Poletgram'ga xush kelibsiz, ${ctx.from.first_name}! ♟\nRus shashkasida do'stlaringiz va tasodifiy raqiblar bilan bellashing.`,
-      { reply_markup: openKb(url) },
-    );
+    const { text, entities } = WELCOME(ctx.from.first_name);
+    const opts = { caption: text, caption_entities: entities, reply_markup: openKb(url) };
+    try {
+      await ctx.replyWithPhoto(new InputFile(path.join(__dirname, 'public', 'coin.jpg')), opts);
+    } catch (e) { // custom emoji yoki rasm xatosi bo'lsa oddiy matn
+      console.error('start photo error', e.message);
+      const plain = text.replace(/\s+$/, '');
+      await ctx.reply(plain, { reply_markup: openKb(url) });
+    }
   });
   bot.catch((e) => console.error('bot error', e.message));
   const hook = '/tg/' + crypto.createHash('sha256').update(BOT_TOKEN).digest('hex').slice(0, 24);
