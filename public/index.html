@@ -22,7 +22,8 @@ h2{font-family:Georgia,serif;font-variant:small-caps;letter-spacing:1px;color:va
 .btn.dark{background:linear-gradient(#6b4423,#3e2611);color:var(--gold);border-color:var(--line);box-shadow:none}
 .btn:disabled{opacity:.45}
 .card{background:linear-gradient(#4a2e15cc,#2a1c10cc);border:2px solid var(--line);border-radius:14px;padding:12px;margin:10px 0;display:flex;align-items:center;gap:12px}
-.card .ico{width:46px;height:46px;border-radius:10px;background:#00000044;display:grid;place-items:center;font-size:24px;flex:none}
+.card .ico{width:52px;height:52px;border-radius:14px;background:radial-gradient(circle at 35% 28%,#8a5b2d,#3a2410);border:2px solid var(--gold2);display:grid;place-items:center;flex:none;box-shadow:inset 0 0 10px #0009,0 2px 6px #0006}
+.card .ico .ic{width:29px;height:29px}
 .card .t{font-weight:800;font-family:Georgia,serif;font-variant:small-caps;color:var(--gold)}
 .card .s{color:var(--mut);font-size:13px}
 .card .go{margin-left:auto}
@@ -45,7 +46,16 @@ h2{font-family:Georgia,serif;font-variant:small-caps;letter-spacing:1px;color:va
 .online:before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px}
 .side{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px}
 .tile{padding:14px 6px;text-align:center;border-radius:14px;border:2px solid var(--line);background:linear-gradient(#5b3a1ccc,#2a1c10cc);color:var(--gold);font-family:Georgia,serif;font-variant:small-caps;font-weight:800;font-size:15px}
-.tile .i{font-size:30px;display:block;margin-bottom:4px}
+.tile{transition:transform .12s;cursor:pointer;box-shadow:0 4px 12px #0006,inset 0 1px 0 #ffffff1a}
+.tile:active,.dep:active,.play:active{transform:scale(.96)}
+.tile .ib{margin:0 auto 6px}
+.ic{width:1.15em;height:1.15em;vertical-align:-.2em;flex:none;overflow:visible}
+.ib{display:grid;place-items:center;width:58px;height:58px;border-radius:50%;background:radial-gradient(circle at 35% 28%,#8a5b2d,#3a2410 75%);border:2px solid var(--gold2);box-shadow:inset 0 0 12px #000a,0 3px 8px #0008,0 0 14px #f0cf7a22}
+.ib .ic{width:32px;height:32px;filter:drop-shadow(0 2px 2px #0008)}
+.ib.big{width:68px;height:68px}.ib.big .ic{width:38px;height:38px}
+h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
+.dep .ic{width:1.1em;height:1.1em;vertical-align:-.22em}
+.crown{width:58%;height:58%;filter:drop-shadow(0 1px 1px #0008)}
 .play{position:sticky;bottom:10px;margin-top:26px;padding:22px;font-size:26px;letter-spacing:3px;font-family:Georgia,serif;border-radius:16px;border:3px solid #7a5a2d;background:linear-gradient(#b98a52,#7d5530);color:#3a2410;font-weight:900;width:100%;box-shadow:0 6px 24px #0008}
 /* reyting */
 .tabs{display:flex;gap:8px;margin-bottom:10px}
@@ -59,7 +69,7 @@ h2{font-family:Georgia,serif;font-variant:small-caps;letter-spacing:1px;color:va
 /* do'kon */
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .shop{position:relative;padding:16px 8px;text-align:center;border-radius:14px;border:2px solid var(--line);background:#1b130bcc;opacity:.85}
-.shop .i{font-size:44px}
+.shop .ib{margin:0 auto 4px}
 .shop b{display:block;margin-top:6px}
 .shop small{color:var(--mut)}
 .soon{position:absolute;top:8px;right:8px;background:var(--gold);color:#3b2506;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px}
@@ -69,18 +79,21 @@ h2{font-family:Georgia,serif;font-variant:small-caps;letter-spacing:1px;color:va
 .gwin{margin:14px 0 8px;font-family:Georgia,serif;font-variant:small-caps;color:var(--gold);font-weight:800;font-size:20px}
 .pl{width:min(100%,480px);display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:14px;border:2px solid var(--line);background:#00000066;position:relative}
 .pl.act{border-color:var(--green)}
-.pl .nm{font-weight:800}
-.pl .lv{font-size:12px;background:#ffffff22;border-radius:6px;padding:1px 6px;margin-left:6px;color:var(--mut)}
+.pl>div:nth-child(2){min-width:0;flex:1}
+.pl>div:nth-child(2)>div:first-child{display:flex;align-items:center;min-width:0}
+.pl .nm{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.pl .lv{flex:none;white-space:nowrap;font-size:12px;background:#ffffff22;border-radius:6px;padding:1px 6px;margin-left:6px;color:var(--mut)}
 .pl .sub{font-size:12px;color:var(--green)}
-.pl .clk{margin-left:auto;padding:8px 14px;border-radius:12px;background:#0007;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+.pl .clk{flex:none;margin-left:auto;padding:8px 14px;border-radius:12px;background:#0007;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
 .pl .em{position:absolute;right:90px;top:-14px;font-size:34px}
-#board{width:min(100%,480px);aspect-ratio:1;margin:10px 0;display:grid;grid-template-columns:repeat(8,1fr);border:10px solid #2b1c10;border-radius:10px;box-shadow:0 0 0 2px #7a5a2d,0 10px 30px #000a;background:#2b1c10}
-.sq{position:relative;display:grid;place-items:center}
+#game>*{flex:none}
+#board{width:min(100%,480px);width:min(100%,480px,calc(100dvh - 330px));min-width:260px;aspect-ratio:1/1;margin:10px 0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border:10px solid #2b1c10;border-radius:10px;box-shadow:0 0 0 2px #7a5a2d,0 10px 30px #000a;background:#2b1c10}
+.sq{position:relative;display:grid;place-items:center;min-width:0;min-height:0}
 .sq.l{background:#e8d3ac}.sq.d{background:#3a2a1e}
 .sq.lastm:after{content:"";position:absolute;inset:0;background:#f0cf7a55}
 .sq.hl:after{content:"";width:34%;height:34%;border-radius:50%;background:#3ddc84cc;box-shadow:0 0 10px #3ddc84}
 .sq.sel{box-shadow:inset 0 0 0 3px var(--green)}
-.pc{width:80%;height:80%;border-radius:50%;display:grid;place-items:center;font-size:clamp(14px,5vw,26px);box-shadow:0 3px 5px #0009,inset 0 -3px 5px #0004;z-index:1}
+.pc{width:80%;aspect-ratio:1/1;height:auto;border-radius:50%;display:grid;place-items:center;font-size:clamp(14px,5vw,26px);box-shadow:0 3px 5px #0009,inset 0 -3px 5px #0004;z-index:1}
 .pc.w{background:radial-gradient(circle at 35% 30%,#fff,#e9e0cf 55%,#bfb59e);color:#8a6a1c;border:2px solid #d8cdb4}
 .pc.b{background:radial-gradient(circle at 35% 30%,#555,#161616 60%,#000);color:#f0cf7a;border:2px solid #000}
 .pc.can{animation:pulse 1.2s infinite}
@@ -89,6 +102,7 @@ h2{font-family:Georgia,serif;font-variant:small-caps;letter-spacing:1px;color:va
 .turn.opp{border-color:var(--line);background:#0006;color:var(--mut)}
 .gbar{width:min(100%,480px);display:flex;gap:10px;margin-top:10px}
 .gbar .btn{margin:0;padding:11px}
+.gbar .btn .ic{vertical-align:-.25em;margin-right:4px}
 /* modal */
 .modal{position:fixed;inset:0;background:#000c;display:none;place-items:center;z-index:50;padding:20px}
 .modal.on{display:grid}
@@ -97,6 +111,7 @@ h2{font-family:Georgia,serif;font-variant:small-caps;letter-spacing:1px;color:va
 .mbox.draw{background:radial-gradient(circle at 50% 0,#555,#1a1a1a 70%)}
 .mbox .big{font-size:34px;font-weight:900;font-family:Georgia,serif;letter-spacing:2px;margin:6px 0;color:#e8918a}
 .mbox.win .big{color:var(--green)}.mbox.draw .big{color:#ddd}
+.mbox .ib{margin:0 auto 6px}
 .mbox .amt{font-size:26px;font-weight:900;margin:10px 0 16px}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#000d;color:#fff;padding:10px 18px;border-radius:12px;z-index:99;display:none;max-width:90%;text-align:center}
 .q{display:none;position:fixed;inset:0;z-index:40;background:#000d;place-items:center;text-align:center;padding:20px}
@@ -106,29 +121,53 @@ h2{font-family:Georgia,serif;font-variant:small-caps;letter-spacing:1px;color:va
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<linearGradient id="gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b8"/><stop offset=".5" stop-color="#f0cf7a"/><stop offset="1" stop-color="#c9993a"/></linearGradient></defs>
+<symbol id="i-tasks" viewBox="0 0 48 48"><rect x="9" y="8" width="30" height="36" rx="5" fill="url(#gg)"/><rect x="17" y="4" width="14" height="9" rx="3" fill="#4a2c10" stroke="url(#gg)" stroke-width="2"/><path d="M15 21l3 3 5-6M15 32l3 3 5-6" stroke="#4a2c10" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M27 22h7M27 33h7" stroke="#4a2c10" stroke-width="2.6" stroke-linecap="round"/></symbol>
+<symbol id="i-friends" viewBox="0 0 48 48"><circle cx="19" cy="16" r="7.5" fill="url(#gg)"/><path d="M4 41c0-8.5 6.5-14 15-14s15 5.5 15 14z" fill="url(#gg)"/><circle cx="35" cy="19" r="6" fill="url(#gg)" opacity=".8"/><path d="M31 28c8-1 14 3 14 13H35c0-5-1.500-9-4-13z" fill="url(#gg)" opacity=".8"/></symbol>
+<symbol id="i-trophy" viewBox="0 0 48 48"><path d="M14 6h20v12c0 7-4 12-10 12s-10-5-10-12z" fill="url(#gg)"/><path d="M14 10H7c0 8 3 12 8 13M34 10h7c0 8-3 12-8 13" stroke="url(#gg)" stroke-width="3" fill="none" stroke-linecap="round"/><rect x="21" y="29" width="6" height="8" fill="url(#gg)"/><rect x="13" y="36" width="22" height="7" rx="2.500" fill="url(#gg)"/><path d="M24 10.500l2.200 4.600 5 .6-3.700 3.400 1 5L24 21.700l-4.500 2.400 1-5-3.700-3.400 5-.6z" fill="#4a2c10"/></symbol>
+<symbol id="i-cash" viewBox="0 0 48 48"><rect x="3" y="11" width="42" height="26" rx="4.500" fill="url(#gg)"/><circle cx="24" cy="24" r="8" fill="none" stroke="#4a2c10" stroke-width="2.600"/><text x="24" y="29" text-anchor="middle" font-size="13" font-weight="800" font-family="Georgia,serif" fill="#4a2c10">$</text><circle cx="10" cy="24" r="2.200" fill="#4a2c10"/><circle cx="38" cy="24" r="2.200" fill="#4a2c10"/></symbol>
+<symbol id="i-shop" viewBox="0 0 48 48"><path d="M5 18l4-11h30l4 11z" fill="url(#gg)"/><path d="M5 18c0 3.500 3 5.500 6.500 5.500S18 21.500 18 18c0 3.500 2.700 5.500 6 5.500s6-2 6-5.500c0 3.500 3 5.500 6.500 5.500S43 21.500 43 18z" fill="#c9993a"/><rect x="9" y="25" width="30" height="18" rx="2" fill="url(#gg)"/><rect x="20" y="30" width="9" height="13" rx="2" fill="#4a2c10"/><rect x="12" y="29" width="5.500" height="6" rx="1" fill="#4a2c10"/><rect x="31.500" y="29" width="5.500" height="6" rx="1" fill="#4a2c10"/></symbol>
+<symbol id="i-stats" viewBox="0 0 48 48"><rect x="6" y="26" width="10" height="17" rx="2.500" fill="url(#gg)"/><rect x="19" y="15" width="10" height="28" rx="2.500" fill="url(#gg)"/><rect x="32" y="5" width="10" height="38" rx="2.500" fill="url(#gg)"/></symbol>
+<symbol id="i-deposit" viewBox="0 0 48 48"><path d="M19 5h10v16h9L24 37 10 21h9z" fill="url(#gg)"/><rect x="7" y="40" width="34" height="5" rx="2.500" fill="url(#gg)"/></symbol>
+<symbol id="i-play" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="url(#gg)"/><path d="M19 14v20l17-10z" fill="#4a2c10"/></symbol>
+<symbol id="i-ad" viewBox="0 0 48 48"><rect x="4" y="8" width="40" height="28" rx="6" fill="url(#gg)"/><path d="M20 16v12l11-6z" fill="#4a2c10"/><path d="M15 43h18" stroke="url(#gg)" stroke-width="3.500" stroke-linecap="round"/></symbol>
+<symbol id="i-link" viewBox="0 0 48 48"><g transform="rotate(-45 24 24)" fill="none" stroke="url(#gg)" stroke-width="4.500"><rect x="2" y="16" width="26" height="16" rx="8"/><rect x="20" y="16" width="26" height="16" rx="8"/></g></symbol>
+<symbol id="i-channel" viewBox="0 0 48 48"><path d="M5 19v10l9 1 19 9V9L14 18z" fill="url(#gg)"/><rect x="10" y="29" width="7" height="12" rx="2.500" fill="url(#gg)"/><path d="M37 17c3.500 3 3.500 11 0 14M41 12c6 5 6 19 0 24" stroke="url(#gg)" stroke-width="3" fill="none" stroke-linecap="round"/></symbol>
+<symbol id="i-star" viewBox="0 0 48 48"><path d="M24 3l6.500 13.500 14.500 2-10.700 10.200 2.700 14.600L24 36.200 10.900 43.300l2.700-14.600L3 18.500l14.500-2z" fill="url(#gg)"/></symbol>
+<symbol id="i-target" viewBox="0 0 48 48"><circle cx="24" cy="24" r="15" fill="none" stroke="url(#gg)" stroke-width="4"/><circle cx="24" cy="24" r="5" fill="url(#gg)"/><path d="M24 2v10M24 36v10M2 24h10M36 24h10" stroke="url(#gg)" stroke-width="4" stroke-linecap="round"/></symbol>
+<symbol id="i-flame" viewBox="0 0 48 48"><path d="M25 3c1 9 13 13 13 26a14 14 0 01-28 0c0-7 3-10 6-14 .5 4 2.500 6 4.500 6-1.500-7-.5-12 4.500-18z" fill="url(#gg)"/><path d="M24 44a7 7 0 01-7-7c0-4.500 3.500-7 7-12 3.500 5 7 7.500 7 12a7 7 0 01-7 7z" fill="#c9993a"/></symbol>
+<symbol id="i-gem" viewBox="0 0 48 48"><path d="M13 7h22l10 12-21 26L3 19z" fill="url(#gg)"/><path d="M3 19h42M17 19l7 26 7-26M13 7l4 12M35 7l-4 12" stroke="#4a2c10" stroke-width="1.800" fill="none" opacity=".65" stroke-linejoin="round"/></symbol>
+<symbol id="i-camera" viewBox="0 0 48 48"><rect x="6" y="6" width="36" height="36" rx="10.500" fill="none" stroke="url(#gg)" stroke-width="4"/><circle cx="24" cy="24" r="8" fill="none" stroke="url(#gg)" stroke-width="4"/><circle cx="34.500" cy="13.500" r="2.600" fill="url(#gg)"/></symbol>
+<symbol id="i-plane" viewBox="0 0 48 48"><path d="M44 5L4 21l11 4 4 14 6-7 9 8z" fill="url(#gg)"/><path d="M15 25L40 10 21 29z" fill="#4a2c10" opacity=".45"/></symbol>
+<symbol id="i-clock" viewBox="0 0 48 48"><circle cx="24" cy="24" r="18" fill="none" stroke="url(#gg)" stroke-width="4.500"/><path d="M24 12v13l9 5" stroke="url(#gg)" stroke-width="4.500" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-flag" viewBox="0 0 48 48"><path d="M10 4v41" stroke="url(#gg)" stroke-width="4.500" stroke-linecap="round"/><path d="M14 7h26l-6 9 6 9H14z" fill="url(#gg)"/></symbol>
+<symbol id="i-lose" viewBox="0 0 48 48"><circle cx="24" cy="24" r="19" fill="none" stroke="url(#gg)" stroke-width="4.500"/><path d="M16 16l16 16M32 16L16 32" stroke="url(#gg)" stroke-width="4.500" stroke-linecap="round"/></symbol>
+<symbol id="i-draw" viewBox="0 0 48 48"><circle cx="24" cy="24" r="19" fill="none" stroke="url(#gg)" stroke-width="4.500"/><path d="M15 19h18M15 29h18" stroke="url(#gg)" stroke-width="4.500" stroke-linecap="round"/></symbol>
+</svg>
 
 <!-- MENYU -->
 <section id="menu" class="screen on">
   <div class="prof">
     <div class="ava" id="mAva"></div>
     <div><div style="font-family:Georgia,serif;font-variant:small-caps;font-weight:800;font-size:19px" id="mName">…</div><div class="muted" id="mLvl"></div></div>
-    <div class="bal"><div class="n"><span id="mCoins">0</span> <span class="coin"></span></div><span class="dep" data-go="deposit">⬇ DEPOZIT</span></div>
+    <div class="bal"><div class="n"><span id="mCoins">0</span> <span class="coin"></span></div><span class="dep" data-go="deposit"><svg class="ic"><use href="#i-deposit"/></svg> DEPOZIT</span></div>
   </div>
   <div style="text-align:center"><span class="online" id="mOnline">0 online</span></div>
   <div class="side">
-    <div class="tile" data-go="tasks"><span class="i">📋</span>Vazifalar</div>
-    <div class="tile" data-go="friend"><span class="i">👥</span>Do'st bilan</div>
-    <div class="tile" data-go="rating"><span class="i">🏆</span>Reyting</div>
-    <div class="tile" data-go="withdraw"><span class="i">💵</span>Pul yechish</div>
-    <div class="tile" data-go="shop"><span class="i">🏪</span>Do'kon</div>
-    <div class="tile" data-go="stats"><span class="i">📊</span>Statistika</div>
+    <div class="tile" data-go="tasks"><span class="ib"><svg class="ic"><use href="#i-tasks"/></svg></span>Vazifalar</div>
+    <div class="tile" data-go="friend"><span class="ib"><svg class="ic"><use href="#i-friends"/></svg></span>Do'st bilan</div>
+    <div class="tile" data-go="rating"><span class="ib"><svg class="ic"><use href="#i-trophy"/></svg></span>Reyting</div>
+    <div class="tile" data-go="withdraw"><span class="ib"><svg class="ic"><use href="#i-cash"/></svg></span>Pul yechish</div>
+    <div class="tile" data-go="shop"><span class="ib"><svg class="ic"><use href="#i-shop"/></svg></span>Do'kon</div>
+    <div class="tile" data-go="stats"><span class="ib"><svg class="ic"><use href="#i-stats"/></svg></span>Statistika</div>
   </div>
   <button class="play" data-go="play">PLAY</button>
 </section>
 
 <!-- PLAY -->
 <section id="play" class="screen">
-  <div class="top"><button class="back" data-go="menu">‹</button><h2>▶ O'ynash</h2><span class="chip"><span class="bc">0</span> <span class="coin"></span></span></div>
+  <div class="top"><button class="back" data-go="menu">‹</button><h2><svg class="ic"><use href="#i-play"/></svg> O'ynash</h2><span class="chip"><span class="bc">0</span> <span class="coin"></span></span></div>
   <h2 style="text-align:center;margin:6px 0 12px">Nechta tanga tikasiz?</h2>
   <div class="stakes" id="stakesPlay"></div>
   <p class="hint">Tikilgan summadan g'olib <b style="color:var(--gold)">×2</b> oladi. Durangda qaytariladi.</p>
@@ -138,24 +177,24 @@ h2{font-family:Georgia,serif;font-variant:small-caps;letter-spacing:1px;color:va
 
 <!-- DO'ST -->
 <section id="friend" class="screen">
-  <div class="top"><button class="back" data-go="menu">‹</button><h2>👥 Do'st bilan o'ynash</h2><span class="chip"><span class="bc">0</span> <span class="coin"></span></span></div>
+  <div class="top"><button class="back" data-go="menu">‹</button><h2><svg class="ic"><use href="#i-friends"/></svg> Do'st bilan o'ynash</h2><span class="chip"><span class="bc">0</span> <span class="coin"></span></span></div>
   <h2 style="text-align:center;margin:6px 0 12px">Nechta tanga tikasiz?</h2>
   <div class="stakes" id="stakesFriend"></div>
   <p class="hint">Do'stingizga havola yuboring — u havolani ochishi bilan o'yin <b style="color:var(--gold)">avtomatik</b> boshlanadi. G'olib <b style="color:var(--gold)">×2</b> oladi.</p>
-  <button class="btn" id="btnInvite">📤 Telegram orqali do'stga yuborish</button>
+  <button class="btn" id="btnInvite"><svg class="ic"><use href="#i-plane"/></svg> Telegram orqali do'stga yuborish</button>
   <div id="inviteBox" class="hint" style="display:none"></div>
 </section>
 
 <!-- VAZIFALAR -->
 <section id="tasks" class="screen">
-  <div class="top"><button class="back" data-go="menu">‹</button><h2>📋 Vazifalar</h2><span class="chip"><span class="bc">0</span> <span class="coin"></span></span></div>
+  <div class="top"><button class="back" data-go="menu">‹</button><h2><svg class="ic"><use href="#i-tasks"/></svg> Vazifalar</h2><span class="chip"><span class="bc">0</span> <span class="coin"></span></span></div>
   <div id="taskList"></div>
-  <div class="card"><div class="ico">👥</div><div><div class="t">Do'st taklif qilish</div><div class="s">+<span id="tRefR">20</span> <span class="coin"></span> · har do'st uchun<br>Taklif qilinganlar: <b id="tRef">0</b></div></div><div class="go"><button class="btn" id="btnRef">Ochish</button></div></div>
+  <div class="card"><div class="ico"><svg class="ic"><use href="#i-friends"/></svg></div><div><div class="t">Do'st taklif qilish</div><div class="s">+<span id="tRefR">20</span> <span class="coin"></span> · har do'st uchun<br>Taklif qilinganlar: <b id="tRef">0</b></div></div><div class="go"><button class="btn" id="btnRef">Ochish</button></div></div>
 </section>
 
 <!-- REYTING -->
 <section id="rating" class="screen">
-  <div class="top"><button class="back" data-go="menu">‹</button><h2>🏆 Reyting</h2></div>
+  <div class="top"><button class="back" data-go="menu">‹</button><h2><svg class="ic"><use href="#i-trophy"/></svg> Reyting</h2></div>
   <div class="muted" style="margin-bottom:8px">Eng yaxshi 100 ta o'yinchi</div>
   <div class="tabs"><button data-rt="wins" class="on">G'alaba</button><button data-rt="coins">Tanga</button><button data-rt="level">Daraja</button></div>
   <div id="ratingList"></div>
@@ -164,28 +203,28 @@ h2{font-family:Georgia,serif;font-variant:small-caps;letter-spacing:1px;color:va
 
 <!-- DO'KON -->
 <section id="shop" class="screen">
-  <div class="top"><button class="back" data-go="menu">‹</button><h2>🏪 Do'kon</h2></div>
+  <div class="top"><button class="back" data-go="menu">‹</button><h2><svg class="ic"><use href="#i-shop"/></svg> Do'kon</h2></div>
   <p class="hint" style="margin-top:0">Do'kon xizmatlari tez orada ishga tushadi.</p>
   <div class="grid2">
-    <div class="shop"><span class="soon">Tez orada</span><div class="i">⭐</div><b>Telegram Stars</b><small>Stars sotib olish</small></div>
-    <div class="shop"><span class="soon">Tez orada</span><div class="i">🔫</div><b>PUBG UC</b><small>UC to'ldirish</small></div>
-    <div class="shop"><span class="soon">Tez orada</span><div class="i">🔥</div><b>Free Fire</b><small>Olmos to'ldirish</small></div>
-    <div class="shop"><span class="soon">Tez orada</span><div class="i">⚔️</div><b>Mobile Legends</b><small>Olmos va Pass</small></div>
-    <div class="shop"><span class="soon">Tez orada</span><div class="i">📸</div><b>Instagram</b><small>Ko'rish, like, obunachi</small></div>
-    <div class="shop"><span class="soon">Tez orada</span><div class="i">✈️</div><b>Telegram</b><small>Ko'rish, reaksiya</small></div>
+    <div class="shop"><span class="soon">Tez orada</span><div class="ib big"><svg class="ic"><use href="#i-star"/></svg></div><b>Telegram Stars</b><small>Stars sotib olish</small></div>
+    <div class="shop"><span class="soon">Tez orada</span><div class="ib big"><svg class="ic"><use href="#i-target"/></svg></div><b>PUBG UC</b><small>UC to'ldirish</small></div>
+    <div class="shop"><span class="soon">Tez orada</span><div class="ib big"><svg class="ic"><use href="#i-flame"/></svg></div><b>Free Fire</b><small>Olmos to'ldirish</small></div>
+    <div class="shop"><span class="soon">Tez orada</span><div class="ib big"><svg class="ic"><use href="#i-gem"/></svg></div><b>Mobile Legends</b><small>Olmos va Pass</small></div>
+    <div class="shop"><span class="soon">Tez orada</span><div class="ib big"><svg class="ic"><use href="#i-camera"/></svg></div><b>Instagram</b><small>Ko'rish, like, obunachi</small></div>
+    <div class="shop"><span class="soon">Tez orada</span><div class="ib big"><svg class="ic"><use href="#i-plane"/></svg></div><b>Telegram</b><small>Ko'rish, reaksiya</small></div>
   </div>
 </section>
 
 <section id="deposit" class="screen">
-  <div class="top"><button class="back" data-go="menu">‹</button><h2>⬇ Depozit</h2></div>
-  <div class="card" style="display:block;text-align:center"><div style="font-size:44px">🚧</div><div class="t">Tez orada</div><p class="s">Hozircha tangalar faqat vazifalar va do'st taklif qilish orqali topiladi.</p><button class="btn" data-go="tasks">Vazifalarga o'tish</button></div>
+  <div class="top"><button class="back" data-go="menu">‹</button><h2><svg class="ic"><use href="#i-deposit"/></svg> Depozit</h2></div>
+  <div class="card" style="display:block;text-align:center"><div class="ib big" style="margin:0 auto 8px"><svg class="ic"><use href="#i-clock"/></svg></div><div class="t">Tez orada</div><p class="s">Hozircha tangalar faqat vazifalar va do'st taklif qilish orqali topiladi.</p><button class="btn" data-go="tasks">Vazifalarga o'tish</button></div>
 </section>
 <section id="withdraw" class="screen">
-  <div class="top"><button class="back" data-go="menu">‹</button><h2>💵 Pul yechish</h2></div>
-  <div class="card" style="display:block;text-align:center"><div style="font-size:44px">🚧</div><div class="t">Tez orada</div><p class="s">Bu bo'lim hali ishga tushmagan.</p></div>
+  <div class="top"><button class="back" data-go="menu">‹</button><h2><svg class="ic"><use href="#i-cash"/></svg> Pul yechish</h2></div>
+  <div class="card" style="display:block;text-align:center"><div class="ib big" style="margin:0 auto 8px"><svg class="ic"><use href="#i-clock"/></svg></div><div class="t">Tez orada</div><p class="s">Bu bo'lim hali ishga tushmagan.</p></div>
 </section>
 <section id="stats" class="screen">
-  <div class="top"><button class="back" data-go="menu">‹</button><h2>📊 Statistika</h2></div>
+  <div class="top"><button class="back" data-go="menu">‹</button><h2><svg class="ic"><use href="#i-stats"/></svg> Statistika</h2></div>
   <div class="row"><span class="nm">O'yinlar</span><span class="v" id="sG">0</span></div>
   <div class="row"><span class="nm">G'alabalar</span><span class="v" id="sW">0</span></div>
   <div class="row"><span class="nm">Mag'lubiyatlar</span><span class="v" id="sL">0</span></div>
@@ -198,11 +237,11 @@ h2{font-family:Georgia,serif;font-variant:small-caps;letter-spacing:1px;color:va
   <div id="board"></div>
   <div class="turn" id="turn"></div>
   <div class="pl" id="plMe"><div class="ava sm" id="yAva"></div><div><div><span class="nm" id="yName"></span><span class="lv" id="yLv"></span></div><div class="sub" id="ySub"></div></div><div class="clk" id="yClk">6:00</div></div>
-  <div class="gbar"><button class="btn dark" id="btnResign">🏳 Taslim</button><button class="btn dark" style="flex:none;width:60px" id="btnEmoji">😀</button></div>
+  <div class="gbar"><button class="btn dark" id="btnResign"><svg class="ic"><use href="#i-flag"/></svg> Taslim</button><button class="btn dark" style="flex:none;width:60px" id="btnEmoji">😀</button></div>
 </section>
 
 <div class="q" id="queue"><div><div class="spin"></div><h2>Raqib qidirilmoqda…</h2><p class="hint" id="qHint"></p><button class="btn dark" id="btnQP" style="display:none">Bot bilan sinab ko'rish</button><button class="btn dark" id="btnQC">Bekor qilish</button></div></div>
-<div class="modal" id="modal"><div class="mbox" id="mbox"><div style="font-size:44px" id="mIcon"></div><div class="big" id="mTitle"></div><div id="mSub" class="muted"></div><div class="amt" id="mAmt"></div><button class="btn" id="mAgain">Yana o'ynash</button><button class="btn dark" id="mMenu">Menyu</button></div></div>
+<div class="modal" id="modal"><div class="mbox" id="mbox"><div class="ib big" id="mIcon"></div><div class="big" id="mTitle"></div><div id="mSub" class="muted"></div><div class="amt" id="mAmt"></div><button class="btn" id="mAgain">Yana o'ynash</button><button class="btn dark" id="mMenu">Menyu</button></div></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -319,7 +358,8 @@ $('#mAgain').onclick = () => { $('#modal').classList.remove('on'); G = null;
 $('#mMenu').onclick = () => { $('#modal').classList.remove('on'); G = null; show('menu'); };
 
 /* ---- Vazifalar / reyting ---- */
-const TICON = { ad: '📺', link: '🔗', channel: '📢' };
+const IC = (n) => `<svg class="ic"><use href="#i-${n}"/></svg>`;
+const TICON = { ad: IC('ad'), link: IC('link'), channel: IC('channel') };
 let taskData = null; const tStart = {}; // id -> boshlangan vaqt (ms)
 async function loadTasks() {
   const d = await api('/api/tasks'); taskData = d;
@@ -342,7 +382,7 @@ function renderTasks() {
       btn = left > 0 ? `<button class="btn dark" disabled>${left} s</button>` : `<button class="btn" data-claim="${t.id}">Olish</button>`;
     } else btn = `<button class="btn" data-start="${t.id}">Boshlash</button>`;
     const cnt = t.once ? '' : ` · ${t.done}/${t.limit}`;
-    return `<div class="card"><div class="ico">${TICON[t.type] || '🔗'}</div><div><div class="t">${esc(t.title)}</div><div class="s">+${fmt(t.reward)} <span class="coin"></span>${cnt}</div></div><div class="go">${btn}</div></div>`;
+    return `<div class="card"><div class="ico">${TICON[t.type] || TICON.link}</div><div><div class="t">${esc(t.title)}</div><div class="s">+${fmt(t.reward)} <span class="coin"></span>${cnt}</div></div><div class="go">${btn}</div></div>`;
   }).join('');
 }
 setInterval(() => { if ($('#tasks').classList.contains('on') && Object.keys(tStart).length) renderTasks(); }, 1000);
@@ -365,7 +405,7 @@ $('#taskList').addEventListener('click', async (e) => {
 });
 async function loadRating() {
   const d = await api('/api/rating?type=' + ratingType);
-  $('#ratingList').innerHTML = d.list.map((u) => `<div class="row${u.me ? ' me' : ''}"><span class="rk">${u.rank}</span><span class="nm">${esc(u.name)}</span><span class="v">${fmt(u.value)} ${ratingType === 'wins' ? '🏆' : ''}</span></div>`).join('') || '<p class="hint">Hozircha bo\'sh</p>';
+  $('#ratingList').innerHTML = d.list.map((u) => `<div class="row${u.me ? ' me' : ''}"><span class="rk">${u.rank}</span><span class="nm">${esc(u.name)}</span><span class="v">${fmt(u.value)} ${ratingType === 'wins' ? IC('trophy') : ''}</span></div>`).join('') || '<p class="hint">Hozircha bo\'sh</p>';
   $('#myRank').textContent = d.myRank ? `Sizning o'rningiz: ${d.myRank}` : '';
 }
 $$('[data-rt]').forEach((b) => b.onclick = () => { ratingType = b.dataset.rt; $$('[data-rt]').forEach((x) => x.classList.toggle('on', x === b)); loadRating(); });
@@ -396,7 +436,7 @@ function renderBoard() {
     const dr = Math.floor(i / 8), dc = i % 8, r = flip ? 7 - dr : dr, c = flip ? 7 - dc : dc, k = r + ',' + c;
     const p = G.board[r][c], dark = (r + c) % 2 === 1;
     let cls = 'sq ' + (dark ? 'd' : 'l') + (lastSq.includes(k) ? ' lastm' : '') + (nexts.has(k) ? ' hl' : '') + (sel === k ? ' sel' : '');
-    h += `<div class="${cls}" data-r="${r}" data-c="${c}">` + (p ? `<div class="pc ${p.toLowerCase()}${!prefix.length && starts.has(k) ? ' can' : ''}">${p === p.toUpperCase() ? '♛' : ''}</div>` : '') + '</div>';
+    h += `<div class="${cls}" data-r="${r}" data-c="${c}">` + (p ? `<div class="pc ${p.toLowerCase()}${!prefix.length && starts.has(k) ? ' can' : ''}">${p === p.toUpperCase() ? '<svg class="crown" viewBox="0 0 24 24"><path d="M2.500 19l-1-12 5.500 4.500L12 4l5 7.500L22.500 7l-1 12z" fill="currentColor"/></svg>' : ''}</div>` : '') + '</div>';
   }
   el.innerHTML = h;
   const my = G.turn === G.you;
@@ -440,11 +480,11 @@ setInterval(tick, 250);
 
 function onOver(m) {
   const mb = $('#mbox'); mb.className = 'mbox ' + (m.result === 'win' ? 'win' : m.result === 'draw' ? 'draw' : '');
-  $('#mIcon').textContent = m.result === 'win' ? '🏆' : m.result === 'draw' ? '🤝' : '💀';
+  $('#mIcon').innerHTML = IC(m.result === 'win' ? 'trophy' : m.result === 'draw' ? 'draw' : 'lose');
   $('#mTitle').textContent = m.result === 'win' ? "G'ALABA" : m.result === 'draw' ? 'DURANG' : "MAG'LUBIYAT";
   const why = { nomoves: m.result === 'win' ? 'Raqibda yurish qolmadi' : 'Sizda yurish qolmadi', resign: m.result === 'win' ? 'Raqib taslim bo\'ldi' : 'Siz taslim bo\'ldingiz', timeout: 'Vaqt tugadi', movetimeout: 'Yurish vaqti tugadi', draw: 'Durang e\'lon qilindi' };
   $('#mSub').textContent = why[m.reason] || '';
-  $('#mAmt').textContent = m.practice ? 'Sinov o\'yini' : (m.delta > 0 ? '+' : '') + (m.delta === 0 ? 'Tikilgan tanga qaytarildi' : m.delta + ' 🪙');
+  $('#mAmt').innerHTML = m.practice ? 'Sinov o\'yini' : (m.delta > 0 ? '+' : '') + (m.delta === 0 ? 'Tikilgan tanga qaytarildi' : m.delta + ' <span class="coin"></span>');
   setCoins(m.coins);
   $('#modal').classList.add('on');
 }
