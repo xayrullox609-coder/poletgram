@@ -49,6 +49,24 @@ h2{font-family:Georgia,serif;font-variant:small-caps;letter-spacing:1px;color:va
 .tile{transition:transform .12s;cursor:pointer;box-shadow:0 4px 12px #0006,inset 0 1px 0 #ffffff1a}
 .tile:active,.dep:active,.play:active{transform:scale(.96)}
 .tile .ib{margin:0 auto 6px}
+.tile.wide{grid-column:1/-1;display:flex;align-items:center;gap:14px;text-align:left;padding:12px 16px}
+.tile.wide .ib{margin:0;flex:none}.tile.wide small{display:block;font-family:system-ui,sans-serif;font-variant:normal;font-weight:500;font-size:12px;color:var(--mut);margin-top:2px}
+.grp{display:flex;align-items:center;gap:10px;margin:18px 0 4px;font-family:Georgia,serif;font-variant:small-caps;color:var(--gold);font-size:19px;font-weight:800}
+.grp .ib{width:40px;height:40px}.grp .ib .ic{width:22px;height:22px}
+.prc{display:inline-flex;align-items:center;gap:3px;color:var(--gold);font-weight:800}.prc .ic{width:15px;height:15px;vertical-align:-.15em}
+.card.soonc{opacity:.6}.tagsoon{padding:6px 12px;border-radius:10px;background:#0006;color:var(--mut);font-size:12px;font-weight:800;border:1px solid var(--line);white-space:nowrap}
+.sheet{position:fixed;inset:0;background:#000b;display:none;align-items:flex-end;justify-content:center;z-index:60}
+.sheet.on{display:flex}
+.sheet .box{width:min(100%,480px);background:linear-gradient(#3a2815,#1d120a);border:2px solid var(--line);border-bottom:0;border-radius:22px 22px 0 0;padding:18px 16px 22px}
+.sheet h3{margin:0 0 4px;font-family:Georgia,serif;font-variant:small-caps;color:var(--gold);font-size:20px}
+.sheet label{display:block;margin:12px 0 5px;color:var(--mut);font-size:13px}
+.sheet input[type=text]{width:100%;padding:12px;border-radius:12px;border:2px solid var(--line);background:#0f0a06;color:var(--txt);font-size:15px}
+.step{display:flex;align-items:center;gap:12px}
+.step button{width:44px;height:44px;border-radius:12px;border:2px solid var(--line);background:linear-gradient(#7a4f27,#4a2e15);color:var(--gold);font-size:24px;font-weight:800}
+.step b{flex:1;text-align:center;font-size:20px}
+.tot{display:flex;justify-content:space-between;align-items:center;margin:14px 0 2px;font-size:17px;font-weight:800}
+.ord{display:flex;justify-content:space-between;gap:8px;padding:9px 12px;margin:6px 0;border-radius:12px;background:#1b130bcc;border:1px solid #6b4a2566;font-size:14px}
+.ord .st{font-weight:800;white-space:nowrap}.st.paid{color:var(--gold)}.st.done{color:var(--green)}.st.refunded,.st.canceled{color:var(--red)}
 .ic{width:1.15em;height:1.15em;vertical-align:-.2em;flex:none;overflow:visible}
 .ib{display:grid;place-items:center;width:58px;height:58px;border-radius:50%;background:radial-gradient(circle at 35% 28%,#8a5b2d,#3a2410 75%);border:2px solid var(--gold2);box-shadow:inset 0 0 12px #000a,0 3px 8px #0008,0 0 14px #f0cf7a22}
 .ib .ic{width:32px;height:32px;filter:drop-shadow(0 2px 2px #0008)}
@@ -144,6 +162,10 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
 <symbol id="i-flag" viewBox="0 0 48 48"><path d="M10 4v41" stroke="url(#gg)" stroke-width="4.500" stroke-linecap="round"/><path d="M14 7h26l-6 9 6 9H14z" fill="url(#gg)"/></symbol>
 <symbol id="i-lose" viewBox="0 0 48 48"><circle cx="24" cy="24" r="19" fill="none" stroke="url(#gg)" stroke-width="4.500"/><path d="M16 16l16 16M32 16L16 32" stroke="url(#gg)" stroke-width="4.500" stroke-linecap="round"/></symbol>
 <symbol id="i-draw" viewBox="0 0 48 48"><circle cx="24" cy="24" r="19" fill="none" stroke="url(#gg)" stroke-width="4.500"/><path d="M15 19h18M15 29h18" stroke="url(#gg)" stroke-width="4.500" stroke-linecap="round"/></symbol>
+<symbol id="i-eye" viewBox="0 0 48 48"><path d="M2 24C8 14 15 9 24 9s16 5 22 15c-6 10-13 15-22 15S8 34 2 24z" fill="url(#gg)"/><circle cx="24" cy="24" r="7.500" fill="#4a2c10"/><circle cx="26.500" cy="21.500" r="2.400" fill="#f0cf7a"/></symbol>
+<symbol id="i-heart" viewBox="0 0 48 48"><path d="M24 43C8 31 3 24 3 16 3 10 7.500 6 13 6c4.500 0 8 2.500 11 7 3-4.500 6.500-7 11-7 5.500 0 10 4 10 10 0 8-5 15-21 27z" fill="url(#gg)"/></symbol>
+<symbol id="i-react" viewBox="0 0 48 48"><path d="M5 22h9v21H5zM17 22l8-17c4 0 6 3 5 7l-1.500 7H41c3 0 5 2.500 4 5.500l-4 15c-.8 2.500-3 4-5.500 4H17z" fill="url(#gg)"/></symbol>
+<symbol id="i-userplus" viewBox="0 0 48 48"><circle cx="19" cy="15" r="8" fill="url(#gg)"/><path d="M3 43c0-9 7-15 16-15s16 6 16 15z" fill="url(#gg)"/><path d="M39 10v14M32 17h14" stroke="url(#gg)" stroke-width="4.500" stroke-linecap="round"/></symbol>
 </svg>
 
 <!-- MENYU -->
@@ -158,9 +180,8 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
     <div class="tile" data-go="tasks"><span class="ib"><svg class="ic"><use href="#i-tasks"/></svg></span>Vazifalar</div>
     <div class="tile" data-go="friend"><span class="ib"><svg class="ic"><use href="#i-friends"/></svg></span>Do'st bilan</div>
     <div class="tile" data-go="rating"><span class="ib"><svg class="ic"><use href="#i-trophy"/></svg></span>Reyting</div>
-    <div class="tile" data-go="withdraw"><span class="ib"><svg class="ic"><use href="#i-cash"/></svg></span>Pul yechish</div>
-    <div class="tile" data-go="shop"><span class="ib"><svg class="ic"><use href="#i-shop"/></svg></span>Do'kon</div>
     <div class="tile" data-go="stats"><span class="ib"><svg class="ic"><use href="#i-stats"/></svg></span>Statistika</div>
+    <div class="tile wide" data-go="shop"><span class="ib"><svg class="ic"><use href="#i-shop"/></svg></span><span>Do'kon<small>Instagram · Telegram xizmatlari</small></span></div>
   </div>
   <button class="play" data-go="play">PLAY</button>
 </section>
@@ -204,24 +225,19 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
 <!-- DO'KON -->
 <section id="shop" class="screen">
   <div class="top"><button class="back" data-go="menu">‹</button><h2><svg class="ic"><use href="#i-shop"/></svg> Do'kon</h2></div>
-  <p class="hint" style="margin-top:0">Do'kon xizmatlari tez orada ishga tushadi.</p>
-  <div class="grid2">
-    <div class="shop"><span class="soon">Tez orada</span><div class="ib big"><svg class="ic"><use href="#i-star"/></svg></div><b>Telegram Stars</b><small>Stars sotib olish</small></div>
-    <div class="shop"><span class="soon">Tez orada</span><div class="ib big"><svg class="ic"><use href="#i-target"/></svg></div><b>PUBG UC</b><small>UC to'ldirish</small></div>
-    <div class="shop"><span class="soon">Tez orada</span><div class="ib big"><svg class="ic"><use href="#i-flame"/></svg></div><b>Free Fire</b><small>Olmos to'ldirish</small></div>
-    <div class="shop"><span class="soon">Tez orada</span><div class="ib big"><svg class="ic"><use href="#i-gem"/></svg></div><b>Mobile Legends</b><small>Olmos va Pass</small></div>
-    <div class="shop"><span class="soon">Tez orada</span><div class="ib big"><svg class="ic"><use href="#i-camera"/></svg></div><b>Instagram</b><small>Ko'rish, like, obunachi</small></div>
-    <div class="shop"><span class="soon">Tez orada</span><div class="ib big"><svg class="ic"><use href="#i-plane"/></svg></div><b>Telegram</b><small>Ko'rish, reaksiya</small></div>
-  </div>
+  <p class="hint" style="margin-top:0">Narxlar Telegram Stars <svg class="ic"><use href="#i-star"/></svg> da. To'lov Telegram ichida amalga oshiriladi.</p>
+  <div id="shopList"></div>
+  <div class="grp">Boshqa xizmatlar</div>
+  <div class="card soonc"><div class="ico"><svg class="ic"><use href="#i-star"/></svg></div><div><div class="t">Telegram Stars</div><div class="s">Stars sotib olish</div></div><div class="go"><span class="tagsoon">Tez orada</span></div></div>
+  <div class="card soonc"><div class="ico"><svg class="ic"><use href="#i-target"/></svg></div><div><div class="t">PUBG UC</div><div class="s">UC to'ldirish</div></div><div class="go"><span class="tagsoon">Tez orada</span></div></div>
+  <div class="card soonc"><div class="ico"><svg class="ic"><use href="#i-flame"/></svg></div><div><div class="t">Free Fire</div><div class="s">Olmos to'ldirish</div></div><div class="go"><span class="tagsoon">Tez orada</span></div></div>
+  <div class="card soonc"><div class="ico"><svg class="ic"><use href="#i-gem"/></svg></div><div><div class="t">Mobile Legends</div><div class="s">Olmos va Pass</div></div><div class="go"><span class="tagsoon">Tez orada</span></div></div>
+  <div id="ordersBox"></div>
 </section>
 
 <section id="deposit" class="screen">
   <div class="top"><button class="back" data-go="menu">‹</button><h2><svg class="ic"><use href="#i-deposit"/></svg> Depozit</h2></div>
   <div class="card" style="display:block;text-align:center"><div class="ib big" style="margin:0 auto 8px"><svg class="ic"><use href="#i-clock"/></svg></div><div class="t">Tez orada</div><p class="s">Hozircha tangalar faqat vazifalar va do'st taklif qilish orqali topiladi.</p><button class="btn" data-go="tasks">Vazifalarga o'tish</button></div>
-</section>
-<section id="withdraw" class="screen">
-  <div class="top"><button class="back" data-go="menu">‹</button><h2><svg class="ic"><use href="#i-cash"/></svg> Pul yechish</h2></div>
-  <div class="card" style="display:block;text-align:center"><div class="ib big" style="margin:0 auto 8px"><svg class="ic"><use href="#i-clock"/></svg></div><div class="t">Tez orada</div><p class="s">Bu bo'lim hali ishga tushmagan.</p></div>
 </section>
 <section id="stats" class="screen">
   <div class="top"><button class="back" data-go="menu">‹</button><h2><svg class="ic"><use href="#i-stats"/></svg> Statistika</h2></div>
@@ -242,6 +258,15 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
 
 <div class="q" id="queue"><div><div class="spin"></div><h2>Raqib qidirilmoqda…</h2><p class="hint" id="qHint"></p><button class="btn dark" id="btnQP" style="display:none">Bot bilan sinab ko'rish</button><button class="btn dark" id="btnQC">Bekor qilish</button></div></div>
 <div class="modal" id="modal"><div class="mbox" id="mbox"><div class="ib big" id="mIcon"></div><div class="big" id="mTitle"></div><div id="mSub" class="muted"></div><div class="amt" id="mAmt"></div><button class="btn" id="mAgain">Yana o'ynash</button><button class="btn dark" id="mMenu">Menyu</button></div></div>
+<div class="sheet" id="sheet"><div class="box">
+  <h3 id="shTitle"></h3><div class="muted" id="shSub"></div>
+  <label>Miqdor (paket soni)</label>
+  <div class="step"><button id="shMinus">−</button><b id="shPacks">1</b><button id="shPlus">+</button></div>
+  <label id="shLinkL">Havola</label><input type="text" id="shLink" autocomplete="off" autocapitalize="off">
+  <div class="tot"><span id="shQty"></span><span class="prc" id="shPrice"></span></div>
+  <button class="btn" id="shPay"><svg class="ic"><use href="#i-star"/></svg> Stars bilan to'lash</button>
+  <button class="btn dark" id="shCancel">Bekor qilish</button>
+</div></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -268,6 +293,7 @@ function show(id) {
   if (id === 'menu') refreshMe();
   if (id === 'play' || id === 'friend') renderStakes();
   if (id === 'tasks') loadTasks();
+  if (id === 'shop') loadShop();
   if (id === 'rating') loadRating();
   if (id === 'stats' && me) { $('#sG').textContent = me.games; $('#sW').textContent = me.wins; $('#sL').textContent = me.losses; }
   if (tg) { try { tg.BackButton[id === 'menu' ? 'hide' : 'show'](); } catch (e) {} }
@@ -275,8 +301,8 @@ function show(id) {
 document.addEventListener('click', (e) => { const t = e.target.closest('[data-go]'); if (t) show(t.dataset.go); });
 if (tg) try { tg.BackButton.onClick(() => { if (!G) show('menu'); }); } catch (e) {}
 
-async function api(path, method = 'GET') {
-  const r = await fetch(path, { method, headers: { 'x-init-data': initData } });
+async function api(path, method = 'GET', body) {
+  const r = await fetch(path, { method, headers: { 'x-init-data': initData, 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
   return r.json();
 }
 function setAva(el, name, photo) {
@@ -356,6 +382,54 @@ $('#btnEmoji').onclick = () => { const e = ['😀', '😎', '😡', '😭', '�
 $('#mAgain').onclick = () => { $('#modal').classList.remove('on'); G = null;
   if (lastMode === 'practice') send({ t: 'practice' }); else if (lastMode === 'friend') { show('friend'); } else send({ t: 'queue', stake }); };
 $('#mMenu').onclick = () => { $('#modal').classList.remove('on'); G = null; show('menu'); };
+
+
+/* ---- Do'kon ---- */
+const KIND_IC = { views: 'eye', likes: 'heart', reactions: 'react', followers: 'userplus' };
+const PLAT = { instagram: ['Instagram', 'camera'], telegram: ['Telegram', 'plane'] };
+const ST_TXT = { paid: 'Qabul qilindi', done: 'Bajarildi', canceled: 'Bekor qilindi', refunded: 'Qaytarildi' };
+let SHOP = [], cur = null, curPacks = 1;
+async function loadShop() {
+  const d = await api('/api/shop'); SHOP = d.products;
+  $('#shopList').innerHTML = ['instagram', 'telegram'].map((pl) => {
+    const items = SHOP.filter((p) => p.platform === pl); if (!items.length) return '';
+    return `<div class="grp"><span class="ib">${IC(PLAT[pl][1])}</span>${PLAT[pl][0]}</div>` + items.map((p) =>
+      `<div class="card${p.soon ? ' soonc' : ''}"><div class="ico">${IC(KIND_IC[p.kind] || 'star')}</div><div><div class="t">${esc(p.title)}</div>` +
+      (p.soon ? '<div class="s">Tez orada</div>' : `<div class="s">${p.qty} ta · <span class="prc">${p.stars} ${IC('star')}</span></div>`) +
+      `</div><div class="go">${p.soon ? '<span class="tagsoon">Tez orada</span>' : `<button class="btn" data-buy="${p.id}">Buyurtma</button>`}</div></div>`).join('');
+  }).join('');
+  $('#ordersBox').innerHTML = d.orders.length ? '<div class="grp">Buyurtmalarim</div>' + d.orders.map((o) =>
+    `<div class="ord"><span>${esc(o.title)} · ${o.qty} ta<br><small class="muted">${o.stars} ★ · ${new Date(o.created).toLocaleDateString()}</small></span><span class="st ${o.status}">${ST_TXT[o.status] || o.status}</span></div>`).join('') : '';
+}
+$('#shopList').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-buy]'); if (!b) return;
+  cur = SHOP.find((p) => p.id === b.dataset.buy); curPacks = 1;
+  $('#shTitle').textContent = `${PLAT[cur.platform][0]}: ${cur.title}`;
+  $('#shSub').textContent = `1 paket = ${cur.qty} ta · ${cur.stars} Stars`;
+  const post = cur.kind === 'followers' ? 'Sahifa/kanal havolasi' : 'Post havolasi';
+  $('#shLinkL').textContent = post; $('#shLink').value = '';
+  $('#shLink').placeholder = cur.platform === 'instagram' ? 'https://instagram.com/...' : 'https://t.me/kanal/123';
+  renderSheet(); $('#sheet').classList.add('on');
+});
+function renderSheet() {
+  $('#shPacks').textContent = curPacks; $('#shQty').textContent = `Jami: ${cur.qty * curPacks} ta`;
+  $('#shPrice').innerHTML = `${cur.stars * curPacks} ${IC('star')}`;
+}
+$('#shMinus').onclick = () => { if (curPacks > 1) { curPacks--; renderSheet(); } };
+$('#shPlus').onclick = () => { if (curPacks < cur.maxPacks) { curPacks++; renderSheet(); } };
+$('#shCancel').onclick = () => $('#sheet').classList.remove('on');
+$('#sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet') $('#sheet').classList.remove('on'); });
+$('#shPay').onclick = async () => {
+  const btn = $('#shPay'); btn.disabled = true;
+  try {
+    const r = await api('/api/shop/order', 'POST', { id: cur.id, packs: curPacks, link: $('#shLink').value });
+    if (r.error) return toast(r.error);
+    const done = () => { $('#sheet').classList.remove('on'); toast("Buyurtma qabul qilindi!"); loadShop(); };
+    if (r.dev) return done();
+    if (tg && tg.openInvoice) tg.openInvoice(r.url, (st) => { if (st === 'paid') done(); else if (st === 'failed') toast("To'lov amalga oshmadi"); });
+    else window.open(r.url, '_blank');
+  } finally { btn.disabled = false; }
+};
 
 /* ---- Vazifalar / reyting ---- */
 const IC = (n) => `<svg class="ic"><use href="#i-${n}"/></svg>`;
