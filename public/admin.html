@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Poletgram admin</title>
+<link rel="icon" href="/coin.png">
+<style>
+:root{--bg:#0e1511;--card:#1a2219;--line:#2f3d2e;--gold:#f0cf7a;--txt:#eef0e6;--mut:#9aa690;--red:#e0705f;--green:#4fd18b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5}
+header img{width:30px;height:30px;border-radius:50%}
+header b{font-size:17px;color:var(--gold)}
+nav{display:flex;gap:6px;overflow-x:auto;padding:10px 16px}
+nav button{flex:none;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--txt);font:inherit;cursor:pointer}
+nav button.on{background:var(--gold);color:#2b1c04;border-color:var(--gold);font-weight:700}
+main{padding:0 16px 40px;max-width:960px;margin:0 auto}
+.tab{display:none}.tab.on{display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.stat b{display:block;font-size:24px;color:var(--gold)}
+.stat span{color:var(--mut);font-size:13px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0}
+label{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
+input,select,textarea{width:100%;padding:9px 10px;border-radius:9px;border:1px solid var(--line);background:#0f1610;color:var(--txt);font:inherit}
+input[type=checkbox]{width:auto}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{padding:9px 16px;border-radius:9px;border:0;background:var(--gold);color:#2b1c04;font:inherit;font-weight:700;cursor:pointer}
+.btn.sec{background:#2a3829;color:var(--txt);font-weight:500}
+.btn.red{background:var(--red);color:#fff}
+.btn.sm{padding:5px 10px;font-size:13px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th,.tbl td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.tbl th{color:var(--mut);font-weight:500;font-size:12px}
+.tag{display:inline-block;padding:1px 8px;border-radius:8px;font-size:12px;background:#2a3829}
+.tag.on{background:#1d4d33;color:var(--green)}.tag.off{background:#4b2a24;color:var(--red)}
+.scroll{overflow-x:auto}
+#login{max-width:340px;margin:18vh auto;padding:0 16px}
+.msg{margin:8px 0;color:var(--mut);font-size:13px}
+.msg.err{color:var(--red)}.msg.ok{color:var(--green)}
+</style>
+</head>
+<body>
+<div id="login"><div class="box"><h3 style="margin:0 0 8px;color:var(--gold)">Poletgram admin</h3>
+<label>Parol</label><input id="pw" type="password" autofocus><div class="msg err" id="lerr"></div>
+<button class="btn" id="lbtn" style="width:100%;margin-top:6px">Kirish</button></div></div>
+
+<div id="app" style="display:none">
+<header><img src="/coin.png" alt=""><b>Poletgram admin</b><span style="flex:1"></span><button class="btn sec sm" id="logout">Chiqish</button></header>
+<nav id="nav"></nav>
+<main>
+  <section class="tab" id="t-stats"><div class="grid" id="stats"></div><button class="btn sec" onclick="loadStats()">Yangilash</button></section>
+
+  <section class="tab" id="t-tasks">
+    <div class="box"><b id="formTitle">Yangi vazifa</b>
+      <input type="hidden" id="tId">
+      <label>Nomi (foydalanuvchi ko'radi)</label><input id="tTitle" maxlength="60" placeholder="Masalan: Kanalimizga obuna bo'ling">
+      <div class="row2"><div><label>Turi</label><select id="tType"><option value="link">Havola (sayt)</option><option value="ad">Reklama</option><option value="channel">Telegram kanal (a'zolik tekshiriladi)</option></select></div>
+      <div><label>Mukofot (tanga)</label><input id="tReward" type="number" step="0.1" min="0" value="1"></div></div>
+      <label>Havola / @kanal</label><input id="tUrl" placeholder="https://... yoki https://t.me/kanal yoki @kanal">
+      <div class="row2"><div><label>Kutish vaqti (soniya)</label><input id="tWait" type="number" min="0" max="300" value="8"></div>
+      <div><label>Kunlik limit (necha marta)</label><input id="tLimit" type="number" min="1" value="1"></div></div>
+      <label><input type="checkbox" id="tOnce"> Faqat bir marta (umrbod)</label>
+      <label><input type="checkbox" id="tActive" checked> Faol (foydalanuvchilarga ko'rinadi)</label>
+      <div class="msg" id="tMsg"></div>
+      <button class="btn" id="tSave">Saqlash</button> <button class="btn sec" id="tReset">Tozalash</button>
+      <p class="msg">Kanal vazifasi uchun botni shu kanalga <b>administrator</b> qiling, aks holda a'zolikni tekshira olmaydi.</p>
+    </div>
+    <div class="box scroll"><table class="tbl"><thead><tr><th>Nomi</th><th>Turi</th><th>Tanga</th><th>Limit</th><th>Holat</th><th></th></tr></thead><tbody id="tList"></tbody></table></div>
+  </section>
+
+  <section class="tab" id="t-users">
+    <div class="box"><div class="row2"><input id="uq" placeholder="Ism yoki ID bo'yicha qidirish"><button class="btn" id="uGo">Qidirish</button></div>
+    <div class="msg" id="uMsg"></div></div>
+    <div class="box scroll"><table class="tbl"><thead><tr><th>Foydalanuvchi</th><th>Tanga</th><th>O'yin</th><th>Holat</th><th></th></tr></thead><tbody id="uList"></tbody></table></div>
+  </section>
+
+  <section class="tab" id="t-bc">
+    <div class="box"><b>Hammaga xabar yuborish</b>
+      <label>Matn</label><textarea id="bText" rows="6" maxlength="3500" placeholder="Barcha foydalanuvchilarga botdan yuboriladi"></textarea>
+      <div class="msg" id="bMsg"></div>
+      <button class="btn" id="bGo">Yuborish</button></div>
+  </section>
+
+  <section class="tab" id="t-set">
+    <div class="box"><b>Sozlamalar</b>
+      <div class="row2"><div><label>Ro'yxatdan o'tganda sovg'a (tanga)</label><input id="sWelcome" type="number" min="0" step="0.1"></div>
+      <div><label>Har bir taklif uchun (tanga)</label><input id="sRef" type="number" min="0" step="0.1"></div></div>
+      <div class="msg" id="sMsg"></div><button class="btn" id="sSave">Saqlash</button>
+      <p class="msg">G'olib stavkaning 2 baravarini oladi (×2), durangda stavka qaytariladi.</p></div>
+  </section>
+</main>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let PASS = sessionStorage.getItem('apw') || '';
+async function api(path, method = 'GET', body) {
+  const r = await fetch(path, { method, headers: { 'x-admin-pass': PASS, 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+  if (r.status === 401 || r.status === 403 || r.status === 429) { const e = await r.json().catch(() => ({})); throw Object.assign(new Error(e.error || 'auth'), { auth: true }); }
+  return r.json();
+}
+const TABS = [['stats', 'Statistika'], ['tasks', 'Vazifalar'], ['users', 'Foydalanuvchilar'], ['bc', 'Xabar yuborish'], ['set', 'Sozlamalar']];
+$('#nav').innerHTML = TABS.map(([k, n]) => `<button data-t="${k}">${n}</button>`).join('');
+$('#nav').onclick = (e) => { const b = e.target.closest('[data-t]'); if (b) openTab(b.dataset.t); };
+function openTab(k) {
+  document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('on', t.id === 't-' + k));
+  document.querySelectorAll('#nav button').forEach((b) => b.classList.toggle('on', b.dataset.t === k));
+  ({ stats: loadStats, tasks: loadTasks, users: loadUsers, set: loadSettings, bc: loadBc })[k]();
+}
+async function login() {
+  PASS = $('#pw').value || PASS;
+  try {
+    await api('/api/admin/stats');
+    sessionStorage.setItem('apw', PASS);
+    $('#login').style.display = 'none'; $('#app').style.display = 'block'; openTab('stats');
+  } catch (e) {
+    PASS = ''; sessionStorage.removeItem('apw');
+    $('#lerr').textContent = e.message === 'disabled' ? "Admin panel o'chiq: Render'da ADMIN_PASSWORD qo'ying" : e.message === 'too_many' ? "Ko'p urinish. 10 daqiqadan so'ng qayta urining" : "Parol noto'g'ri";
+  }
+}
+$('#lbtn').onclick = login; $('#pw').onkeydown = (e) => e.key === 'Enter' && login();
+$('#logout').onclick = () => { sessionStorage.removeItem('apw'); location.reload(); };
+if (PASS) login();
+
+/* statistika */
+async function loadStats() {
+  const s = await api('/api/admin/stats');
+  const items = [['Foydalanuvchilar', s.users], ['Bugun yangi', s.newToday], ['Hozir onlayn', s.online], ["Faol o'yinlar", s.activeGames], ['Navbatda', s.queued],
+    ["O'ynalgan o'yinlar", s.gamesPlayed], ['Takliflar', s.referrals], ['Umumiy tanga', s.totalCoins], ['Bloklangan', s.banned]];
+  $('#stats').innerHTML = items.map(([n, v]) => `<div class="stat"><b>${v}</b><span>${n}</span></div>`).join('');
+}
+
+/* vazifalar */
+const TN = { link: 'Havola', ad: 'Reklama', channel: 'Kanal' };
+let TASKS = [];
+async function loadTasks() {
+  TASKS = (await api('/api/admin/tasks')).list;
+  $('#tList').innerHTML = TASKS.map((t) => `<tr><td>${esc(t.title)}<div class="msg" style="margin:0;word-break:break-all">${esc(t.url || 'havola yo\'q')}</div></td><td>${TN[t.type]}</td><td>${t.reward}</td>
+    <td>${t.once ? 'bir marta' : t.limit + '/kun'}</td><td><span class="tag ${t.active ? 'on' : 'off'}">${t.active ? 'faol' : "o'chiq"}</span></td>
+    <td><button class="btn sec sm" data-edit="${t.id}">Tahrirlash</button> <button class="btn red sm" data-del="${t.id}">O'chirish</button></td></tr>`).join('') || '<tr><td colspan=6 class="msg">Vazifa yo\'q</td></tr>';
+}
+function fillTask(t) {
+  $('#formTitle').textContent = t ? 'Tahrirlash' : 'Yangi vazifa';
+  $('#tId').value = t ? t.id : ''; $('#tTitle').value = t ? t.title : ''; $('#tType').value = t ? t.type : 'link';
+  $('#tReward').value = t ? t.reward : 1; $('#tUrl').value = t ? t.url : ''; $('#tWait').value = t ? t.wait : 8;
+  $('#tLimit').value = t ? t.limit : 1; $('#tOnce').checked = t ? t.once : false; $('#tActive').checked = t ? t.active : true; $('#tMsg').textContent = '';
+}
+$('#tReset').onclick = () => fillTask(null);
+$('#tList').onclick = async (e) => {
+  const ed = e.target.closest('[data-edit]'), del = e.target.closest('[data-del]');
+  if (ed) { fillTask(TASKS.find((t) => t.id === ed.dataset.edit)); scrollTo(0, 0); }
+  if (del && confirm("Vazifa o'chirilsinmi?")) { await api('/api/admin/tasks?id=' + del.dataset.del, 'DELETE'); loadTasks(); }
+};
+$('#tSave').onclick = async () => {
+  const r = await api('/api/admin/tasks', 'POST', { id: $('#tId').value, title: $('#tTitle').value, type: $('#tType').value, reward: $('#tReward').value,
+    url: $('#tUrl').value, wait: $('#tWait').value, limit: $('#tLimit').value, once: $('#tOnce').checked, active: $('#tActive').checked });
+  const m = $('#tMsg');
+  if (r.error) { m.className = 'msg err'; m.textContent = r.error; return; }
+  m.className = 'msg ok'; m.textContent = 'Saqlandi'; fillTask(null); loadTasks();
+};
+
+/* foydalanuvchilar */
+async function loadUsers() {
+  const d = await api('/api/admin/users?q=' + encodeURIComponent($('#uq').value));
+  $('#uMsg').textContent = `Jami: ${d.total}. Oxirgi 50 tasi ko'rsatilmoqda.`;
+  $('#uList').innerHTML = d.list.map((u) => `<tr><td>${esc(u.name)}<div class="msg" style="margin:0">${esc(u.id)}</div></td><td>${u.coins}</td><td>${u.games} (${u.wins} g'.)</td>
+    <td><span class="tag ${u.banned ? 'off' : 'on'}">${u.banned ? 'blok' : 'faol'}</span></td>
+    <td><button class="btn sec sm" data-coin="${esc(u.id)}">± tanga</button> <button class="btn ${u.banned ? 'sec' : 'red'} sm" data-ban="${esc(u.id)}" data-v="${u.banned ? 0 : 1}">${u.banned ? 'Blokdan olish' : 'Bloklash'}</button></td></tr>`).join('') || '<tr><td colspan=5 class="msg">Topilmadi</td></tr>';
+}
+$('#uGo').onclick = loadUsers; $('#uq').onkeydown = (e) => e.key === 'Enter' && loadUsers();
+$('#uList').onclick = async (e) => {
+  const c = e.target.closest('[data-coin]'), b = e.target.closest('[data-ban]');
+  if (c) {
+    const v = prompt("Qancha tanga qo'shish (manfiy bo'lsa ayiriladi)?", '10'); if (v === null) return;
+    const r = await api('/api/admin/users/coins', 'POST', { id: c.dataset.coin, amount: v, note: 'admin panel' });
+    if (r.error) alert(r.error); loadUsers();
+  }
+  if (b) { await api('/api/admin/users/ban', 'POST', { id: b.dataset.ban, banned: b.dataset.v === '1' }); loadUsers(); }
+};
+
+/* xabar */
+let bcTimer;
+async function loadBc() { const s = await api('/api/admin/broadcast'); showBc(s); }
+function showBc(s) {
+  $('#bMsg').className = 'msg';
+  $('#bMsg').textContent = s.total ? `${s.running ? 'Yuborilmoqda…' : 'Tugadi.'} Yuborildi: ${s.sent}/${s.total}, xato: ${s.failed}` : '';
+  clearTimeout(bcTimer); if (s.running) bcTimer = setTimeout(loadBc, 1500);
+}
+$('#bGo').onclick = async () => {
+  if (!$('#bText').value.trim()) return;
+  if (!confirm('Hamma foydalanuvchilarga yuborilsinmi?')) return;
+  const r = await api('/api/admin/broadcast', 'POST', { text: $('#bText').value });
+  if (r.error) { $('#bMsg').className = 'msg err'; $('#bMsg').textContent = r.error; } else loadBc();
+};
+
+/* sozlamalar */
+async function loadSettings() { const s = await api('/api/admin/settings'); $('#sWelcome').value = s.welcomeCoins; $('#sRef').value = s.referralReward; }
+$('#sSave').onclick = async () => {
+  await api('/api/admin/settings', 'POST', { welcomeCoins: $('#sWelcome').value, referralReward: $('#sRef').value });
+  $('#sMsg').className = 'msg ok'; $('#sMsg').textContent = 'Saqlandi';
+};
+window.addEventListener('unhandledrejection', (e) => { if (e.reason && e.reason.auth) { sessionStorage.removeItem('apw'); location.reload(); } });
+</script>
+</body>
+</html>

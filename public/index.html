@@ -131,7 +131,7 @@ h2{font-family:Georgia,serif;font-variant:small-caps;letter-spacing:1px;color:va
   <div class="top"><button class="back" data-go="menu">‹</button><h2>▶ O'ynash</h2><span class="chip"><span class="bc">0</span> <span class="coin"></span></span></div>
   <h2 style="text-align:center;margin:6px 0 12px">Nechta tanga tikasiz?</h2>
   <div class="stakes" id="stakesPlay"></div>
-  <p class="hint">Tikilgan summadan g'olib <b style="color:var(--gold)">×1.8</b> oladi. Durangda qaytariladi.</p>
+  <p class="hint">Tikilgan summadan g'olib <b style="color:var(--gold)">×2</b> oladi. Durangda qaytariladi.</p>
   <button class="btn" id="btnRandom">Tasodifiy raqib</button>
   <button class="btn dark" id="btnPractice">Bot bilan sinov (tikilmaydi)</button>
 </section>
@@ -141,7 +141,7 @@ h2{font-family:Georgia,serif;font-variant:small-caps;letter-spacing:1px;color:va
   <div class="top"><button class="back" data-go="menu">‹</button><h2>👥 Do'st bilan o'ynash</h2><span class="chip"><span class="bc">0</span> <span class="coin"></span></span></div>
   <h2 style="text-align:center;margin:6px 0 12px">Nechta tanga tikasiz?</h2>
   <div class="stakes" id="stakesFriend"></div>
-  <p class="hint">Do'stingizga havola yuboring — u havolani ochishi bilan o'yin <b style="color:var(--gold)">avtomatik</b> boshlanadi. G'olib <b style="color:var(--gold)">×1.8</b> oladi.</p>
+  <p class="hint">Do'stingizga havola yuboring — u havolani ochishi bilan o'yin <b style="color:var(--gold)">avtomatik</b> boshlanadi. G'olib <b style="color:var(--gold)">×2</b> oladi.</p>
   <button class="btn" id="btnInvite">📤 Telegram orqali do'stga yuborish</button>
   <div id="inviteBox" class="hint" style="display:none"></div>
 </section>
@@ -149,9 +149,8 @@ h2{font-family:Georgia,serif;font-variant:small-caps;letter-spacing:1px;color:va
 <!-- VAZIFALAR -->
 <section id="tasks" class="screen">
   <div class="top"><button class="back" data-go="menu">‹</button><h2>📋 Vazifalar</h2><span class="chip"><span class="bc">0</span> <span class="coin"></span></span></div>
-  <div class="card"><div class="ico">📺</div><div><div class="t">Reklama ko'rish</div><div class="s">+1 <span class="coin"></span> · <span id="tAds">0/20</span></div></div><div class="go"><button class="btn dark" disabled>Tez orada</button></div></div>
-  <div class="card"><div class="ico">🔗</div><div><div class="t">Saytga o'tish</div><div class="s">+0.5 <span class="coin"></span> · <span id="tSite">0/20</span></div></div><div class="go"><button class="btn" id="btnSite">Boshlash</button></div></div>
-  <div class="card"><div class="ico">👥</div><div><div class="t">Do'st taklif qilish</div><div class="s">+20 <span class="coin"></span> · har do'st uchun<br>Taklif qilinganlar: <b id="tRef">0</b></div></div><div class="go"><button class="btn" id="btnRef">Ochish</button></div></div>
+  <div id="taskList"></div>
+  <div class="card"><div class="ico">👥</div><div><div class="t">Do'st taklif qilish</div><div class="s">+<span id="tRefR">20</span> <span class="coin"></span> · har do'st uchun<br>Taklif qilinganlar: <b id="tRef">0</b></div></div><div class="go"><button class="btn" id="btnRef">Ochish</button></div></div>
 </section>
 
 <!-- REYTING -->
@@ -216,7 +215,7 @@ if (!initData) { // brauzerda sinash (har bir tab alohida o'yinchi)
   let id = sessionStorage.devId, n = sessionStorage.devName;
   if (!id) { id = Math.random().toString(36).slice(2, 8); sessionStorage.devId = id; }
   if (!n) { n = qs.get('name') || prompt("Ismingiz (sinov rejimi):") || 'Mehmon'; sessionStorage.devName = n; }
-  initData = 'dev:' + id + ':' + n;
+  initData = 'dev:' + id + ':' + (qs.get('ref') || '') + ':' + n;
 }
 let joinCode = qs.get('join') || (startParam.startsWith('g_') ? startParam.slice(2) : '');
 
@@ -320,25 +319,50 @@ $('#mAgain').onclick = () => { $('#modal').classList.remove('on'); G = null;
 $('#mMenu').onclick = () => { $('#modal').classList.remove('on'); G = null; show('menu'); };
 
 /* ---- Vazifalar / reyting ---- */
+const TICON = { ad: '📺', link: '🔗', channel: '📢' };
+let taskData = null; const tStart = {}; // id -> boshlangan vaqt (ms)
 async function loadTasks() {
-  const d = await api('/api/tasks');
-  $('#tAds').textContent = `${d.ads.done}/${d.ads.max}`; $('#tSite').textContent = `${d.site.done}/${d.site.max}`; $('#tRef').textContent = d.ref.count;
+  const d = await api('/api/tasks'); taskData = d;
+  $('#tRef').textContent = d.ref.count; $('#tRefR').textContent = d.ref.reward;
+  renderTasks();
   $('#btnRef').onclick = () => {
-    const text = "Poletgram'da shashka o'ynaymiz! Ro'yxatdan o'ting va tanga yuting.";
+    const text = "Poletgram'da shashka o'ynaymiz! Botga kiring va tanga yuting.";
     const url = 'https://t.me/share/url?url=' + encodeURIComponent(d.ref.link) + '&text=' + encodeURIComponent(text);
     if (tg && tg.openTelegramLink) tg.openTelegramLink(url); else { try { navigator.clipboard.writeText(d.ref.link); } catch (e) {} toast('Havola nusxalandi: ' + d.ref.link); }
   };
 }
-$('#btnSite').onclick = async () => {
-  const s = await api('/api/tasks/site/start', 'POST');
-  if (s.error) return toast('Bugungi limit tugadi');
-  if (tg && tg.openLink) tg.openLink(s.url); else window.open(s.url, '_blank');
-  toast('Saytda 8 soniya turing, so\'ng qayting…');
-  setTimeout(async () => {
-    const c = await api('/api/tasks/site/claim', 'POST');
-    if (c.ok) { setCoins(c.coins); toast('+0.5 tanga!'); loadTasks(); } else toast('Hali erta yoki limit tugagan');
-  }, 9000);
-};
+function renderTasks() {
+  if (!taskData) return;
+  const box = $('#taskList');
+  box.innerHTML = taskData.list.map((t) => {
+    let btn;
+    if (t.completed) btn = '<button class="btn dark" disabled>Bajarildi ✓</button>';
+    else if (tStart[t.id]) {
+      const left = Math.ceil(t.wait - (Date.now() - tStart[t.id]) / 1000);
+      btn = left > 0 ? `<button class="btn dark" disabled>${left} s</button>` : `<button class="btn" data-claim="${t.id}">Olish</button>`;
+    } else btn = `<button class="btn" data-start="${t.id}">Boshlash</button>`;
+    const cnt = t.once ? '' : ` · ${t.done}/${t.limit}`;
+    return `<div class="card"><div class="ico">${TICON[t.type] || '🔗'}</div><div><div class="t">${esc(t.title)}</div><div class="s">+${fmt(t.reward)} <span class="coin"></span>${cnt}</div></div><div class="go">${btn}</div></div>`;
+  }).join('');
+}
+setInterval(() => { if ($('#tasks').classList.contains('on') && Object.keys(tStart).length) renderTasks(); }, 1000);
+$('#taskList').addEventListener('click', async (e) => {
+  const st = e.target.closest('[data-start]'), cl = e.target.closest('[data-claim]');
+  if (st) {
+    const id = st.dataset.start, s = await api('/api/tasks/start?id=' + encodeURIComponent(id), 'POST');
+    if (s.error) return toast(s.error === 'limit' ? 'Bugungi limit tugadi' : 'Vazifa topilmadi');
+    tStart[id] = Date.now();
+    if (s.url) { if (tg && tg.openTelegramLink && /^https:\/\/t\.me\//.test(s.url)) tg.openTelegramLink(s.url); else if (tg && tg.openLink) tg.openLink(s.url); else window.open(s.url, '_blank'); }
+    renderTasks();
+  } else if (cl) {
+    const id = cl.dataset.claim, c = await api('/api/tasks/claim?id=' + encodeURIComponent(id), 'POST');
+    if (c.ok) { delete tStart[id]; setCoins(c.coins); toast('Tanga qo\'shildi!'); loadTasks(); }
+    else if (c.error === 'notmember') { delete tStart[id]; toast("Kanalga a'zo bo'lmagansiz"); renderTasks(); }
+    else if (c.error === 'verify') toast('Tekshirib bo\'lmadi. Keyinroq urinib ko\'ring.');
+    else if (c.error === 'wait') { delete tStart[id]; toast('Vaqt tugadi, qaytadan boshlang'); renderTasks(); }
+    else toast('Bugungi limit tugadi');
+  }
+});
 async function loadRating() {
   const d = await api('/api/rating?type=' + ratingType);
   $('#ratingList').innerHTML = d.list.map((u) => `<div class="row${u.me ? ' me' : ''}"><span class="rk">${u.rank}</span><span class="nm">${esc(u.name)}</span><span class="v">${fmt(u.value)} ${ratingType === 'wins' ? '🏆' : ''}</span></div>`).join('') || '<p class="hint">Hozircha bo\'sh</p>';
