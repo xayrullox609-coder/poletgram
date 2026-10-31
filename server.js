@@ -7,9 +7,11 @@ const { WebSocketServer } = require('ws');
 const G = require('./game');
 
 const PORT = process.env.PORT || 3000;
-const BOT_TOKEN = process.env.BOT_TOKEN || '';
+const BOT_TOKEN = (process.env.BOT_TOKEN || '').trim();
+process.on('unhandledRejection', (e) => console.error('unhandledRejection', e && e.message));
+process.on('uncaughtException', (e) => console.error('uncaughtException', e && e.stack));
 let BOT_USERNAME = (process.env.BOT_USERNAME || 'Poletgram_bot').replace(/^@/, '');
-const BASE_URL = (process.env.WEBAPP_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/$/, '');
+const BASE_URL = (process.env.WEBAPP_URL || process.env.RENDER_EXTERNAL_URL || '').trim().replace(/\/$/, '');
 // Brauzerda sinash uchun "dev" kirish. Tokensiz avtomatik yoqiladi; productionda ALLOW_DEV=0 qiling.
 const ALLOW_DEV = process.env.ALLOW_DEV ? process.env.ALLOW_DEV === '1' : !BOT_TOKEN;
 // Admin panel paroli (/admin). Sozlanmasa: faqat sinov rejimida 'admin', productionda panel o'chiq.
@@ -163,7 +165,10 @@ app.get('/health', (_, res) => res.send('ok'));
 
 function auth(req, res, next) {
   const v = verifyInit(req.get('x-init-data'));
-  if (!v) { res.writeHead(401, { 'content-type': 'application/json' }); return res.end('{"error":"auth"}'); }
+  if (!v) {
+    if (Date.now() - (auth.lastLog || 0) > 30e3) { auth.lastLog = Date.now(); console.warn('auth rad etildi: tokenSet=' + !!BOT_TOKEN + ', initData uzunligi=' + String(req.get('x-init-data') || '').length); }
+    res.writeHead(401, { 'content-type': 'application/json' }); return res.end('{"error":"auth"}');
+  }
   req.u = getUser(v.user, v.start);
   if (req.u.banned) { res.writeHead(403, { 'content-type': 'application/json' }); return res.end('{"error":"banned"}'); }
   next();
@@ -334,12 +339,29 @@ app.get('/api/admin/ledger', admin, (req, res) => {
   const u = String(req.query.u || '');
   res.json({ list: db.ledger.filter((x) => !u || x.u === u).slice(-100).reverse() });
 });
+// Diagnostika: sirlarni ko'rsatmaydi. https://<sayt>/diag
+app.get('/diag', async (req, res) => {
+  const d = {
+    tokenSet: !!BOT_TOKEN, tokenFormatOk: /^\d{6,}:[\w-]{30,}$/.test(BOT_TOKEN), botState, botUsername: BOT_USERNAME,
+    baseUrl: BASE_URL || null, allowDev: ALLOW_DEV, adminPasswordSet: !!process.env.ADMIN_PASSWORD, users: Object.keys(db.users).length,
+  };
+  if (bot) {
+    try {
+      const w = await bot.api.getWebhookInfo();
+      d.webhookSet = !!w.url; d.webhookMatches = w.url === BASE_URL + HOOK; d.pendingUpdates = w.pending_update_count;
+      d.lastWebhookError = w.last_error_message || null;
+      const me = await bot.api.getMe(); d.tokenBelongsTo = '@' + me.username;
+    } catch (e) { d.telegramError = e.message; }
+  }
+  res.json(d);
+});
 app.get('/admin', (req, res) => {
   fs.readFile(path.join(__dirname, 'public', 'admin.html'), (e, d) => { res.writeHead(e ? 404 : 200, { 'content-type': 'text/html; charset=utf-8' }); res.end(d); });
 });
 
 /* ---------------- Bot (grammY) ---------------- */
 let bot = null;
+let HOOK = '', botState = BOT_TOKEN ? 'starting' : 'BOT_TOKEN yoq';
 function notify(uid, text) {
   if (!bot || String(uid).startsWith('dev')) return;
   bot.api.sendMessage(uid, text).catch(() => {});
@@ -386,7 +408,7 @@ if (BOT_TOKEN) {
     }
   });
   bot.catch((e) => console.error('bot error', e.message));
-  const hook = '/tg/' + crypto.createHash('sha256').update(BOT_TOKEN).digest('hex').slice(0, 24);
+  const hook = HOOK = '/tg/' + crypto.createHash('sha256').update(BOT_TOKEN).digest('hex').slice(0, 24);
   if (BASE_URL) webhook = { path: hook, fn: webhookCallback(bot, 'http') };
   setTimeout(async () => {
     try {
@@ -399,8 +421,8 @@ if (BOT_TOKEN) {
         bot.start();
       }
       await bot.api.setMyCommands([{ command: 'start', description: 'Boshlash' }]);
-      console.log('Bot tayyor: @' + BOT_USERNAME);
-    } catch (e) { console.error('bot init error', e.message); }
+      botState = 'ok'; console.log('Bot tayyor: @' + BOT_USERNAME);
+    } catch (e) { botState = 'XATO: ' + e.message; console.error('bot init error', e.message); }
   }, 500);
 }
 

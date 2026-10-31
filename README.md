@@ -46,3 +46,11 @@ Testlar: `npm test` (shashka qoidalari), `node e2e.js` (server, ws kerak).
 - **Statistika:** foydalanuvchilar, onlayn, o'yinlar, takliflar.
 
 G'olib stavkaning 2 baravarini oladi (×2), durangda stavka qaytariladi.
+
+## Bot ishlamasa
+`https://<render-manzil>/diag` ni oching (sirlar ko'rsatilmaydi):
+- `tokenSet: false` → Render → Environment'da `BOT_TOKEN` yo'q. Qo'shing va Save (qayta deploy bo'ladi).
+- `tokenBelongsTo` `@Poletgram_bot` bo'lishi kerak. Boshqa bot bo'lsa, token noto'g'ri.
+- `webhookMatches: false` yoki `lastWebhookError` bor → `WEBAPP_URL` ni to'g'ri `https://...onrender.com` qilib qo'ying.
+- `botState` "XATO: ..." bo'lsa, matn sababini aytadi (Render → Logs'da ham chiqadi).
+- Mini App'da ism/balans bo'sh bo'lsa, odatda token bu botniki emas.
