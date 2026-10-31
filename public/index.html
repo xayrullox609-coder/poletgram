@@ -2,6 +2,7 @@
 <html lang="uz">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="/coin.png">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Poletgram</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -16,7 +17,7 @@ h2{font-family:Georgia,serif;font-variant:small-caps;letter-spacing:1px;color:va
 .top{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #ffffff18;margin-bottom:14px;position:sticky;top:0;background:#0f1a12cc;backdrop-filter:blur(6px);z-index:5}
 .back{width:40px;height:40px;border-radius:10px;border:2px solid var(--line);background:linear-gradient(#7a4f27,#4a2e15);color:var(--gold);font-size:22px}
 .chip{margin-left:auto;padding:7px 14px;border-radius:20px;border:2px solid var(--line);background:#00000055;font-weight:700;color:var(--gold);white-space:nowrap}
-.coin{display:inline-block;width:1em;height:1em;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe9a0,#e0a52c 60%,#a8741a);vertical-align:-.12em;box-shadow:inset 0 0 0 .1em #b9821f}
+.coin{display:inline-block;width:1.05em;height:1.05em;border-radius:50%;background:url(/coin.png) center/cover;vertical-align:-.15em}
 .btn{display:block;width:100%;padding:14px;border-radius:14px;border:2px solid var(--gold2);background:linear-gradient(#f4d98a,#c9993a);color:#3b2506;font-weight:800;font-size:16px;margin:10px 0;box-shadow:0 4px 18px #c9993a44}
 .btn.dark{background:linear-gradient(#6b4423,#3e2611);color:var(--gold);border-color:var(--line);box-shadow:none}
 .btn:disabled{opacity:.45}
@@ -354,7 +355,7 @@ function onState(s) {
   $('#queue').classList.remove('on'); clearTimeout(onMsg.qt);
   $('#inviteBox').style.display = 'none';
   show('game');
-  $('#gWin').textContent = s.practice ? 'SINOV O\'YINI' : `G'OLIBGA +${s.win} 🪙`;
+  $('#gWin').innerHTML = s.practice ? 'SINOV O\'YINI' : `G'OLIBGA +${s.win} <span class="coin"></span>`;
   $('#oName').textContent = s.opp.name; $('#oLv').textContent = 'Lv ' + s.opp.level; setAva($('#oAva'), s.opp.name, s.opp.photo);
   $('#yName').textContent = s.me.name + ' · siz'; $('#yLv').textContent = 'Lv ' + s.me.level; setAva($('#yAva'), s.me.name, s.me.photo);
   renderBoard(); tick();
