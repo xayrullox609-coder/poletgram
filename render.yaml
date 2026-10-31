@@ -10,6 +10,8 @@ services:
       - key: BOT_TOKEN
         sync: false
       - key: BOT_USERNAME
+        value: Poletgram_bot
+      - key: ADMIN_PASSWORD
         sync: false
       - key: ALLOW_DEV
         value: "1"   # sinov uchun brauzerdan kirish. Productionda "0" qiling
