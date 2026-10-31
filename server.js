@@ -8,23 +8,29 @@ const G = require('./game');
 
 const PORT = process.env.PORT || 3000;
 const BOT_TOKEN = process.env.BOT_TOKEN || '';
-let BOT_USERNAME = process.env.BOT_USERNAME || '';
+let BOT_USERNAME = (process.env.BOT_USERNAME || 'Poletgram_bot').replace(/^@/, '');
 const BASE_URL = (process.env.WEBAPP_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/$/, '');
 // Brauzerda sinash uchun "dev" kirish. Tokensiz avtomatik yoqiladi; productionda ALLOW_DEV=0 qiling.
 const ALLOW_DEV = process.env.ALLOW_DEV ? process.env.ALLOW_DEV === '1' : !BOT_TOKEN;
-const SITE_TASK_URL = process.env.SITE_TASK_URL || BASE_URL || 'https://telegram.org';
+// Admin panel paroli (/admin). Sozlanmasa: faqat sinov rejimida 'admin', productionda panel o'chiq.
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || (ALLOW_DEV && !BOT_TOKEN ? 'admin' : '');
 
-const START_COINS = 100;
 const STAKES = [3, 20, 100, 300, 1000];
-const WIN_MULT = 1.8;
+const WIN_MULT = 2; // g'olib stavkaning 2 baravarini oladi (komissiya yo'q)
 const TOTAL_MS = 6 * 60 * 1000;
 const MOVE_MS = 60 * 1000;
-const DAILY_MAX = 20;
 
 /* ---------------- Ma'lumotlar bazasi (JSON fayl) ---------------- */
 const DB_FILE = process.env.DB_FILE || path.join(__dirname, 'data', 'db.json');
-let db = { users: {}, ledger: [], pendingRef: {} };
+let db = { users: {}, ledger: [], pendingRef: {}, tasks: null, settings: {} };
 try { db = Object.assign(db, JSON.parse(fs.readFileSync(DB_FILE, 'utf8'))); } catch { /* yangi baza */ }
+db.settings = Object.assign({ welcomeCoins: 100, referralReward: 20 }, db.settings || {});
+if (!Array.isArray(db.tasks)) {
+  db.tasks = [
+    { id: 't_ad', type: 'ad', title: 'Reklama ko\'rish', reward: 1, url: '', wait: 10, limit: 20, once: false, active: false },
+    { id: 't_site', type: 'link', title: 'Saytga o\'tish', reward: 0.5, url: BASE_URL || 'https://telegram.org', wait: 8, limit: 20, once: false, active: true },
+  ];
+}
 let dirty = false;
 const save = () => { dirty = true; };
 function flush() {
@@ -57,17 +63,17 @@ function getUser(tgUser, startParam) {
   if (!u) {
     u = db.users[id] = {
       id, name, photo: tgUser.photo_url || '', coins: 0, wins: 0, losses: 0, draws: 0, games: 0,
-      created: Date.now(), refBy: null, tasks: { day: '', site: 0, ads: 0, siteStart: 0 },
+      created: Date.now(), refBy: null, banned: false, tasks: { day: '', done: {}, started: {}, forever: {} },
     };
-    credit(u, START_COINS, 'welcome');
+    credit(u, db.settings.welcomeCoins, 'welcome');
     let refId = '';
     if (startParam && startParam.startsWith('ref_')) refId = startParam.slice(4);
     if (!refId && db.pendingRef[id]) refId = db.pendingRef[id];
     delete db.pendingRef[id];
     if (refId && refId !== id && db.users[refId]) {
       u.refBy = refId;
-      credit(db.users[refId], 20, 'referral', id);
-      notify(refId, `🎉 Do'stingiz ${name} qo'shildi: +20 tanga!`);
+      credit(db.users[refId], db.settings.referralReward, 'referral', id);
+      notify(refId, `🎉 Do'stingiz ${name} qo'shildi: +${db.settings.referralReward} tanga!`);
     }
   } else {
     u.name = name;
@@ -88,7 +94,7 @@ function meView(u) {
   return {
     id: u.id, name: u.name, photo: u.photo, coins: u.coins, wins: u.wins, losses: u.losses,
     games: u.games, level: lv, title: titleOf(lv),
-    refLink: BOT_USERNAME ? `https://t.me/${BOT_USERNAME}?startapp=ref_${u.id}` : `${BASE_URL || ''}/?ref=${u.id}`,
+    refLink: `https://t.me/${BOT_USERNAME}?start=ref_${u.id}`,
   };
 }
 
@@ -96,10 +102,10 @@ function meView(u) {
 function verifyInit(initData) {
   if (!initData || typeof initData !== 'string') return null;
   if (ALLOW_DEV && initData.startsWith('dev:')) {
-    const [, id, ...n] = initData.split(':');
+    const [, id, ref, ...n] = initData.split(':');
     const clean = String(id).replace(/\W/g, '').slice(0, 20);
     if (!clean) return null;
-    return { user: { id: 'dev' + clean, first_name: (n.join(':') || 'Mehmon').slice(0, 24) }, start: '' };
+    return { user: { id: 'dev' + clean, first_name: (n.join(':') || 'Mehmon').slice(0, 24) }, start: ref ? 'ref_dev' + String(ref).replace(/\W/g, '') : '' };
   }
   if (!BOT_TOKEN) return null;
   const p = new URLSearchParams(initData);
@@ -122,6 +128,7 @@ const routes = [];
 const app = {
   get: (p, ...h) => routes.push(['GET', p, h]),
   post: (p, ...h) => routes.push(['POST', p, h]),
+  delete: (p, ...h) => routes.push(['DELETE', p, h]),
 };
 let webhook = null; // {path, fn}
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.json': 'application/json' };
@@ -135,7 +142,11 @@ function onHttp(req, res) {
   const r = routes.find((x) => x[0] === req.method && x[1] === url.pathname);
   if (r) {
     const run = (i) => { if (r[2][i]) r[2][i](req, res, () => run(i + 1)); };
-    return run(0);
+    if (req.method === 'GET' || req.method === 'DELETE') { req.body = {}; return run(0); }
+    let raw = '';
+    req.on('data', (d) => { raw += d; if (raw.length > 200e3) req.destroy(); });
+    req.on('end', () => { try { req.body = raw ? JSON.parse(raw) : {}; } catch { req.body = {}; } run(0); });
+    return;
   }
   if (req.method !== 'GET') { res.writeHead(404); return res.end(); }
   const rel = url.pathname === '/' ? '/index.html' : decodeURIComponent(url.pathname);
@@ -154,6 +165,7 @@ function auth(req, res, next) {
   const v = verifyInit(req.get('x-init-data'));
   if (!v) { res.writeHead(401, { 'content-type': 'application/json' }); return res.end('{"error":"auth"}'); }
   req.u = getUser(v.user, v.start);
+  if (req.u.banned) { res.writeHead(403, { 'content-type': 'application/json' }); return res.end('{"error":"banned"}'); }
   next();
 }
 const conns = new Map(); // uid -> Set(ws)
@@ -172,33 +184,158 @@ app.get('/api/rating', auth, (req, res) => {
 });
 
 function taskState(u) {
-  const t = u.tasks;
-  if (t.day !== dayKey()) { t.day = dayKey(); t.site = 0; t.ads = 0; t.siteStart = 0; save(); }
+  let t = u.tasks;
+  if (!t || !t.done) t = u.tasks = { day: '', done: {}, started: {}, forever: {} };
+  if (t.day !== dayKey()) { t.day = dayKey(); t.done = {}; t.started = {}; save(); }
   return t;
+}
+const taskById = (id) => db.tasks.find((x) => x.id === id && x.active);
+const chatOf = (url) => { const m = String(url).match(/(?:t\.me\/|^@)([A-Za-z0-9_]{4,})/); return m ? '@' + m[1] : ''; };
+function taskView(task, t) {
+  const done = t.done[task.id] || 0;
+  return {
+    id: task.id, type: task.type, title: task.title, reward: task.reward, wait: task.wait, limit: task.limit,
+    once: !!task.once, done, completed: !!t.forever[task.id] || done >= task.limit,
+  };
 }
 app.get('/api/tasks', auth, (req, res) => {
   const t = taskState(req.u);
   const refCount = Object.values(db.users).filter((x) => x.refBy === req.u.id).length;
   res.json({
-    ads: { reward: 1, done: t.ads, max: DAILY_MAX, soon: true },
-    site: { reward: 0.5, done: t.site, max: DAILY_MAX },
-    ref: { reward: 20, count: refCount, link: meView(req.u).refLink },
+    list: db.tasks.filter((x) => x.active).map((x) => taskView(x, t)),
+    ref: { reward: db.settings.referralReward, count: refCount, link: meView(req.u).refLink },
   });
 });
-app.post('/api/tasks/site/start', auth, (req, res) => {
+app.post('/api/tasks/start', auth, (req, res) => {
+  const task = taskById(req.query.id);
+  if (!task) return res.json({ error: 'notfound' });
   const t = taskState(req.u);
-  if (t.site >= DAILY_MAX) return res.json({ error: 'limit' });
-  t.siteStart = Date.now(); save();
-  res.json({ url: SITE_TASK_URL, wait: 8 });
+  if (taskView(task, t).completed) return res.json({ error: 'limit' });
+  t.started[task.id] = Date.now(); save();
+  res.json({ url: task.url, wait: task.wait });
 });
-app.post('/api/tasks/site/claim', auth, (req, res) => {
-  const t = taskState(req.u);
-  const el = Date.now() - t.siteStart;
-  if (!t.siteStart || el < 8000 || el > 10 * 60e3) return res.json({ error: 'wait' });
-  if (t.site >= DAILY_MAX) return res.json({ error: 'limit' });
-  t.site++; t.siteStart = 0;
-  credit(req.u, 0.5, 'task_site');
-  res.json({ ok: true, coins: req.u.coins, done: t.site });
+app.post('/api/tasks/claim', auth, async (req, res) => {
+  const task = taskById(req.query.id);
+  if (!task) return res.json({ error: 'notfound' });
+  const u = req.u, t = taskState(u);
+  if (taskView(task, t).completed) return res.json({ error: 'limit' });
+  const st = t.started[task.id], el = Date.now() - (st || 0);
+  if (!st || el < task.wait * 1000 || el > 30 * 60e3) return res.json({ error: 'wait' });
+  if (task.type === 'channel' && bot && !String(u.id).startsWith('dev')) {
+    const chat = chatOf(task.url);
+    try {
+      const m = await bot.api.getChatMember(chat, Number(u.id));
+      if (!['member', 'administrator', 'creator'].includes(m.status)) return res.json({ error: 'notmember' });
+    } catch (e) { return res.json({ error: 'verify' }); }
+  }
+  delete t.started[task.id];
+  t.done[task.id] = (t.done[task.id] || 0) + 1;
+  if (task.once) t.forever[task.id] = true;
+  credit(u, task.reward, 'task', task.id);
+  res.json({ ok: true, coins: u.coins });
+});
+
+/* ---------------- Admin panel API ---------------- */
+const adminFails = new Map();
+function admin(req, res, next) {
+  const fail = (code, msg) => { res.writeHead(code, { 'content-type': 'application/json' }); res.end(JSON.stringify({ error: msg })); };
+  if (!ADMIN_PASSWORD) return fail(403, 'disabled');
+  const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress).split(',')[0].trim();
+  const f = adminFails.get(ip) || { n: 0, t: Date.now() };
+  if (Date.now() - f.t > 10 * 60e3) { f.n = 0; f.t = Date.now(); }
+  if (f.n >= 10) return fail(429, 'too_many');
+  const given = Buffer.from(String(req.get('x-admin-pass') || ''));
+  const real = Buffer.from(ADMIN_PASSWORD);
+  if (given.length !== real.length || !crypto.timingSafeEqual(given, real)) { f.n++; adminFails.set(ip, f); return fail(401, 'auth'); }
+  next();
+}
+app.get('/api/admin/stats', admin, (req, res) => {
+  const us = Object.values(db.users), today = dayKey();
+  const real = us.filter((u) => !String(u.id).startsWith('dev'));
+  res.json({
+    users: us.length, newToday: us.filter((u) => new Date(u.created + 5 * 3600e3).toISOString().slice(0, 10) === today).length,
+    online: online(), activeGames: games.size, queued: [...queues.values()].reduce((a, q) => a + q.length, 0),
+    totalCoins: round1(us.reduce((a, u) => a + u.coins, 0)), gamesPlayed: Math.round(us.reduce((a, u) => a + u.games, 0) / 2),
+    referrals: us.filter((u) => u.refBy).length, banned: us.filter((u) => u.banned).length, telegramUsers: real.length,
+  });
+});
+const TYPES = ['link', 'ad', 'channel'];
+app.get('/api/admin/tasks', admin, (req, res) => res.json({ list: db.tasks }));
+app.post('/api/admin/tasks', admin, (req, res) => {
+  const b = req.body || {};
+  const num = (x, lo, hi, d) => { const n = Number(x); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; };
+  const task = {
+    id: b.id && db.tasks.some((x) => x.id === b.id) ? b.id : 't_' + crypto.randomBytes(4).toString('hex'),
+    type: TYPES.includes(b.type) ? b.type : 'link',
+    title: String(b.title || '').trim().slice(0, 60),
+    reward: Math.round(num(b.reward, 0, 10000, 0) * 10) / 10,
+    url: String(b.url || '').trim().slice(0, 300),
+    wait: Math.round(num(b.wait, 0, 300, 8)),
+    limit: Math.round(num(b.limit, 1, 1000, 1)),
+    once: !!b.once, active: !!b.active,
+  };
+  if (!task.title) return res.json({ error: 'Nomi kerak' });
+  if (task.active && task.type !== 'ad' && !/^(https?:\/\/|@)/.test(task.url)) return res.json({ error: "Havola http(s):// yoki @kanal bilan boshlansin" });
+  if (task.active && task.type === 'ad' && task.url && !/^https?:\/\//.test(task.url)) return res.json({ error: 'Reklama havolasi http(s):// bilan boshlansin' });
+  if (task.type === 'channel' && !chatOf(task.url)) return res.json({ error: "Kanal havolasi: https://t.me/kanal yoki @kanal" });
+  const i = db.tasks.findIndex((x) => x.id === task.id);
+  if (i >= 0) db.tasks[i] = task; else db.tasks.push(task);
+  save(); res.json({ ok: true, task });
+});
+app.delete('/api/admin/tasks', admin, (req, res) => {
+  db.tasks = db.tasks.filter((x) => x.id !== req.query.id); save(); res.json({ ok: true });
+});
+app.get('/api/admin/users', admin, (req, res) => {
+  const q = String(req.query.q || '').toLowerCase();
+  const list = Object.values(db.users).filter((u) => !q || u.id.toLowerCase().includes(q) || u.name.toLowerCase().includes(q))
+    .sort((a, b) => b.created - a.created).slice(0, 50)
+    .map((u) => ({ id: u.id, name: u.name, coins: u.coins, games: u.games, wins: u.wins, losses: u.losses, banned: !!u.banned, created: u.created, refBy: u.refBy }));
+  res.json({ list, total: Object.keys(db.users).length });
+});
+app.post('/api/admin/users/coins', admin, (req, res) => {
+  const u = db.users[String(req.body.id)], amount = Math.round(Number(req.body.amount) * 10) / 10;
+  if (!u || !Number.isFinite(amount) || amount === 0 || Math.abs(amount) > 1e6) return res.json({ error: "Noto'g'ri qiymat" });
+  if (u.coins + amount < 0) return res.json({ error: 'Balans manfiy bo\'lib qoladi' });
+  credit(u, amount, 'admin', String(req.body.note || '').slice(0, 80));
+  sendBalance(u); res.json({ ok: true, coins: u.coins });
+});
+app.post('/api/admin/users/ban', admin, (req, res) => {
+  const u = db.users[String(req.body.id)]; if (!u) return res.json({ error: 'topilmadi' });
+  u.banned = !!req.body.banned; save();
+  if (u.banned) { const s = conns.get(u.id); if (s) for (const w of s) w.close(); }
+  res.json({ ok: true, banned: u.banned });
+});
+app.get('/api/admin/settings', admin, (req, res) => res.json(db.settings));
+app.post('/api/admin/settings', admin, (req, res) => {
+  const n = (x, d) => (Number.isFinite(Number(x)) && Number(x) >= 0 && Number(x) <= 100000 ? Math.round(Number(x) * 10) / 10 : d);
+  db.settings.welcomeCoins = n(req.body.welcomeCoins, db.settings.welcomeCoins);
+  db.settings.referralReward = n(req.body.referralReward, db.settings.referralReward);
+  save(); res.json(db.settings);
+});
+const bc = { running: false, total: 0, sent: 0, failed: 0 };
+app.get('/api/admin/broadcast', admin, (req, res) => res.json(bc));
+app.post('/api/admin/broadcast', admin, (req, res) => {
+  const text = String(req.body.text || '').trim().slice(0, 3500);
+  if (!bot) return res.json({ error: 'Bot ulanmagan (BOT_TOKEN yo\'q)' });
+  if (!text) return res.json({ error: 'Matn bo\'sh' });
+  if (bc.running) return res.json({ error: 'Oldingi yuborish tugamagan' });
+  const ids = Object.values(db.users).filter((u) => !String(u.id).startsWith('dev') && !u.banned).map((u) => u.id);
+  Object.assign(bc, { running: true, total: ids.length, sent: 0, failed: 0 });
+  (async () => {
+    for (const id of ids) {
+      try { await bot.api.sendMessage(id, text); bc.sent++; } catch { bc.failed++; }
+      await new Promise((r) => setTimeout(r, 40)); // ~25 xabar/soniya
+    }
+    bc.running = false;
+  })();
+  res.json({ ok: true, total: ids.length });
+});
+app.get('/api/admin/ledger', admin, (req, res) => {
+  const u = String(req.query.u || '');
+  res.json({ list: db.ledger.filter((x) => !u || x.u === u).slice(-100).reverse() });
+});
+app.get('/admin', (req, res) => {
+  fs.readFile(path.join(__dirname, 'public', 'admin.html'), (e, d) => { res.writeHead(e ? 404 : 200, { 'content-type': 'text/html; charset=utf-8' }); res.end(d); });
 });
 
 /* ---------------- Bot (grammY) ---------------- */
@@ -410,6 +547,7 @@ function handle(ws, m) {
     const v = verifyInit(m.initData);
     if (!v) return ws.send(JSON.stringify({ t: 'auth_fail' }));
     const u = getUser(v.user, v.start);
+    if (u.banned) return ws.send(JSON.stringify({ t: 'auth_fail' }));
     ws.uid = u.id;
     if (!conns.has(u.id)) conns.set(u.id, new Set());
     conns.get(u.id).add(ws);
@@ -464,7 +602,7 @@ function handle(ws, m) {
       const code = crypto.randomBytes(4).toString('hex');
       rooms.set(code, { host: uid, stake, t: Date.now() });
       const base = BASE_URL || ws.origin || '';
-      const link = BOT_USERNAME ? `https://t.me/${BOT_USERNAME}?startapp=g_${code}` : `${base}/?join=${code}`;
+      const link = BOT_USERNAME && BOT_TOKEN ? `https://t.me/${BOT_USERNAME}?start=g_${code}` : `${base}/?join=${code}`;
       ws.send(JSON.stringify({ t: 'invite', code, stake, link }));
       break;
     }
