@@ -6,6 +6,7 @@
 <meta name="robots" content="noindex">
 <title>Poletgram admin</title>
 <link rel="icon" href="/coin.png">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root{--bg:#0e1511;--card:#1a2219;--line:#2f3d2e;--gold:#f0cf7a;--txt:#eef0e6;--mut:#9aa690;--red:#e0705f;--green:#4fd18b}
 *{box-sizing:border-box}
@@ -98,8 +99,10 @@ input[type=checkbox]{width:auto}
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 let PASS = sessionStorage.getItem('apw') || '';
+const TGINIT = (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) || '';
+if (window.Telegram && Telegram.WebApp) { try { Telegram.WebApp.ready(); Telegram.WebApp.expand(); } catch (e) {} }
 async function api(path, method = 'GET', body) {
-  const r = await fetch(path, { method, headers: { 'x-admin-pass': PASS, 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+  const r = await fetch(path, { method, headers: { 'x-admin-pass': PASS, 'x-init-data': TGINIT, 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
   if (r.status === 401 || r.status === 403 || r.status === 429) { const e = await r.json().catch(() => ({})); throw Object.assign(new Error(e.error || 'auth'), { auth: true }); }
   return r.json();
 }
@@ -119,12 +122,13 @@ async function login() {
     $('#login').style.display = 'none'; $('#app').style.display = 'block'; openTab('stats');
   } catch (e) {
     PASS = ''; sessionStorage.removeItem('apw');
+    if (TGINIT && !$('#pw').value) { $('#lerr').textContent = "Siz admin emassiz. Parol bilan kiring yoki ID'ingizni (/id) adminga yuboring."; return; }
     $('#lerr').textContent = e.message === 'disabled' ? "Admin panel o'chiq: Render'da ADMIN_PASSWORD qo'ying" : e.message === 'too_many' ? "Ko'p urinish. 10 daqiqadan so'ng qayta urining" : "Parol noto'g'ri";
   }
 }
 $('#lbtn').onclick = login; $('#pw').onkeydown = (e) => e.key === 'Enter' && login();
 $('#logout').onclick = () => { sessionStorage.removeItem('apw'); location.reload(); };
-if (PASS) login();
+if (PASS || TGINIT) login();
 
 /* statistika */
 async function loadStats() {
