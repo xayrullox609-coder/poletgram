@@ -56,3 +56,11 @@ G'olib stavkaning 2 baravarini oladi (×2), durangda stavka qaytariladi.
 - `webhookMatches: false` yoki `lastWebhookError` bor → `WEBAPP_URL` ni to'g'ri `https://...onrender.com` qilib qo'ying.
 - `botState` "XATO: ..." bo'lsa, matn sababini aytadi (Render → Logs'da ham chiqadi).
 - Mini App'da ism/balans bo'sh bo'lsa, odatda token bu botniki emas.
+
+## Do'kon (Telegram Stars)
+Instagram va Telegram xizmatlari Stars'ga sotiladi: foydalanuvchi paket sonini va havolani kiritadi, to'lov Telegram ichida (`XTR`, provider token kerak emas). To'lovdan keyin buyurtma admin panel → **Buyurtmalar** bo'limiga tushadi va adminlarga (ADMIN_IDS) bot xabar yuboradi.
+- Buyurtmani **o'zingiz** (yoki xizmat ko'rsatuvchi panel orqali) bajarasiz, so'ng "Bajarildi" bosasiz — mijozga xabar ketadi.
+- Bajarib bo'lmasa "Bekor + qaytarish" Stars'ni mijozga qaytaradi (`refundStarPayment`).
+- Narxlar, paket o'lchami, "Tez orada" holati: admin panel → **Do'kon narxlari**.
+- Standart narxlar: IG ko'rish 1000 = 1⭐, IG like 25 = 1⭐, IG obunachi (tez orada); TG ko'rish 1000 = 2⭐, reaksiya 20 = 1⭐, obunachi 10 = 1⭐.
+- Eslatma: Instagram va Telegram sun'iy ko'rish/like/obunachi xizmatlarini o'z qoidalari bilan cheklaydi; xizmat ko'rsatuvchi tanlashda buni hisobga oling.
