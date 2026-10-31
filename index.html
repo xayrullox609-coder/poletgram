@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Poletgram</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#0f1a12;--card:#2a1c10;--card2:#3a2815;--line:#6b4a25;--gold:#f0cf7a;--gold2:#c9993a;--txt:#f6ead0;--mut:#b9a67e;--green:#3ddc84;--red:#e07a6f}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+body{background:radial-gradient(1200px 700px at 50% -10%,#2f6b3a 0%,#173a22 45%,#0b140e 100%)}
+.screen{display:none;position:absolute;inset:0;overflow-y:auto;padding:0 14px 24px}
+.screen.on{display:block}
+h2{font-family:Georgia,serif;font-variant:small-caps;letter-spacing:1px;color:var(--gold);margin:0}
+.top{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #ffffff18;margin-bottom:14px;position:sticky;top:0;background:#0f1a12cc;backdrop-filter:blur(6px);z-index:5}
+.back{width:40px;height:40px;border-radius:10px;border:2px solid var(--line);background:linear-gradient(#7a4f27,#4a2e15);color:var(--gold);font-size:22px}
+.chip{margin-left:auto;padding:7px 14px;border-radius:20px;border:2px solid var(--line);background:#00000055;font-weight:700;color:var(--gold);white-space:nowrap}
+.coin{display:inline-block;width:1em;height:1em;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe9a0,#e0a52c 60%,#a8741a);vertical-align:-.12em;box-shadow:inset 0 0 0 .1em #b9821f}
+.btn{display:block;width:100%;padding:14px;border-radius:14px;border:2px solid var(--gold2);background:linear-gradient(#f4d98a,#c9993a);color:#3b2506;font-weight:800;font-size:16px;margin:10px 0;box-shadow:0 4px 18px #c9993a44}
+.btn.dark{background:linear-gradient(#6b4423,#3e2611);color:var(--gold);border-color:var(--line);box-shadow:none}
+.btn:disabled{opacity:.45}
+.card{background:linear-gradient(#4a2e15cc,#2a1c10cc);border:2px solid var(--line);border-radius:14px;padding:12px;margin:10px 0;display:flex;align-items:center;gap:12px}
+.card .ico{width:46px;height:46px;border-radius:10px;background:#00000044;display:grid;place-items:center;font-size:24px;flex:none}
+.card .t{font-weight:800;font-family:Georgia,serif;font-variant:small-caps;color:var(--gold)}
+.card .s{color:var(--mut);font-size:13px}
+.card .go{margin-left:auto}
+.card .go .btn{margin:0;padding:9px 14px;font-size:13px;width:auto}
+.stakes{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px}
+.stake{flex:none;min-width:76px;padding:12px 14px;border-radius:14px;border:2px solid var(--line);background:linear-gradient(#5b3a1c,#3a2410);color:var(--gold);font-weight:800;font-size:18px;text-align:center}
+.stake.sel{border-color:var(--gold);box-shadow:0 0 0 2px #f0cf7a55}
+.stake.dis{opacity:.4}
+.hint{color:var(--mut);font-size:14px;text-align:center;margin:10px 0}
+.muted{color:var(--mut)}
+/* menyu */
+#menu{padding-top:10px}
+.prof{display:flex;align-items:center;gap:12px}
+.ava{width:62px;height:62px;border-radius:50%;border:3px solid var(--gold);background:#222 center/cover;display:grid;place-items:center;font-weight:800;font-size:24px;color:var(--gold);flex:none}
+.ava.sm{width:44px;height:44px;border-width:2px;font-size:18px}
+.bal{margin-left:auto;text-align:right}
+.bal .n{font-size:40px;font-weight:900;font-family:Georgia,serif;color:#fff2c4;text-shadow:0 2px 0 #7a5415}
+.dep{display:inline-block;margin-top:2px;padding:8px 14px;border-radius:12px;border:2px solid var(--line);background:linear-gradient(#7a4f27,#4a2e15);color:var(--gold);font-weight:800}
+.online{display:inline-block;margin:14px auto 0;padding:5px 14px;border-radius:20px;background:#0006;color:var(--mut);font-size:14px}
+.online:before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px}
+.side{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px}
+.tile{padding:14px 6px;text-align:center;border-radius:14px;border:2px solid var(--line);background:linear-gradient(#5b3a1ccc,#2a1c10cc);color:var(--gold);font-family:Georgia,serif;font-variant:small-caps;font-weight:800;font-size:15px}
+.tile .i{font-size:30px;display:block;margin-bottom:4px}
+.play{position:sticky;bottom:10px;margin-top:26px;padding:22px;font-size:26px;letter-spacing:3px;font-family:Georgia,serif;border-radius:16px;border:3px solid #7a5a2d;background:linear-gradient(#b98a52,#7d5530);color:#3a2410;font-weight:900;width:100%;box-shadow:0 6px 24px #0008}
+/* reyting */
+.tabs{display:flex;gap:8px;margin-bottom:10px}
+.tabs button{flex:1;padding:11px 4px;border-radius:12px;border:2px solid var(--line);background:linear-gradient(#5b3a1c,#3a2410);color:var(--gold);font-weight:800;font-variant:small-caps}
+.tabs button.on{background:linear-gradient(#f4d98a,#c9993a);color:#3b2506}
+.row{display:flex;align-items:center;gap:10px;padding:10px 12px;margin:6px 0;border-radius:12px;border:2px solid #6b4a2566;background:#1b130bcc}
+.row.me{border-color:var(--gold)}
+.row .rk{width:26px;text-align:center;font-weight:800;color:var(--gold)}
+.row .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .v{font-weight:800;color:var(--gold)}
+/* do'kon */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.shop{position:relative;padding:16px 8px;text-align:center;border-radius:14px;border:2px solid var(--line);background:#1b130bcc;opacity:.85}
+.shop .i{font-size:44px}
+.shop b{display:block;margin-top:6px}
+.shop small{color:var(--mut)}
+.soon{position:absolute;top:8px;right:8px;background:var(--gold);color:#3b2506;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px}
+/* o'yin */
+#game{padding:0 10px;display:none;flex-direction:column;align-items:center}
+#game.on{display:flex}
+.gwin{margin:14px 0 8px;font-family:Georgia,serif;font-variant:small-caps;color:var(--gold);font-weight:800;font-size:20px}
+.pl{width:min(100%,480px);display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:14px;border:2px solid var(--line);background:#00000066;position:relative}
+.pl.act{border-color:var(--green)}
+.pl .nm{font-weight:800}
+.pl .lv{font-size:12px;background:#ffffff22;border-radius:6px;padding:1px 6px;margin-left:6px;color:var(--mut)}
+.pl .sub{font-size:12px;color:var(--green)}
+.pl .clk{margin-left:auto;padding:8px 14px;border-radius:12px;background:#0007;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+.pl .em{position:absolute;right:90px;top:-14px;font-size:34px}
+#board{width:min(100%,480px);aspect-ratio:1;margin:10px 0;display:grid;grid-template-columns:repeat(8,1fr);border:10px solid #2b1c10;border-radius:10px;box-shadow:0 0 0 2px #7a5a2d,0 10px 30px #000a;background:#2b1c10}
+.sq{position:relative;display:grid;place-items:center}
+.sq.l{background:#e8d3ac}.sq.d{background:#3a2a1e}
+.sq.lastm:after{content:"";position:absolute;inset:0;background:#f0cf7a55}
+.sq.hl:after{content:"";width:34%;height:34%;border-radius:50%;background:#3ddc84cc;box-shadow:0 0 10px #3ddc84}
+.sq.sel{box-shadow:inset 0 0 0 3px var(--green)}
+.pc{width:80%;height:80%;border-radius:50%;display:grid;place-items:center;font-size:clamp(14px,5vw,26px);box-shadow:0 3px 5px #0009,inset 0 -3px 5px #0004;z-index:1}
+.pc.w{background:radial-gradient(circle at 35% 30%,#fff,#e9e0cf 55%,#bfb59e);color:#8a6a1c;border:2px solid #d8cdb4}
+.pc.b{background:radial-gradient(circle at 35% 30%,#555,#161616 60%,#000);color:#f0cf7a;border:2px solid #000}
+.pc.can{animation:pulse 1.2s infinite}
+@keyframes pulse{50%{filter:brightness(1.25)}}
+.turn{margin:2px 0 8px;padding:7px 18px;border-radius:20px;border:2px solid var(--green);background:#0a3a1ecc;color:var(--green);font-weight:800;font-variant:small-caps;letter-spacing:1px;font-size:14px}
+.turn.opp{border-color:var(--line);background:#0006;color:var(--mut)}
+.gbar{width:min(100%,480px);display:flex;gap:10px;margin-top:10px}
+.gbar .btn{margin:0;padding:11px}
+/* modal */
+.modal{position:fixed;inset:0;background:#000c;display:none;place-items:center;z-index:50;padding:20px}
+.modal.on{display:grid}
+.mbox{width:min(100%,380px);padding:26px 20px;border-radius:24px;border:2px solid var(--line);background:radial-gradient(circle at 50% 0,#6b2c2c,#1d120d 70%);text-align:center}
+.mbox.win{background:radial-gradient(circle at 50% 0,#2c6b3a,#101d10 70%)}
+.mbox.draw{background:radial-gradient(circle at 50% 0,#555,#1a1a1a 70%)}
+.mbox .big{font-size:34px;font-weight:900;font-family:Georgia,serif;letter-spacing:2px;margin:6px 0;color:#e8918a}
+.mbox.win .big{color:var(--green)}.mbox.draw .big{color:#ddd}
+.mbox .amt{font-size:26px;font-weight:900;margin:10px 0 16px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#000d;color:#fff;padding:10px 18px;border-radius:12px;z-index:99;display:none;max-width:90%;text-align:center}
+.q{display:none;position:fixed;inset:0;z-index:40;background:#000d;place-items:center;text-align:center;padding:20px}
+.q.on{display:grid}
+.spin{width:54px;height:54px;border:6px solid #ffffff33;border-top-color:var(--gold);border-radius:50%;margin:0 auto 14px;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- MENYU -->
+<section id="menu" class="screen on">
+  <div class="prof">
+    <div class="ava" id="mAva"></div>
+    <div><div style="font-family:Georgia,serif;font-variant:small-caps;font-weight:800;font-size:19px" id="mName">…</div><div class="muted" id="mLvl"></div></div>
+    <div class="bal"><div class="n"><span id="mCoins">0</span> <span class="coin"></span></div><span class="dep" data-go="deposit">⬇ DEPOZIT</span></div>
+  </div>
+  <div style="text-align:center"><span class="online" id="mOnline">0 online</span></div>
+  <div class="side">
+    <div class="tile" data-go="tasks"><span class="i">📋</span>Vazifalar</div>
+    <div class="tile" data-go="friend"><span class="i">👥</span>Do'st bilan</div>
+    <div class="tile" data-go="rating"><span class="i">🏆</span>Reyting</div>
+    <div class="tile" data-go="withdraw"><span class="i">💵</span>Pul yechish</div>
+    <div class="tile" data-go="shop"><span class="i">🏪</span>Do'kon</div>
+    <div class="tile" data-go="stats"><span class="i">📊</span>Statistika</div>
+  </div>
+  <button class="play" data-go="play">PLAY</button>
+</section>
+
+<!-- PLAY -->
+<section id="play" class="screen">
+  <div class="top"><button class="back" data-go="menu">‹</button><h2>▶ O'ynash</h2><span class="chip"><span class="bc">0</span> <span class="coin"></span></span></div>
+  <h2 style="text-align:center;margin:6px 0 12px">Nechta tanga tikasiz?</h2>
+  <div class="stakes" id="stakesPlay"></div>
+  <p class="hint">Tikilgan summadan g'olib <b style="color:var(--gold)">×1.8</b> oladi. Durangda qaytariladi.</p>
+  <button class="btn" id="btnRandom">Tasodifiy raqib</button>
+  <button class="btn dark" id="btnPractice">Bot bilan sinov (tikilmaydi)</button>
+</section>
+
+<!-- DO'ST -->
+<section id="friend" class="screen">
+  <div class="top"><button class="back" data-go="menu">‹</button><h2>👥 Do'st bilan o'ynash</h2><span class="chip"><span class="bc">0</span> <span class="coin"></span></span></div>
+  <h2 style="text-align:center;margin:6px 0 12px">Nechta tanga tikasiz?</h2>
+  <div class="stakes" id="stakesFriend"></div>
+  <p class="hint">Do'stingizga havola yuboring — u havolani ochishi bilan o'yin <b style="color:var(--gold)">avtomatik</b> boshlanadi. G'olib <b style="color:var(--gold)">×1.8</b> oladi.</p>
+  <button class="btn" id="btnInvite">📤 Telegram orqali do'stga yuborish</button>
+  <div id="inviteBox" class="hint" style="display:none"></div>
+</section>
+
+<!-- VAZIFALAR -->
+<section id="tasks" class="screen">
+  <div class="top"><button class="back" data-go="menu">‹</button><h2>📋 Vazifalar</h2><span class="chip"><span class="bc">0</span> <span class="coin"></span></span></div>
+  <div class="card"><div class="ico">📺</div><div><div class="t">Reklama ko'rish</div><div class="s">+1 <span class="coin"></span> · <span id="tAds">0/20</span></div></div><div class="go"><button class="btn dark" disabled>Tez orada</button></div></div>
+  <div class="card"><div class="ico">🔗</div><div><div class="t">Saytga o'tish</div><div class="s">+0.5 <span class="coin"></span> · <span id="tSite">0/20</span></div></div><div class="go"><button class="btn" id="btnSite">Boshlash</button></div></div>
+  <div class="card"><div class="ico">👥</div><div><div class="t">Do'st taklif qilish</div><div class="s">+20 <span class="coin"></span> · har do'st uchun<br>Taklif qilinganlar: <b id="tRef">0</b></div></div><div class="go"><button class="btn" id="btnRef">Ochish</button></div></div>
+</section>
+
+<!-- REYTING -->
+<section id="rating" class="screen">
+  <div class="top"><button class="back" data-go="menu">‹</button><h2>🏆 Reyting</h2></div>
+  <div class="muted" style="margin-bottom:8px">Eng yaxshi 100 ta o'yinchi</div>
+  <div class="tabs"><button data-rt="wins" class="on">G'alaba</button><button data-rt="coins">Tanga</button><button data-rt="level">Daraja</button></div>
+  <div id="ratingList"></div>
+  <div class="hint" id="myRank"></div>
+</section>
+
+<!-- DO'KON -->
+<section id="shop" class="screen">
+  <div class="top"><button class="back" data-go="menu">‹</button><h2>🏪 Do'kon</h2></div>
+  <p class="hint" style="margin-top:0">Do'kon xizmatlari tez orada ishga tushadi.</p>
+  <div class="grid2">
+    <div class="shop"><span class="soon">Tez orada</span><div class="i">⭐</div><b>Telegram Stars</b><small>Stars sotib olish</small></div>
+    <div class="shop"><span class="soon">Tez orada</span><div class="i">🔫</div><b>PUBG UC</b><small>UC to'ldirish</small></div>
+    <div class="shop"><span class="soon">Tez orada</span><div class="i">🔥</div><b>Free Fire</b><small>Olmos to'ldirish</small></div>
+    <div class="shop"><span class="soon">Tez orada</span><div class="i">⚔️</div><b>Mobile Legends</b><small>Olmos va Pass</small></div>
+    <div class="shop"><span class="soon">Tez orada</span><div class="i">📸</div><b>Instagram</b><small>Ko'rish, like, obunachi</small></div>
+    <div class="shop"><span class="soon">Tez orada</span><div class="i">✈️</div><b>Telegram</b><small>Ko'rish, reaksiya</small></div>
+  </div>
+</section>
+
+<section id="deposit" class="screen">
+  <div class="top"><button class="back" data-go="menu">‹</button><h2>⬇ Depozit</h2></div>
+  <div class="card" style="display:block;text-align:center"><div style="font-size:44px">🚧</div><div class="t">Tez orada</div><p class="s">Hozircha tangalar faqat vazifalar va do'st taklif qilish orqali topiladi.</p><button class="btn" data-go="tasks">Vazifalarga o'tish</button></div>
+</section>
+<section id="withdraw" class="screen">
+  <div class="top"><button class="back" data-go="menu">‹</button><h2>💵 Pul yechish</h2></div>
+  <div class="card" style="display:block;text-align:center"><div style="font-size:44px">🚧</div><div class="t">Tez orada</div><p class="s">Bu bo'lim hali ishga tushmagan.</p></div>
+</section>
+<section id="stats" class="screen">
+  <div class="top"><button class="back" data-go="menu">‹</button><h2>📊 Statistika</h2></div>
+  <div class="row"><span class="nm">O'yinlar</span><span class="v" id="sG">0</span></div>
+  <div class="row"><span class="nm">G'alabalar</span><span class="v" id="sW">0</span></div>
+  <div class="row"><span class="nm">Mag'lubiyatlar</span><span class="v" id="sL">0</span></div>
+</section>
+
+<!-- O'YIN -->
+<section id="game" class="screen">
+  <div class="gwin" id="gWin"></div>
+  <div class="pl" id="plOpp"><div class="ava sm" id="oAva"></div><div><div><span class="nm" id="oName"></span><span class="lv" id="oLv"></span></div><div class="sub" id="oSub"></div></div><div class="clk" id="oClk">6:00</div><span class="em" id="oEm"></span></div>
+  <div id="board"></div>
+  <div class="turn" id="turn"></div>
+  <div class="pl" id="plMe"><div class="ava sm" id="yAva"></div><div><div><span class="nm" id="yName"></span><span class="lv" id="yLv"></span></div><div class="sub" id="ySub"></div></div><div class="clk" id="yClk">6:00</div></div>
+  <div class="gbar"><button class="btn dark" id="btnResign">🏳 Taslim</button><button class="btn dark" style="flex:none;width:60px" id="btnEmoji">😀</button></div>
+</section>
+
+<div class="q" id="queue"><div><div class="spin"></div><h2>Raqib qidirilmoqda…</h2><p class="hint" id="qHint"></p><button class="btn dark" id="btnQP" style="display:none">Bot bilan sinab ko'rish</button><button class="btn dark" id="btnQC">Bekor qilish</button></div></div>
+<div class="modal" id="modal"><div class="mbox" id="mbox"><div style="font-size:44px" id="mIcon"></div><div class="big" id="mTitle"></div><div id="mSub" class="muted"></div><div class="amt" id="mAmt"></div><button class="btn" id="mAgain">Yana o'ynash</button><button class="btn dark" id="mMenu">Menyu</button></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const tg = window.Telegram && Telegram.WebApp;
+let initData = (tg && tg.initData) || '';
+let startParam = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || '';
+const qs = new URLSearchParams(location.search);
+if (tg) { tg.ready(); tg.expand(); try { tg.setHeaderColor('#0f1a12'); tg.setBackgroundColor('#0f1a12'); } catch (e) {} }
+if (!initData) { // brauzerda sinash (har bir tab alohida o'yinchi)
+  let id = sessionStorage.devId, n = sessionStorage.devName;
+  if (!id) { id = Math.random().toString(36).slice(2, 8); sessionStorage.devId = id; }
+  if (!n) { n = qs.get('name') || prompt("Ismingiz (sinov rejimi):") || 'Mehmon'; sessionStorage.devName = n; }
+  initData = 'dev:' + id + ':' + n;
+}
+let joinCode = qs.get('join') || (startParam.startsWith('g_') ? startParam.slice(2) : '');
+
+const $ = (s) => document.querySelector(s), $$ = (s) => [...document.querySelectorAll(s)];
+const fmt = (x) => (Math.round(x * 10) / 10).toString();
+let me = null, ws = null, G = null, STAKES = [3, 20, 100, 300, 1000], stake = 3, lastMode = 'random', ratingType = 'wins';
+
+function toast(t) { const e = $('#toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.display = 'none', 2600); }
+function show(id) {
+  $$('.screen').forEach((s) => s.classList.toggle('on', s.id === id));
+  if (id === 'menu') refreshMe();
+  if (id === 'play' || id === 'friend') renderStakes();
+  if (id === 'tasks') loadTasks();
+  if (id === 'rating') loadRating();
+  if (id === 'stats' && me) { $('#sG').textContent = me.games; $('#sW').textContent = me.wins; $('#sL').textContent = me.losses; }
+  if (tg) { try { tg.BackButton[id === 'menu' ? 'hide' : 'show'](); } catch (e) {} }
+}
+document.addEventListener('click', (e) => { const t = e.target.closest('[data-go]'); if (t) show(t.dataset.go); });
+if (tg) try { tg.BackButton.onClick(() => { if (!G) show('menu'); }); } catch (e) {}
+
+async function api(path, method = 'GET') {
+  const r = await fetch(path, { method, headers: { 'x-init-data': initData } });
+  return r.json();
+}
+function setAva(el, name, photo) {
+  el.textContent = photo ? '' : (name || '?').trim()[0]?.toUpperCase() || '?';
+  el.style.backgroundImage = photo ? `url(${photo})` : '';
+}
+function setCoins(c) { if (me) me.coins = c; $('#mCoins').textContent = fmt(c); $$('.bc').forEach((e) => e.textContent = fmt(c)); renderStakes(); }
+function renderMe() {
+  if (!me) return;
+  $('#mName').textContent = me.name; $('#mLvl').textContent = `Lvl ${me.level} · ${me.title}`;
+  setAva($('#mAva'), me.name, me.photo); setCoins(me.coins);
+}
+async function refreshMe() { try { const d = await api('/api/me'); me = d.user; $('#mOnline').textContent = d.online + ' online'; renderMe(); } catch (e) {} }
+
+function renderStakes() {
+  for (const id of ['#stakesPlay', '#stakesFriend']) {
+    const box = $(id); if (!box) continue;
+    box.innerHTML = '';
+    STAKES.forEach((s) => {
+      const b = document.createElement('div');
+      const afford = me && me.coins >= s;
+      b.className = 'stake' + (s === stake ? ' sel' : '') + (afford ? '' : ' dis');
+      b.innerHTML = `${s} <span class="coin"></span>`;
+      b.onclick = () => { if (!afford) return toast('Tanga yetarli emas'); stake = s; renderStakes(); };
+      box.appendChild(b);
+    });
+  }
+}
+
+/* ---- WebSocket ---- */
+let wsTries = 0;
+function connect() {
+  ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws');
+  ws.onopen = () => { wsTries = 0; ws.send(JSON.stringify({ t: 'auth', initData })); };
+  ws.onmessage = (e) => onMsg(JSON.parse(e.data));
+  ws.onclose = () => setTimeout(connect, Math.min(5000, 500 * ++wsTries));
+}
+const send = (o) => ws && ws.readyState === 1 && ws.send(JSON.stringify(o));
+
+function onMsg(m) {
+  switch (m.t) {
+    case 'auth_ok':
+      me = m.user; $('#mOnline').textContent = m.online + ' online'; renderMe();
+      if (joinCode) { send({ t: 'join', code: joinCode }); joinCode = ''; history.replaceState(null, '', location.pathname); }
+      break;
+    case 'auth_fail': toast('Kirish xatosi. Botdan qayta oching.'); break;
+    case 'balance': setCoins(m.coins); break;
+    case 'err': toast(m.msg); $('#queue').classList.remove('on'); break;
+    case 'queued': $('#queue').classList.add('on'); $('#qHint').textContent = ''; $('#btnQP').style.display = 'none';
+      clearTimeout(onMsg.qt); onMsg.qt = setTimeout(() => { $('#qHint').textContent = 'Hozircha raqib topilmadi.'; $('#btnQP').style.display = 'block'; }, 15000); break;
+    case 'cancelled': $('#queue').classList.remove('on'); $('#inviteBox').style.display = 'none'; break;
+    case 'invite': showInvite(m); break;
+    case 'invite_cancelled': $('#inviteBox').style.display = 'none'; break;
+    case 'state': onState(m); break;
+    case 'over': onOver(m); break;
+    case 'emoji': { const el = $('#oEm'); el.textContent = m.e; clearTimeout(onMsg.et); onMsg.et = setTimeout(() => el.textContent = '', 2500); break; }
+  }
+}
+
+/* ---- Tugmalar ---- */
+$('#btnRandom').onclick = () => { lastMode = 'random'; send({ t: 'queue', stake }); };
+$('#btnPractice').onclick = () => { lastMode = 'practice'; send({ t: 'practice' }); };
+$('#btnQP').onclick = () => { send({ t: 'cancel' }); setTimeout(() => { lastMode = 'practice'; send({ t: 'practice' }); }, 250); };
+$('#btnQC').onclick = () => { clearTimeout(onMsg.qt); send({ t: 'cancel' }); };
+$('#btnInvite').onclick = () => { lastMode = 'friend'; send({ t: 'invite', stake }); };
+function showInvite(m) {
+  const box = $('#inviteBox'); box.style.display = 'block';
+  box.innerHTML = `Havola tayyor. Do'stingiz qo'shilishini kuting (10 daqiqa).<br><small style="word-break:break-all">${m.link}</small><br><button class="btn dark" id="btnCancelInv">Bekor qilish</button>`;
+  $('#btnCancelInv').onclick = () => send({ t: 'cancel' });
+  const text = `Poletgram'da shashka o'ynaymiz! Stavka: ${m.stake} tanga`;
+  const share = 'https://t.me/share/url?url=' + encodeURIComponent(m.link) + '&text=' + encodeURIComponent(text);
+  if (tg && tg.openTelegramLink) tg.openTelegramLink(share);
+  else { try { navigator.clipboard.writeText(m.link); toast('Havola nusxalandi. Boshqa tabda oching.'); } catch (e) { window.open(share, '_blank'); } }
+}
+$('#btnResign').onclick = () => { if (confirm('Taslim bo\'lasizmi?')) send({ t: 'resign' }); };
+$('#btnEmoji').onclick = () => { const e = ['😀', '😎', '😡', '😭', '👍', '🔥'][Math.floor(Math.random() * 6)]; send({ t: 'emoji', e }); toast('Yuborildi ' + e); };
+$('#mAgain').onclick = () => { $('#modal').classList.remove('on'); G = null;
+  if (lastMode === 'practice') send({ t: 'practice' }); else if (lastMode === 'friend') { show('friend'); } else send({ t: 'queue', stake }); };
+$('#mMenu').onclick = () => { $('#modal').classList.remove('on'); G = null; show('menu'); };
+
+/* ---- Vazifalar / reyting ---- */
+async function loadTasks() {
+  const d = await api('/api/tasks');
+  $('#tAds').textContent = `${d.ads.done}/${d.ads.max}`; $('#tSite').textContent = `${d.site.done}/${d.site.max}`; $('#tRef').textContent = d.ref.count;
+  $('#btnRef').onclick = () => {
+    const text = "Poletgram'da shashka o'ynaymiz! Ro'yxatdan o'ting va tanga yuting.";
+    const url = 'https://t.me/share/url?url=' + encodeURIComponent(d.ref.link) + '&text=' + encodeURIComponent(text);
+    if (tg && tg.openTelegramLink) tg.openTelegramLink(url); else { try { navigator.clipboard.writeText(d.ref.link); } catch (e) {} toast('Havola nusxalandi: ' + d.ref.link); }
+  };
+}
+$('#btnSite').onclick = async () => {
+  const s = await api('/api/tasks/site/start', 'POST');
+  if (s.error) return toast('Bugungi limit tugadi');
+  if (tg && tg.openLink) tg.openLink(s.url); else window.open(s.url, '_blank');
+  toast('Saytda 8 soniya turing, so\'ng qayting…');
+  setTimeout(async () => {
+    const c = await api('/api/tasks/site/claim', 'POST');
+    if (c.ok) { setCoins(c.coins); toast('+0.5 tanga!'); loadTasks(); } else toast('Hali erta yoki limit tugagan');
+  }, 9000);
+};
+async function loadRating() {
+  const d = await api('/api/rating?type=' + ratingType);
+  $('#ratingList').innerHTML = d.list.map((u) => `<div class="row${u.me ? ' me' : ''}"><span class="rk">${u.rank}</span><span class="nm">${esc(u.name)}</span><span class="v">${fmt(u.value)} ${ratingType === 'wins' ? '🏆' : ''}</span></div>`).join('') || '<p class="hint">Hozircha bo\'sh</p>';
+  $('#myRank').textContent = d.myRank ? `Sizning o'rningiz: ${d.myRank}` : '';
+}
+$$('[data-rt]').forEach((b) => b.onclick = () => { ratingType = b.dataset.rt; $$('[data-rt]').forEach((x) => x.classList.toggle('on', x === b)); loadRating(); });
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ---- O'yin ---- */
+let recvAt = 0, prefix = [];
+function mmss(ms) { ms = Math.max(0, ms); const s = Math.ceil(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+function onState(s) {
+  G = s; recvAt = Date.now(); prefix = [];
+  $('#queue').classList.remove('on'); clearTimeout(onMsg.qt);
+  $('#inviteBox').style.display = 'none';
+  show('game');
+  $('#gWin').textContent = s.practice ? 'SINOV O\'YINI' : `G'OLIBGA +${s.win} 🪙`;
+  $('#oName').textContent = s.opp.name; $('#oLv').textContent = 'Lv ' + s.opp.level; setAva($('#oAva'), s.opp.name, s.opp.photo);
+  $('#yName').textContent = s.me.name + ' · siz'; $('#yLv').textContent = 'Lv ' + s.me.level; setAva($('#yAva'), s.me.name, s.me.photo);
+  renderBoard(); tick();
+}
+function renderBoard() {
+  if (!G) return;
+  const flip = G.you === 'b', el = $('#board');
+  const starts = new Set(G.moves.map((m) => m[0].join(',')));
+  const nexts = new Set(); const sel = prefix.length ? prefix[prefix.length - 1].join(',') : '';
+  if (prefix.length) G.moves.forEach((m) => { if (match(m, prefix) && m.length > prefix.length) nexts.add(m[prefix.length].join(',')); });
+  const lastSq = G.last ? [G.last.from.join(','), G.last.to.join(',')] : [];
+  let h = '';
+  for (let i = 0; i < 64; i++) {
+    const dr = Math.floor(i / 8), dc = i % 8, r = flip ? 7 - dr : dr, c = flip ? 7 - dc : dc, k = r + ',' + c;
+    const p = G.board[r][c], dark = (r + c) % 2 === 1;
+    let cls = 'sq ' + (dark ? 'd' : 'l') + (lastSq.includes(k) ? ' lastm' : '') + (nexts.has(k) ? ' hl' : '') + (sel === k ? ' sel' : '');
+    h += `<div class="${cls}" data-r="${r}" data-c="${c}">` + (p ? `<div class="pc ${p.toLowerCase()}${!prefix.length && starts.has(k) ? ' can' : ''}">${p === p.toUpperCase() ? '♛' : ''}</div>` : '') + '</div>';
+  }
+  el.innerHTML = h;
+  const my = G.turn === G.you;
+  const t = $('#turn'); t.className = 'turn' + (my ? '' : ' opp'); t.textContent = my ? 'Sizning navbatingiz' : 'Raqib yuryapti…';
+  $('#plMe').classList.toggle('act', my); $('#plOpp').classList.toggle('act', !my);
+}
+const match = (m, pre) => pre.every((s, i) => m[i] && m[i][0] === s[0] && m[i][1] === s[1]);
+$('#board').addEventListener('click', (e) => {
+  const sq = e.target.closest('.sq'); if (!sq || !G || G.turn !== G.you) return;
+  const pos = [+sq.dataset.r, +sq.dataset.c];
+  if (prefix.length) {
+    const cand = G.moves.filter((m) => match(m, prefix) && m.length > prefix.length && m[prefix.length][0] === pos[0] && m[prefix.length][1] === pos[1]);
+    if (cand.length) {
+      prefix.push(pos);
+      const full = G.moves.find((m) => m.length === prefix.length && match(m, prefix));
+      const longer = G.moves.some((m) => m.length > prefix.length && match(m, prefix));
+      if (full && !longer) { send({ t: 'move', path: full }); G.turn = G.you === 'w' ? 'b' : 'w'; G.moves = []; applyLocal(full); prefix = []; }
+      renderBoard(); return;
+    }
+  }
+  prefix = G.moves.some((m) => m[0][0] === pos[0] && m[0][1] === pos[1]) ? [pos] : [];
+  renderBoard();
+});
+function applyLocal(path) { // tezkor ko'rinish; server holatni qayta yuboradi
+  const [fr, fc] = path[0], [tr, tc] = path[path.length - 1], p = G.board[fr][fc];
+  G.board[fr][fc] = null; G.board[tr][tc] = p;
+  for (let i = 1; i < path.length; i++) { const a = path[i - 1], b = path[i], dr = Math.sign(b[0] - a[0]), dc = Math.sign(b[1] - a[1]); let r = a[0] + dr, c = a[1] + dc;
+    while (r !== b[0] || c !== b[1]) { if (G.board[r][c] && G.board[r][c].toLowerCase() !== p.toLowerCase()) G.board[r][c] = null; r += dr; c += dc; } }
+  recvAt = Date.now(); G.moveLeft = 60000;
+}
+function tick() {
+  if (!G) return;
+  const el = Date.now() - recvAt, opp = G.you === 'w' ? 'b' : 'w';
+  const c = { w: G.clocks.w, b: G.clocks.b }; c[G.turn] -= el;
+  $('#yClk').textContent = mmss(c[G.you]); $('#oClk').textContent = mmss(c[opp]);
+  const my = G.turn === G.you;
+  $('#ySub').textContent = my ? '⏱ ' + mmss(G.moveLeft - el) + ' / yurish' : '';
+  $('#oSub').textContent = !my && !G.opp.name.startsWith('Bot') ? '⏱ ' + mmss(G.moveLeft - el) + ' / yurish' : '';
+}
+setInterval(tick, 250);
+
+function onOver(m) {
+  const mb = $('#mbox'); mb.className = 'mbox ' + (m.result === 'win' ? 'win' : m.result === 'draw' ? 'draw' : '');
+  $('#mIcon').textContent = m.result === 'win' ? '🏆' : m.result === 'draw' ? '🤝' : '💀';
+  $('#mTitle').textContent = m.result === 'win' ? "G'ALABA" : m.result === 'draw' ? 'DURANG' : "MAG'LUBIYAT";
+  const why = { nomoves: m.result === 'win' ? 'Raqibda yurish qolmadi' : 'Sizda yurish qolmadi', resign: m.result === 'win' ? 'Raqib taslim bo\'ldi' : 'Siz taslim bo\'ldingiz', timeout: 'Vaqt tugadi', movetimeout: 'Yurish vaqti tugadi', draw: 'Durang e\'lon qilindi' };
+  $('#mSub').textContent = why[m.reason] || '';
+  $('#mAmt').textContent = m.practice ? 'Sinov o\'yini' : (m.delta > 0 ? '+' : '') + (m.delta === 0 ? 'Tikilgan tanga qaytarildi' : m.delta + ' 🪙');
+  setCoins(m.coins);
+  $('#modal').classList.add('on');
+}
+
+connect();
+</script>
+</body>
+</html>
