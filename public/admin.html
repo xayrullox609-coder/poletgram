@@ -62,7 +62,7 @@ input[type=checkbox]{width:auto}
 
   <section class="tab" id="t-shop">
     <div class="box scroll"><p class="msg" style="margin-top:0">Narx — bitta paket uchun tanga. "Tez orada" belgilansa, foydalanuvchi buyurtma bera olmaydi.</p>
-    <table class="tbl"><thead><tr><th>Xizmat</th><th>Nomi</th><th>Paket (ta)</th><th>Narx (tanga)</th><th>Maks. paket</th><th>Faol</th><th>Tez orada</th><th></th></tr></thead><tbody id="sList"></tbody></table></div>
+    <table class="tbl"><thead><tr><th>Xizmat</th><th>Nomi</th><th>Paket (ta)</th><th>Narx (tanga)</th><th>Maks. paket</th><th>Panel ID</th><th>Faol</th><th>Tez orada</th><th></th></tr></thead><tbody id="sList"></tbody></table></div>
   </section>
 
   <section class="tab" id="t-tasks">
@@ -157,10 +157,12 @@ async function loadOrders() {
   $('#oList').innerHTML = d.list.map((o) => `<tr><td>${new Date(o.created).toLocaleString()}</td><td>${esc(o.uname)}<div class="msg" style="margin:0">${esc(o.uid)}</div></td>
     <td>${esc(o.title)}<div class="msg" style="margin:0">${o.qty} ta</div></td><td style="word-break:break-all;max-width:220px"><a style="color:var(--gold)" target="_blank" rel="noopener noreferrer" href="${/^https?:\/\//.test(o.link) ? esc(o.link) : '#'}">${esc(o.link)}</a></td>
     <td>${o.price}</td><td><span class="tag ${o.status === 'done' ? 'on' : o.status === 'paid' ? '' : 'off'}">${OST[o.status] || o.status}</span></td>
-    <td>${o.status === 'paid' ? `<button class="btn sm" data-od="${o.id}" data-s="done">Bajarildi</button> <button class="btn red sm" data-rf="${o.id}">Bekor + tangani qaytarish</button>` : ''}</td></tr>`).join('') || '<tr><td colspan=7 class="msg">Buyurtma yo\'q</td></tr>';
+    <td>${o.status === 'paid' && o.smmId ? `<div class="msg" style="margin:0">Panel #${esc(o.smmId)}: ${esc(o.smmState || '')}</div>` : ''}${o.status === 'paid' && o.smmError ? `<div class="msg" style="margin:0;color:#f66">${esc(o.smmError)}</div><button class="btn sm" data-sm="${o.id}">Panelga qayta yuborish</button> ` : ''}${o.status === 'paid' ? `<button class="btn sm" data-od="${o.id}" data-s="done">Bajarildi</button> <button class="btn red sm" data-rf="${o.id}">Bekor + tangani qaytarish</button>` : ''}</td></tr>`).join('') || '<tr><td colspan=7 class="msg">Buyurtma yo\'q</td></tr>';
 }
 $('#oSt').onchange = loadOrders;
 $('#oList').onclick = async (e) => {
+  const sm = e.target.closest('[data-sm]');
+  if (sm) { const x = await api('/api/admin/orders/smm', 'POST', { id: sm.dataset.sm }); if (x.error) alert(x.error); loadOrders(); return; }
   const d = e.target.closest('[data-od]'), r = e.target.closest('[data-rf]');
   if (d) { await api('/api/admin/orders/status', 'POST', { id: d.dataset.od, status: d.dataset.s }); loadOrders(); }
   if (r && confirm('Buyurtma bekor qilinib, tanga mijozga qaytarilsinmi?')) {
@@ -172,14 +174,14 @@ async function loadShopAdm() {
   const d = await api('/api/admin/shop');
   $('#sList').innerHTML = d.list.map((p) => `<tr data-id="${p.id}"><td>${p.platform === 'instagram' ? 'Instagram' : 'Telegram'}</td>
     <td><input data-f="title" value="${esc(p.title)}" style="min-width:90px"></td><td><input data-f="qty" type="number" min="0" value="${p.qty}" style="width:90px"></td>
-    <td><input data-f="price" type="number" min="0" value="${p.price}" style="width:80px"></td><td><input data-f="maxPacks" type="number" min="1" value="${p.maxPacks}" style="width:80px"></td>
+    <td><input data-f="price" type="number" min="0" value="${p.price}" style="width:80px"></td><td><input data-f="maxPacks" type="number" min="1" value="${p.maxPacks}" style="width:80px"></td><td><input data-f="smm" value="${esc(p.smm || '')}" placeholder="service ID" style="width:90px"></td>
     <td><input data-f="active" type="checkbox" ${p.active ? 'checked' : ''}></td><td><input data-f="soon" type="checkbox" ${p.soon ? 'checked' : ''}></td>
     <td><button class="btn sm" data-save="${p.id}">Saqlash</button></td></tr>`).join('');
 }
 $('#sList').onclick = async (e) => {
   const b = e.target.closest('[data-save]'); if (!b) return;
   const tr = b.closest('tr'), v = (f) => tr.querySelector(`[data-f=${f}]`);
-  const r = await api('/api/admin/shop', 'POST', { id: b.dataset.save, title: v('title').value, qty: v('qty').value, price: v('price').value, maxPacks: v('maxPacks').value, active: v('active').checked, soon: v('soon').checked });
+  const r = await api('/api/admin/shop', 'POST', { id: b.dataset.save, title: v('title').value, qty: v('qty').value, price: v('price').value, maxPacks: v('maxPacks').value, smm: v('smm').value, active: v('active').checked, soon: v('soon').checked });
   b.textContent = r.ok ? 'Saqlandi ✓' : 'Xato'; setTimeout(() => b.textContent = 'Saqlash', 1500);
 };
 
