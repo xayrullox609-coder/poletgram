@@ -229,7 +229,7 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
     <div class="mm-name" id="mName">…</div>
     <div class="mm-lvl" id="mLvl"></div>
     <div class="mm-bal"><b id="mCoins">0</b><span class="coin"></span></div>
-    <div class="mm-dep wood" data-go="deposit"><span class="coin"></span>DEPOZIT<span class="arr">›</span></div>
+    
     <div class="mm-online" id="mOnline">0 online</div>
     <div class="mm-col l">
       <div class="mm-b" data-go="tasks"><div class="wood"><svg class="ic"><use href="#i-tasks"/></svg></div><span>Vazifalar</span></div>
@@ -286,7 +286,7 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
 <!-- DO'KON -->
 <section id="shop" class="screen">
   <div class="top"><button class="back" data-go="menu">‹</button><h2><svg class="ic"><use href="#i-shop"/></svg> Do'kon</h2></div>
-  <p class="hint" style="margin-top:0">Narxlar Telegram Stars <svg class="ic"><use href="#i-star"/></svg> da. To'lov Telegram ichida amalga oshiriladi.</p>
+  <p class="hint" style="margin-top:0">Xizmatlar tanga evaziga. Tangalarni g'alaba, vazifa va do'st taklif qilish orqali topasiz.</p>
   <div id="shopList"></div>
   <div class="grp">Boshqa xizmatlar</div>
   <div class="card soonc"><div class="ico"><svg class="ic"><use href="#i-star"/></svg></div><div><div class="t">Telegram Stars</div><div class="s">Stars sotib olish</div></div><div class="go"><span class="tagsoon">Tez orada</span></div></div>
@@ -301,10 +301,6 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
   <div id="plList"></div>
 </section>
 
-<section id="deposit" class="screen">
-  <div class="top"><button class="back" data-go="menu">‹</button><h2><svg class="ic"><use href="#i-deposit"/></svg> Depozit</h2></div>
-  <div class="card" style="display:block;text-align:center"><div class="ib big" style="margin:0 auto 8px"><svg class="ic"><use href="#i-clock"/></svg></div><div class="t">Tez orada</div><p class="s">Hozircha tangalar faqat vazifalar va do'st taklif qilish orqali topiladi.</p><button class="btn" data-go="tasks">Vazifalarga o'tish</button></div>
-</section>
 <section id="stats" class="screen">
   <div class="top"><button class="back" data-go="menu">‹</button><h2><svg class="ic"><use href="#i-stats"/></svg> Statistika</h2></div>
   <div class="row"><span class="nm">O'yinlar</span><span class="v" id="sG">0</span></div>
@@ -332,7 +328,7 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
   <div class="hintq" id="shHint"></div>
   <label id="shLinkL">Havola</label><input type="text" id="shLink" autocomplete="off" autocapitalize="off">
   <div class="price"><span id="shGet"></span><b id="shPrice">—</b></div>
-  <button class="btn" id="shPay" disabled><svg class="ic"><use href="#i-star"/></svg> Stars bilan to'lash</button>
+  <button class="btn" id="shPay" disabled><span class="coin"></span> Tanga bilan olish</button>
   <button class="btn dark" id="shCancel">Bekor qilish</button>
 </div></div>
 <div class="toast" id="toast"></div>
@@ -454,9 +450,10 @@ $('#mMenu').onclick = () => { $('#modal').classList.remove('on'); G = null; show
 
 
 /* ---- Do'kon ---- */
+const COIN = '<span class="coin"></span>';
 const KIND_IC = { views: 'eye', likes: 'heart', reactions: 'react', followers: 'userplus' };
 const PLAT = { instagram: ['Instagram', 'camera'], telegram: ['Telegram', 'plane'] };
-const ST_TXT = { paid: 'Qabul qilindi', done: 'Bajarildi', canceled: 'Bekor qilindi', refunded: 'Qaytarildi' };
+const ST_TXT = { paid: 'Qabul qilindi', done: 'Bajarildi', refunded: 'Qaytarildi' };
 let SHOP = [], cur = null;
 async function loadShop() {
   const d = await api('/api/shop'); SHOP = d.products;
@@ -465,13 +462,13 @@ async function loadShop() {
     return `<div class="card plat" data-pl="${pl}"><div class="ico big">${IC(PLAT[pl][1])}</div><div><div class="t" style="font-size:20px">${PLAT[pl][0]}</div><div class="s">${items.map((p) => esc(p.title)).join(' · ')}</div></div><div class="chev">›</div></div>`;
   }).join('');
   $('#ordersBox').innerHTML = d.orders.length ? '<div class="grp">Buyurtmalarim</div>' + d.orders.map((o) =>
-    `<div class="ord"><span>${esc(o.title)} · ${o.qty} ta<br><small class="muted">${o.stars} ★ · ${new Date(o.created).toLocaleDateString()}</small></span><span class="st ${o.status}">${ST_TXT[o.status] || o.status}</span></div>`).join('') : '';
+    `<div class="ord"><span>${esc(o.title)} · ${o.qty} ta<br><small class="muted">${o.price} ${COIN} · ${new Date(o.created).toLocaleDateString()}</small></span><span class="st ${o.status}">${ST_TXT[o.status] || o.status}</span></div>`).join('') : '';
 }
 function openPlat(pl) {
   $('#plTitle').innerHTML = `${IC(PLAT[pl][1])} ${PLAT[pl][0]}`;
   $('#plList').innerHTML = SHOP.filter((p) => p.platform === pl).map((p) =>
     `<div class="card svc${p.soon ? ' soonc' : ''}" ${p.soon ? '' : `data-buy="${p.id}"`}><div class="ico">${IC(KIND_IC[p.kind] || 'star')}</div><div><div class="t">${esc(p.title)}</div>` +
-    (p.soon ? '<div class="s">Tez orada</div>' : `<div class="s">${p.qty} ta = <span class="prc">${p.stars} ${IC('star')}</span></div>`) +
+    (p.soon ? '<div class="s">Tez orada</div>' : `<div class="s">${p.qty} ta = <span class="prc">${p.price} ${COIN}</span></div>`) +
     `</div>${p.soon ? '<div class="go"><span class="tagsoon">Tez orada</span></div>' : '<div class="chev">›</div>'}</div>`).join('');
   show('shopPl');
 }
@@ -481,7 +478,7 @@ $('#plList').addEventListener('click', (e) => {
   cur = SHOP.find((p) => p.id === b.dataset.buy);
   const max = cur.qty * cur.maxPacks;
   $('#shTitle').textContent = `${PLAT[cur.platform][0]}: ${cur.title}`;
-  $('#shSub').textContent = `${cur.qty} ta = ${cur.stars} Stars`;
+  $('#shSub').textContent = `${cur.qty} ta = ${cur.price} tanga`;
   $('#shLinkL').textContent = cur.kind === 'followers' ? 'Sahifa/kanal havolasi' : 'Post havolasi';
   $('#shLink').value = ''; $('#shLink').placeholder = cur.platform === 'instagram' ? 'https://instagram.com/...' : 'https://t.me/kanal/123';
   $('#shQtyIn').value = cur.qty; $('#shQtyIn').max = max;
@@ -493,9 +490,10 @@ function calcSheet() {
   const v = Math.floor(Number($('#shQtyIn').value)), max = cur.qty * cur.maxPacks;
   const ok = v >= cur.qty && v <= max;
   const packs = ok ? Math.ceil(v / cur.qty) : 0;
-  $('#shPrice').innerHTML = ok ? `${packs * cur.stars} ${IC('star')}` : '—';
-  $('#shGet').textContent = ok ? `Olasiz: ${packs * cur.qty} ta` : (v > max ? `Ko'pi bilan ${max}` : `Kamida ${cur.qty}`);
-  $('#shPay').disabled = !ok;
+  const price = packs * cur.price, enough = !me || me.coins >= price;
+  $('#shPrice').innerHTML = ok ? `${price} ${COIN}` : '—';
+  $('#shGet').textContent = !ok ? (v > max ? `Ko'pi bilan ${max}` : `Kamida ${cur.qty}`) : enough ? `Olasiz: ${packs * cur.qty} ta` : `Tanga yetarli emas (sizda ${fmt(me.coins)})`;
+  $('#shPay').disabled = !ok || !enough;
 }
 $('#shQtyIn').addEventListener('input', calcSheet);
 $('#shChips').addEventListener('click', (e) => { const b = e.target.closest('[data-v]'); if (b) { $('#shQtyIn').value = b.dataset.v; calcSheet(); } });
@@ -506,10 +504,7 @@ $('#shPay').onclick = async () => {
   try {
     const r = await api('/api/shop/order', 'POST', { id: cur.id, qty: Math.floor(Number($('#shQtyIn').value)), link: $('#shLink').value });
     if (r.error) return toast(r.error);
-    const done = () => { $('#sheet').classList.remove('on'); show('shop'); toast('Buyurtma qabul qilindi!'); };
-    if (r.dev) return done();
-    if (tg && tg.openInvoice) tg.openInvoice(r.url, (st) => { if (st === 'paid') done(); else if (st === 'failed') toast("To'lov amalga oshmadi"); });
-    else window.open(r.url, '_blank');
+    setCoins(r.coins); $('#sheet').classList.remove('on'); show('shop'); toast('Buyurtma qabul qilindi!');
   } finally { calcSheet(); }
 };
 
