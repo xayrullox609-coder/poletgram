@@ -155,12 +155,13 @@ function getUser(tgUser, startParam) {
   return u;
 }
 
-const xpOf = (u) => u.games + u.wins * 2;
-const levelOf = (u) => 1 + Math.floor(xpOf(u) / 10);
-const titleOf = (lv) => (lv < 3 ? 'Yangi' : lv < 6 ? "O'yinchi" : lv < 10 ? 'Usta' : 'Grossmeyster');
+// Daraja g'alabalar soniga qarab (kamida -> nomi)
+const RANKS = [[0, 'YANGI'], [1, 'BRONZA 3'], [20, 'BRONZA 2'], [50, 'BRONZA 1'], [100, 'SILVER 2'], [200, 'SILVER'], [500, 'OLTIN'], [1000, 'CHEMPION']];
+const levelOf = (u) => { let i = 0; RANKS.forEach((r, k) => { if (u.wins >= r[0]) i = k; }); return i; };
+const titleOf = (lv) => RANKS[lv][1];
 function pubUser(u) {
-  if (u === 'bot' || !u) return { name: 'Bot (sinov)', level: 1, photo: '' };
-  return { name: u.name, level: levelOf(u), photo: u.photo };
+  if (u === 'bot' || !u) return { name: 'Bot (sinov)', level: 0, title: titleOf(0), photo: '' };
+  return { name: u.name, level: levelOf(u), title: titleOf(levelOf(u)), photo: u.photo };
 }
 function meView(u) {
   const lv = levelOf(u);
@@ -251,10 +252,10 @@ app.get('/api/me', auth, (req, res) => res.json({ user: meView(req.u), online: o
 
 app.get('/api/rating', auth, (req, res) => {
   const type = req.query.type;
-  const val = type === 'coins' ? (u) => u.coins : type === 'level' ? (u) => xpOf(u) : (u) => u.wins;
+  const val = type === 'coins' ? (u) => u.coins : (u) => u.wins;
   const all = Object.values(db.users).sort((a, b) => val(b) - val(a));
   const list = all.slice(0, 100).map((u, i) => ({
-    rank: i + 1, name: u.name, photo: u.photo, value: type === 'level' ? levelOf(u) : val(u), me: u.id === req.u.id,
+    rank: i + 1, name: u.name, photo: u.photo, value: type === 'level' ? titleOf(levelOf(u)) : val(u), me: u.id === req.u.id,
   }));
   res.json({ list, myRank: all.findIndex((u) => u.id === req.u.id) + 1 });
 });
@@ -701,7 +702,7 @@ function finish(g, winner, reason) {
     }
     save();
     send(uid, stateFor(g, uid));
-    send(uid, { t: 'over', result, reason, delta, coins: u.coins, stake: g.stake, practice: g.practice, level: levelOf(u) });
+    send(uid, { t: 'over', result, reason, delta, coins: u.coins, stake: g.stake, practice: g.practice, level: levelOf(u), title: titleOf(levelOf(u)) });
     userGame.delete(uid);
   }
   games.delete(g.id);
