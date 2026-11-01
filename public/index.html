@@ -2,7 +2,7 @@
 <html lang="uz">
 <head>
 <meta charset="utf-8">
-<link rel="icon" href="/coin.png">
+<link rel="icon" href="/coin.png?v=2">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Poletgram</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -20,7 +20,7 @@ h2{font-family:Georgia,serif;font-variant:small-caps;letter-spacing:1px;color:va
 .top{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #ffffff18;margin-bottom:14px;position:sticky;top:0;background:#150f35cc;backdrop-filter:blur(6px);z-index:5}
 .back{width:40px;height:40px;border-radius:10px;border:2px solid var(--line);background:linear-gradient(#7a4f27,#4a2e15);color:var(--gold);font-size:22px}
 .chip{margin-left:auto;padding:7px 14px;border-radius:20px;border:2px solid var(--line);background:#00000055;font-weight:700;color:var(--gold);white-space:nowrap}
-.coin{display:inline-block;width:1.05em;height:1.05em;border-radius:50%;background:url(/coin.png) center/cover;vertical-align:-.15em}
+.coin{display:inline-block;width:1.15em;height:1.15em;background:url(/coin.png?v=2) center/contain no-repeat;vertical-align:-.2em}
 .btn{display:block;width:100%;padding:14px;border-radius:14px;border:2px solid var(--gold2);background:linear-gradient(#f4d98a,#c9993a);color:#3b2506;font-weight:800;font-size:16px;margin:10px 0;box-shadow:0 4px 18px #c9993a44}
 .btn.dark{background:linear-gradient(#6b4423,#3e2611);color:var(--gold);border-color:var(--line);box-shadow:none}
 .btn:disabled{opacity:.45}
@@ -63,7 +63,16 @@ h2{font-family:Georgia,serif;font-variant:small-caps;letter-spacing:1px;color:va
 .sheet .box{width:min(100%,480px);background:linear-gradient(#3a2815,#1d120a);border:2px solid var(--line);border-bottom:0;border-radius:22px 22px 0 0;padding:18px 16px 22px}
 .sheet h3{margin:0 0 4px;font-family:Georgia,serif;font-variant:small-caps;color:var(--gold);font-size:20px}
 .sheet label{display:block;margin:12px 0 5px;color:var(--mut);font-size:13px}
-.sheet input[type=text]{width:100%;padding:12px;border-radius:12px;border:2px solid var(--line);background:#0f0a06;color:var(--txt);font-size:15px}
+.sheet input[type=text],.sheet input[type=number]{width:100%;padding:12px;border-radius:12px;border:2px solid var(--line);background:#0f0a06;color:var(--txt);font-size:15px}
+.card.plat{cursor:pointer;padding:16px;transition:transform .12s}.card.plat:active,.card.svc:active{transform:scale(.98)}
+.card .ico.big{width:64px;height:64px;border-radius:18px}.card .ico.big .ic{width:36px;height:36px}
+.card.svc{cursor:pointer}
+.chev{margin-left:auto;font-size:32px;color:var(--gold);line-height:1;padding:0 4px}
+.qin{font-size:28px!important;font-weight:800;text-align:center}
+.chips{display:flex;gap:8px;margin-top:8px}.chips button{flex:1;padding:9px 0;border-radius:10px;border:2px solid var(--line);background:linear-gradient(#5b3a1c,#3a2410);color:var(--gold);font-weight:800;font-size:14px}
+.price{display:flex;align-items:center;justify-content:space-between;margin:16px 0 4px;padding:12px 14px;border-radius:14px;background:#0008;border:2px solid var(--gold2)}
+.price span{color:var(--mut);font-size:14px}.price b{font-size:28px;color:var(--gold);display:flex;align-items:center;gap:6px}.price b .ic{width:26px;height:26px}
+.hintq{margin-top:6px;color:var(--mut);font-size:12px}
 .step{display:flex;align-items:center;gap:12px}
 .step button{width:44px;height:44px;border-radius:12px;border:2px solid var(--line);background:linear-gradient(#7a4f27,#4a2e15);color:var(--gold);font-size:24px;font-weight:800}
 .step b{flex:1;text-align:center;font-size:20px}
@@ -286,6 +295,11 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
   <div class="card soonc"><div class="ico"><svg class="ic"><use href="#i-gem"/></svg></div><div><div class="t">Mobile Legends</div><div class="s">Olmos va Pass</div></div><div class="go"><span class="tagsoon">Tez orada</span></div></div>
   <div id="ordersBox"></div>
 </section>
+<section id="shopPl" class="screen">
+  <div class="top"><button class="back" data-go="shop">‹</button><h2 id="plTitle"></h2></div>
+  <p class="hint" style="margin-top:0">Xizmatni tanlang</p>
+  <div id="plList"></div>
+</section>
 
 <section id="deposit" class="screen">
   <div class="top"><button class="back" data-go="menu">‹</button><h2><svg class="ic"><use href="#i-deposit"/></svg> Depozit</h2></div>
@@ -312,11 +326,13 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
 <div class="modal" id="modal"><div class="mbox" id="mbox"><div class="ib big" id="mIcon"></div><div class="big" id="mTitle"></div><div id="mSub" class="muted"></div><div class="amt" id="mAmt"></div><button class="btn" id="mAgain">Yana o'ynash</button><button class="btn dark" id="mMenu">Menyu</button></div></div>
 <div class="sheet" id="sheet"><div class="box">
   <h3 id="shTitle"></h3><div class="muted" id="shSub"></div>
-  <label>Miqdor (paket soni)</label>
-  <div class="step"><button id="shMinus">−</button><b id="shPacks">1</b><button id="shPlus">+</button></div>
+  <label>Nechta kerak? (raqam kiriting)</label>
+  <input type="number" class="qin" id="shQtyIn" inputmode="numeric" min="1" step="1" placeholder="0">
+  <div class="chips" id="shChips"></div>
+  <div class="hintq" id="shHint"></div>
   <label id="shLinkL">Havola</label><input type="text" id="shLink" autocomplete="off" autocapitalize="off">
-  <div class="tot"><span id="shQty"></span><span class="prc" id="shPrice"></span></div>
-  <button class="btn" id="shPay"><svg class="ic"><use href="#i-star"/></svg> Stars bilan to'lash</button>
+  <div class="price"><span id="shGet"></span><b id="shPrice">—</b></div>
+  <button class="btn" id="shPay" disabled><svg class="ic"><use href="#i-star"/></svg> Stars bilan to'lash</button>
   <button class="btn dark" id="shCancel">Bekor qilish</button>
 </div></div>
 <div class="toast" id="toast"></div>
@@ -352,7 +368,7 @@ function show(id) {
   if (tg) { try { tg.BackButton[id === 'menu' ? 'hide' : 'show'](); } catch (e) {} }
 }
 document.addEventListener('click', (e) => { const t = e.target.closest('[data-go]'); if (t) show(t.dataset.go); });
-if (tg) try { tg.BackButton.onClick(() => { if (!G) show('menu'); }); } catch (e) {}
+if (tg) try { tg.BackButton.onClick(() => { if (G) return; const on = document.querySelector('.screen.on'); show(on && on.id === 'shopPl' ? 'shop' : 'menu'); }); } catch (e) {}
 
 async function api(path, method = 'GET', body) {
   const r = await fetch(path, { method, headers: { 'x-init-data': initData, 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
@@ -441,47 +457,60 @@ $('#mMenu').onclick = () => { $('#modal').classList.remove('on'); G = null; show
 const KIND_IC = { views: 'eye', likes: 'heart', reactions: 'react', followers: 'userplus' };
 const PLAT = { instagram: ['Instagram', 'camera'], telegram: ['Telegram', 'plane'] };
 const ST_TXT = { paid: 'Qabul qilindi', done: 'Bajarildi', canceled: 'Bekor qilindi', refunded: 'Qaytarildi' };
-let SHOP = [], cur = null, curPacks = 1;
+let SHOP = [], cur = null;
 async function loadShop() {
   const d = await api('/api/shop'); SHOP = d.products;
   $('#shopList').innerHTML = ['instagram', 'telegram'].map((pl) => {
     const items = SHOP.filter((p) => p.platform === pl); if (!items.length) return '';
-    return `<div class="grp"><span class="ib">${IC(PLAT[pl][1])}</span>${PLAT[pl][0]}</div>` + items.map((p) =>
-      `<div class="card${p.soon ? ' soonc' : ''}"><div class="ico">${IC(KIND_IC[p.kind] || 'star')}</div><div><div class="t">${esc(p.title)}</div>` +
-      (p.soon ? '<div class="s">Tez orada</div>' : `<div class="s">${p.qty} ta · <span class="prc">${p.stars} ${IC('star')}</span></div>`) +
-      `</div><div class="go">${p.soon ? '<span class="tagsoon">Tez orada</span>' : `<button class="btn" data-buy="${p.id}">Buyurtma</button>`}</div></div>`).join('');
+    return `<div class="card plat" data-pl="${pl}"><div class="ico big">${IC(PLAT[pl][1])}</div><div><div class="t" style="font-size:20px">${PLAT[pl][0]}</div><div class="s">${items.map((p) => esc(p.title)).join(' · ')}</div></div><div class="chev">›</div></div>`;
   }).join('');
   $('#ordersBox').innerHTML = d.orders.length ? '<div class="grp">Buyurtmalarim</div>' + d.orders.map((o) =>
     `<div class="ord"><span>${esc(o.title)} · ${o.qty} ta<br><small class="muted">${o.stars} ★ · ${new Date(o.created).toLocaleDateString()}</small></span><span class="st ${o.status}">${ST_TXT[o.status] || o.status}</span></div>`).join('') : '';
 }
-$('#shopList').addEventListener('click', (e) => {
-  const b = e.target.closest('[data-buy]'); if (!b) return;
-  cur = SHOP.find((p) => p.id === b.dataset.buy); curPacks = 1;
-  $('#shTitle').textContent = `${PLAT[cur.platform][0]}: ${cur.title}`;
-  $('#shSub').textContent = `1 paket = ${cur.qty} ta · ${cur.stars} Stars`;
-  const post = cur.kind === 'followers' ? 'Sahifa/kanal havolasi' : 'Post havolasi';
-  $('#shLinkL').textContent = post; $('#shLink').value = '';
-  $('#shLink').placeholder = cur.platform === 'instagram' ? 'https://instagram.com/...' : 'https://t.me/kanal/123';
-  renderSheet(); $('#sheet').classList.add('on');
-});
-function renderSheet() {
-  $('#shPacks').textContent = curPacks; $('#shQty').textContent = `Jami: ${cur.qty * curPacks} ta`;
-  $('#shPrice').innerHTML = `${cur.stars * curPacks} ${IC('star')}`;
+function openPlat(pl) {
+  $('#plTitle').innerHTML = `${IC(PLAT[pl][1])} ${PLAT[pl][0]}`;
+  $('#plList').innerHTML = SHOP.filter((p) => p.platform === pl).map((p) =>
+    `<div class="card svc${p.soon ? ' soonc' : ''}" ${p.soon ? '' : `data-buy="${p.id}"`}><div class="ico">${IC(KIND_IC[p.kind] || 'star')}</div><div><div class="t">${esc(p.title)}</div>` +
+    (p.soon ? '<div class="s">Tez orada</div>' : `<div class="s">${p.qty} ta = <span class="prc">${p.stars} ${IC('star')}</span></div>`) +
+    `</div>${p.soon ? '<div class="go"><span class="tagsoon">Tez orada</span></div>' : '<div class="chev">›</div>'}</div>`).join('');
+  show('shopPl');
 }
-$('#shMinus').onclick = () => { if (curPacks > 1) { curPacks--; renderSheet(); } };
-$('#shPlus').onclick = () => { if (curPacks < cur.maxPacks) { curPacks++; renderSheet(); } };
+$('#shopList').addEventListener('click', (e) => { const c = e.target.closest('[data-pl]'); if (c) openPlat(c.dataset.pl); });
+$('#plList').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-buy]'); if (!b) return;
+  cur = SHOP.find((p) => p.id === b.dataset.buy);
+  const max = cur.qty * cur.maxPacks;
+  $('#shTitle').textContent = `${PLAT[cur.platform][0]}: ${cur.title}`;
+  $('#shSub').textContent = `${cur.qty} ta = ${cur.stars} Stars`;
+  $('#shLinkL').textContent = cur.kind === 'followers' ? 'Sahifa/kanal havolasi' : 'Post havolasi';
+  $('#shLink').value = ''; $('#shLink').placeholder = cur.platform === 'instagram' ? 'https://instagram.com/...' : 'https://t.me/kanal/123';
+  $('#shQtyIn').value = cur.qty; $('#shQtyIn').max = max;
+  $('#shChips').innerHTML = [1, 2, 5, 10, 20].map((m) => m * cur.qty).filter((v) => v <= max).slice(0, 4).map((v) => `<button data-v="${v}">${v}</button>`).join('');
+  $('#shHint').textContent = `Eng kami ${cur.qty}, eng ko'pi ${max}. Narx ${cur.qty} talik paketlar bo'yicha hisoblanadi.`;
+  calcSheet(); $('#sheet').classList.add('on');
+});
+function calcSheet() {
+  const v = Math.floor(Number($('#shQtyIn').value)), max = cur.qty * cur.maxPacks;
+  const ok = v >= cur.qty && v <= max;
+  const packs = ok ? Math.ceil(v / cur.qty) : 0;
+  $('#shPrice').innerHTML = ok ? `${packs * cur.stars} ${IC('star')}` : '—';
+  $('#shGet').textContent = ok ? `Olasiz: ${packs * cur.qty} ta` : (v > max ? `Ko'pi bilan ${max}` : `Kamida ${cur.qty}`);
+  $('#shPay').disabled = !ok;
+}
+$('#shQtyIn').addEventListener('input', calcSheet);
+$('#shChips').addEventListener('click', (e) => { const b = e.target.closest('[data-v]'); if (b) { $('#shQtyIn').value = b.dataset.v; calcSheet(); } });
 $('#shCancel').onclick = () => $('#sheet').classList.remove('on');
 $('#sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet') $('#sheet').classList.remove('on'); });
 $('#shPay').onclick = async () => {
   const btn = $('#shPay'); btn.disabled = true;
   try {
-    const r = await api('/api/shop/order', 'POST', { id: cur.id, packs: curPacks, link: $('#shLink').value });
+    const r = await api('/api/shop/order', 'POST', { id: cur.id, qty: Math.floor(Number($('#shQtyIn').value)), link: $('#shLink').value });
     if (r.error) return toast(r.error);
-    const done = () => { $('#sheet').classList.remove('on'); toast("Buyurtma qabul qilindi!"); loadShop(); };
+    const done = () => { $('#sheet').classList.remove('on'); show('shop'); toast('Buyurtma qabul qilindi!'); };
     if (r.dev) return done();
     if (tg && tg.openInvoice) tg.openInvoice(r.url, (st) => { if (st === 'paid') done(); else if (st === 'failed') toast("To'lov amalga oshmadi"); });
     else window.open(r.url, '_blank');
-  } finally { btn.disabled = false; }
+  } finally { calcSheet(); }
 };
 
 /* ---- Vazifalar / reyting ---- */
