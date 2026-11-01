@@ -24,45 +24,100 @@ const WIN_MULT = 2; // g'olib stavkaning 2 baravarini oladi (komissiya yo'q)
 const TOTAL_MS = 6 * 60 * 1000;
 const MOVE_MS = 60 * 1000;
 
-/* ---------------- Ma'lumotlar bazasi (JSON fayl) ---------------- */
+/* ---------------- Ma'lumotlar bazasi: PostgreSQL (DATABASE_URL) yoki JSON fayl ---------------- */
 const DB_FILE = process.env.DB_FILE || path.join(__dirname, 'data', 'db.json');
+const DATABASE_URL = (process.env.DATABASE_URL || '').trim();
+let pool = null; // PostgreSQL ulanishi (DATABASE_URL berilganda)
 let db = { users: {}, ledger: [], pendingRef: {}, tasks: null, settings: {}, shop: null, shopVer: 0, orders: [] };
-try { db = Object.assign(db, JSON.parse(fs.readFileSync(DB_FILE, 'utf8'))); } catch { /* yangi baza */ }
-db.settings = Object.assign({ welcomeCoins: 100, referralReward: 20 }, db.settings || {});
-if (!Array.isArray(db.orders)) db.orders = [];
-const SHOP_VER = 2; // narxlar tangada
-if (!Array.isArray(db.shop) || db.shopVer !== SHOP_VER) {
-  // price = bitta paket narxi (tanga), qty = bitta paketdagi miqdor. Admin paneldan o'zgartiriladi.
-  db.shopVer = SHOP_VER;
-  db.shop = [
-    { id: 'ig_views', platform: 'instagram', kind: 'views', title: "Ko'rish", qty: 1000, price: 100, maxPacks: 20, active: true, soon: false },
-    { id: 'ig_followers', platform: 'instagram', kind: 'followers', title: 'Obunachi', qty: 0, price: 0, maxPacks: 20, active: true, soon: true },
-    { id: 'ig_likes', platform: 'instagram', kind: 'likes', title: 'Like', qty: 100, price: 100, maxPacks: 20, active: true, soon: false },
-    { id: 'tg_views', platform: 'telegram', kind: 'views', title: "Ko'rish", qty: 1000, price: 200, maxPacks: 20, active: true, soon: false },
-    { id: 'tg_reactions', platform: 'telegram', kind: 'reactions', title: 'Reaksiya', qty: 100, price: 100, maxPacks: 20, active: true, soon: false },
-    { id: 'tg_followers', platform: 'telegram', kind: 'followers', title: 'Obunachi', qty: 10, price: 100, maxPacks: 50, active: true, soon: false },
-  ];
+const store = { kind: DATABASE_URL ? 'postgres' : 'file', lastSaveAt: 0, lastError: null, loaded: false };
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const KV_UPSERT = 'INSERT INTO poletgram_kv (key, value, updated_at) VALUES ($1, $2::jsonb, now()) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()';
+const lastSaved = {}; // qism nomi -> oxirgi saqlangan JSON (o'zgarmagan qismlar qayta yozilmaydi)
+
+// db'ni 4 qismga bo'lamiz: foydalanuvchilar, jurnal, buyurtmalar, qolgani (vazifa, do'kon, sozlama)
+const dbParts = () => { const { users, ledger, orders, ...meta } = db; return { users, ledger, orders, meta }; };
+
+async function loadDb() {
+  if (DATABASE_URL) {
+    const { Pool } = require('pg');
+    pool = new Pool({ connectionString: DATABASE_URL, max: 3, ssl: process.env.DATABASE_SSL === '0' ? false : { rejectUnauthorized: false } });
+    pool.on('error', (e) => console.error('pg pool error', e.message));
+    // Ulanib bo'lmasa bo'sh baza bilan BOSHLAMAYMIZ: keyin mavjud ma'lumotni ustidan yozib yuborishi mumkin.
+    let rows = null;
+    for (let k = 1; k <= 6 && !rows; k++) {
+      try {
+        await pool.query('CREATE TABLE IF NOT EXISTS poletgram_kv (key text PRIMARY KEY, value jsonb NOT NULL, updated_at timestamptz NOT NULL DEFAULT now())');
+        rows = (await pool.query('SELECT key, value FROM poletgram_kv')).rows;
+      } catch (e) { console.error(`DATABASE_URL ulanish xatosi (${k}/6):`, e.message); await sleep(3000); }
+    }
+    if (!rows) throw new Error('PostgreSQL ga ulanib bo\'lmadi (DATABASE_URL ni tekshiring)');
+    const kv = Object.fromEntries(rows.map((r) => [r.key, typeof r.value === 'string' ? JSON.parse(r.value) : r.value]));
+    if (rows.length) {
+      db = Object.assign(db, kv.meta || {}, { users: kv.users || {}, ledger: kv.ledger || [], orders: kv.orders || [] });
+      for (const [k, v] of Object.entries(dbParts())) lastSaved[k] = JSON.stringify(v);
+      console.log(`PostgreSQL'dan yuklandi: ${Object.keys(db.users).length} foydalanuvchi`);
+    } else {
+      try { db = Object.assign(db, JSON.parse(fs.readFileSync(DB_FILE, 'utf8'))); console.log('Eski JSON fayldan PostgreSQL ga ko\'chirildi'); } catch { console.log('PostgreSQL: yangi baza'); }
+      dirty = true;
+    }
+  } else {
+    try { db = Object.assign(db, JSON.parse(fs.readFileSync(DB_FILE, 'utf8'))); } catch { /* yangi baza */ }
+  }
+  // standart qiymatlar
+  db.settings = Object.assign({ welcomeCoins: 100, referralReward: 20 }, db.settings || {});
+  if (!Array.isArray(db.orders)) db.orders = [];
+  if (!db.pendingRef) db.pendingRef = {};
+  const SHOP_VER = 2; // narxlar tangada
+  if (!Array.isArray(db.shop) || db.shopVer !== SHOP_VER) {
+    // price = bitta paket narxi (tanga), qty = bitta paketdagi miqdor. Admin paneldan o'zgartiriladi.
+    db.shopVer = SHOP_VER;
+    db.shop = [
+      { id: 'ig_views', platform: 'instagram', kind: 'views', title: "Ko'rish", qty: 1000, price: 100, maxPacks: 20, active: true, soon: false },
+      { id: 'ig_followers', platform: 'instagram', kind: 'followers', title: 'Obunachi', qty: 0, price: 0, maxPacks: 20, active: true, soon: true },
+      { id: 'ig_likes', platform: 'instagram', kind: 'likes', title: 'Like', qty: 100, price: 100, maxPacks: 20, active: true, soon: false },
+      { id: 'tg_views', platform: 'telegram', kind: 'views', title: "Ko'rish", qty: 1000, price: 200, maxPacks: 20, active: true, soon: false },
+      { id: 'tg_reactions', platform: 'telegram', kind: 'reactions', title: 'Reaksiya', qty: 100, price: 100, maxPacks: 20, active: true, soon: false },
+      { id: 'tg_followers', platform: 'telegram', kind: 'followers', title: 'Obunachi', qty: 10, price: 100, maxPacks: 50, active: true, soon: false },
+    ];
+    dirty = true;
+  }
+  if (!Array.isArray(db.tasks)) {
+    db.tasks = [
+      { id: 't_ad', type: 'ad', title: 'Reklama ko\'rish', reward: 1, url: '', wait: 10, limit: 20, once: false, active: false },
+      { id: 't_site', type: 'link', title: 'Saytga o\'tish', reward: 0.5, url: BASE_URL || 'https://telegram.org', wait: 8, limit: 20, once: false, active: true },
+    ];
+    dirty = true;
+  }
+  store.loaded = true;
 }
-if (!Array.isArray(db.tasks)) {
-  db.tasks = [
-    { id: 't_ad', type: 'ad', title: 'Reklama ko\'rish', reward: 1, url: '', wait: 10, limit: 20, once: false, active: false },
-    { id: 't_site', type: 'link', title: 'Saytga o\'tish', reward: 0.5, url: BASE_URL || 'https://telegram.org', wait: 8, limit: 20, once: false, active: true },
-  ];
-}
-let dirty = false;
+
+let dirty = false, flushing = false;
 const save = () => { dirty = true; };
-function flush() {
-  if (!dirty) return;
-  dirty = false;
+async function flush() {
+  if (!dirty || flushing || !store.loaded) return;
+  flushing = true; dirty = false;
   try {
     if (db.ledger.length > 5000) db.ledger = db.ledger.slice(-5000);
-    fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
-    fs.writeFileSync(DB_FILE + '.tmp', JSON.stringify(db));
-    fs.renameSync(DB_FILE + '.tmp', DB_FILE);
-  } catch (e) { console.error('db save error', e.message); }
+    if (pool) {
+      for (const [k, v] of Object.entries(dbParts())) {
+        const j = JSON.stringify(v);
+        if (j === lastSaved[k]) continue;
+        await pool.query(KV_UPSERT, [k, j]);
+        lastSaved[k] = j;
+      }
+    } else {
+      fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
+      fs.writeFileSync(DB_FILE + '.tmp', JSON.stringify(db));
+      fs.renameSync(DB_FILE + '.tmp', DB_FILE);
+    }
+    store.lastSaveAt = Date.now(); store.lastError = null;
+  } catch (e) { dirty = true; store.lastError = e.message; console.error('db save error', e.message); }
+  finally { flushing = false; }
 }
+async function flushNow() { while (flushing) await sleep(30); dirty = true; await flush(); }
 setInterval(flush, 3000);
-process.on('SIGTERM', () => { flush(); process.exit(0); });
+for (const sig of ['SIGTERM', 'SIGINT']) process.on(sig, async () => { await flushNow(); process.exit(0); });
+const dbReady = loadDb();
 
 const round1 = (x) => Math.round(x * 10) / 10;
 const dayKey = () => new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10);
@@ -288,9 +343,62 @@ app.post('/api/shop/order', auth, (req, res) => {
   credit(u, -price, 'shop', order.id); // balans faqat jurnal orqali o'zgaradi
   db.orders.push(order); save();
   sendBalance(u);
-  for (const a of ADMIN_IDS) notify(a, `🛒 Yangi buyurtma: ${order.title} ×${order.qty}\n${price} tanga · ${order.uname}\n${order.link}`);
+  for (const a of ADMIN_IDS) notify(a, `🛒 Yangi buyurtma: ${order.title} ×${order.qty}\n${price} tanga · ${order.uname}\n${order.link}${SMM_ON && p.smm ? '\n🤖 Panelga avtomatik yuboriladi' : ''}`);
+  if (SMM_ON && p.smm) submitSmm(order, p);
   res.json({ ok: true, coins: u.coins, order: order.id });
 });
+
+
+/* ---------------- SMM panel (boshqa xizmat) bilan ulanish ----------------
+   Telegram botlari bir-biriga xabar yubora olmaydi, shuning uchun buyurtmalar
+   SMM panelning API'siga yuboriladi (ko'pchilik panellarda bor: action=add). */
+const SMM_API_URL = (process.env.SMM_API_URL || '').trim();
+const SMM_API_KEY = (process.env.SMM_API_KEY || '').trim();
+const SMM_ON = !!(SMM_API_URL && SMM_API_KEY);
+async function smmCall(params) {
+  const r = await fetch(SMM_API_URL, {
+    method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ key: SMM_API_KEY, ...params }).toString(), signal: AbortSignal.timeout(20000),
+  });
+  const t = await r.text();
+  try { return JSON.parse(t); } catch { throw new Error('Panel javobi tushunarsiz: ' + t.slice(0, 100)); }
+}
+async function submitSmm(order, p) {
+  if (order.smmId || order.status !== 'paid') return { error: 'allaqachon yuborilgan' };
+  try {
+    const link = order.platform === 'telegram' && order.link.startsWith('@') ? 'https://t.me/' + order.link.slice(1) : order.link;
+    const j = await smmCall({ action: 'add', service: p.smm, link, quantity: order.qty });
+    if (!j || !j.order) throw new Error((j && j.error) || 'noma\'lum xato');
+    order.smmId = String(j.order); order.smmError = null; order.smmState = 'Pending'; save();
+    return { ok: true };
+  } catch (e) {
+    order.smmError = String(e.message).slice(0, 200); save();
+    for (const a of ADMIN_IDS) notify(a, `⚠️ Panelga yuborilmadi (${order.id}): ${order.smmError}\n${order.title} ×${order.qty}\n${order.link}\nAdmin paneldan qayta yuboring yoki qo'lda bajaring.`);
+    return { error: order.smmError };
+  }
+}
+let smmPolling = false;
+async function pollSmm() {
+  if (!SMM_ON || smmPolling) return;
+  smmPolling = true;
+  try {
+    for (const o of db.orders.filter((x) => x.status === 'paid' && x.smmId).slice(0, 50)) {
+      let j; try { j = await smmCall({ action: 'status', order: o.smmId }); } catch { continue; }
+      const st = String((j && j.status) || '');
+      if (!st || st === o.smmState) continue;
+      o.smmState = st; save();
+      if (/^completed$/i.test(st)) {
+        o.status = 'done'; save(); notify(o.uid, `✅ Buyurtmangiz bajarildi: ${o.title} (${o.qty} ta)`);
+      } else if (/^(canceled|cancelled|refunded|fail)/i.test(st)) {
+        const u = db.users[o.uid];
+        if (u) { o.status = 'refunded'; credit(u, o.price, 'shop_refund', o.id); sendBalance(u); notify(o.uid, `↩️ Buyurtma bajarilmadi, ${o.price} tanga qaytarildi: ${o.title}`); }
+      } else if (/^partial$/i.test(st)) {
+        for (const a of ADMIN_IDS) notify(a, `⚠️ Qisman bajarildi (${o.id}) — tekshiring: ${o.title}, ${o.link}`);
+      }
+    }
+  } finally { smmPolling = false; }
+}
+if (SMM_ON) setInterval(() => pollSmm().catch(() => {}), 60000);
 
 /* ---------------- Admin panel API ---------------- */
 const adminFails = new Map();
@@ -397,7 +505,9 @@ app.get('/api/admin/ledger', admin, (req, res) => {
 app.get('/diag', async (req, res) => {
   const d = {
     tokenSet: !!BOT_TOKEN, tokenFormatOk: /^\d{6,}:[\w-]{30,}$/.test(BOT_TOKEN), botState, botUsername: BOT_USERNAME,
-    baseUrl: BASE_URL || null, allowDev: ALLOW_DEV, adminPasswordSet: !!process.env.ADMIN_PASSWORD, adminIds: ADMIN_IDS.length, users: Object.keys(db.users).length,
+    baseUrl: BASE_URL || null, allowDev: ALLOW_DEV, adminPasswordSet: !!process.env.ADMIN_PASSWORD, adminIds: ADMIN_IDS.length, smmConfigured: SMM_ON,
+    storage: store.kind, storageLastSave: store.lastSaveAt ? new Date(store.lastSaveAt).toISOString() : null, storageError: store.lastError,
+    storageWarning: store.kind === 'file' && process.env.RENDER && !process.env.DB_FILE ? "Ma'lumotlar vaqtinchalik fayl'da: har deployda o'chadi. DATABASE_URL (PostgreSQL) qo'ying" : null, users: Object.keys(db.users).length,
   };
   if (bot) {
     try {
@@ -429,6 +539,12 @@ app.post('/api/admin/orders/refund', admin, (req, res) => {
   notify(o.uid, `↩️ Buyurtma bekor qilindi, ${o.price} tanga qaytarildi: ${o.title}`);
   res.json({ ok: true });
 });
+app.post('/api/admin/orders/smm', admin, async (req, res) => {
+  const o = db.orders.find((x) => x.id === req.body.id), p = o && db.shop.find((x) => x.id === o.product);
+  if (!SMM_ON) return res.json({ error: 'SMM_API_URL / SMM_API_KEY sozlanmagan' });
+  if (!o || !p || !p.smm) return res.json({ error: "Bu xizmatga panel ID kiritilmagan" });
+  res.json(await submitSmm(o, p));
+});
 app.get('/api/admin/shop', admin, (req, res) => res.json({ list: db.shop }));
 app.post('/api/admin/shop', admin, (req, res) => {
   const p = db.shop.find((x) => x.id === req.body.id);
@@ -437,6 +553,7 @@ app.post('/api/admin/shop', admin, (req, res) => {
   p.title = String(req.body.title || p.title).trim().slice(0, 30);
   p.qty = n(req.body.qty, 0, 1e7, p.qty); p.price = n(req.body.price, 0, 1e7, p.price); p.maxPacks = n(req.body.maxPacks, 1, 1000, p.maxPacks);
   p.active = !!req.body.active; p.soon = !!req.body.soon;
+  p.smm = String(req.body.smm || '').trim().replace(/[^\w-]/g, '').slice(0, 20);
   save(); res.json({ ok: true });
 });
 app.get('/admin', (req, res) => {
@@ -501,6 +618,7 @@ if (BOT_TOKEN) {
   if (BASE_URL) webhook = { path: hook, fn: webhookCallback(bot, 'http') };
   setTimeout(async () => {
     try {
+      await dbReady; // baza yuklanmaguncha webhook o'rnatilmaydi
       const me = await bot.api.getMe();
       if (!BOT_USERNAME) BOT_USERNAME = me.username;
       if (BASE_URL) {
@@ -785,4 +903,6 @@ setInterval(() => {
   }
 }, 25000);
 
-server.listen(PORT, () => console.log(`Poletgram http://localhost:${PORT}  (dev kirish: ${ALLOW_DEV ? 'yoqilgan' : "o'chiq"})`));
+dbReady.then(() => {
+  server.listen(PORT, () => console.log(`Poletgram http://localhost:${PORT}  (dev kirish: ${ALLOW_DEV ? 'yoqilgan' : "o'chiq"}, baza: ${store.kind})`));
+}).catch((e) => { console.error('BAZA XATOSI:', e.message); process.exit(1); });

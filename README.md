@@ -38,6 +38,30 @@ Testlar: `npm test` (shashka qoidalari), `node e2e.js` (server, ws kerak).
 - Hozircha tangalar faqat vazifa/referal/g'alaba bilan topiladi. Depozit, pul yechish va do'kon "Tez orada". Haqiqiy pulga tanga sotish va yutuqni yechish stavka (qimor) hisoblanadi, O'zbekistonda ruxsat etilmagan, shuning uchun kodga qo'shilmagan.
 - Reklama vazifasi "Tez orada" (reklama tarmog'i ulanmagan).
 
+## Xotira (ma'lumotlar saqlanishi) — MUHIM
+
+Render bepul tarifida disk har safar qayta ishga tushganda (deploy) tozalanadi. Foydalanuvchilar, tangalar, buyurtmalar yo'qolmasligi uchun PostgreSQL ulang:
+
+1. https://neon.tech (yoki supabase.com) da bepul loyiha oching va **connection string** ni nusxalang (`postgresql://...`).
+2. Render → servis → **Environment** → `DATABASE_URL` = o'sha satr → Save.
+3. Qayta deploy bo'lgach `https://SAYT/diag` oching: `"storage": "postgres"` va `"storageError": null` bo'lishi kerak.
+
+Eslatmalar:
+- Birinchi ishga tushganda eski JSON fayldagi ma'lumotlar avtomatik ko'chiriladi.
+- Baza bilan ulanib bo'lmasa, server ataylab to'xtaydi (bo'sh baza bilan ishlab, ma'lumotni ustidan yozib yubormaslik uchun).
+- SSL kerak bo'lmasa: `DATABASE_SSL=0`.
+- Render'ning o'z bepul Postgres'i 30 kundan keyin o'chadi — Neon/Supabase tavsiya etiladi.
+
+## Boshqa xizmatga ulash (SMM panel)
+
+Telegram botlari bir-biriga xabar yubora olmaydi, shuning uchun buyurtmalar boshqa xizmatning **API**'siga yuboriladi (SMM panellarda "API" bo'limi bor).
+
+1. Panelingizdan API manzili (masalan `https://panel.uz/api/v2`) va API kalitni oling.
+2. Render → Environment: `SMM_API_URL` va `SMM_API_KEY` ni qo'ying.
+3. `/admin` → Do'kon narxlari → har bir xizmat uchun **Panel ID** (paneldagi service ID) kiriting → Saqlash.
+
+Endi mijoz buyurtma bersa, u avtomatik panelga yuboriladi; har daqiqada holat tekshiriladi: bajarilsa mijozga xabar, bekor bo'lsa tanga qaytariladi. Yuborilmasa adminga xabar keladi va Buyurtmalarda "Panelga qayta yuborish" tugmasi chiqadi. Panel ID kiritilmagan xizmatlar avvalgidek qo'lda bajariladi.
+
 ## Admin panel (`/admin`)
 **Telegram ichida:** botga `/id` yozing → raqamni oling → Render'da `ADMIN_IDS=sizning_id` (bir nechta bo'lsa vergul bilan) → botga `/admin` yozing → "Admin panelni ochish" tugmasi parolsiz ochadi (Telegram imzosi bilan tekshiriladi). Brauzerda esa `ADMIN_PASSWORD` bilan kiriladi.
 

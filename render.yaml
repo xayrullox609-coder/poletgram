@@ -15,5 +15,11 @@ services:
         sync: false
       - key: ADMIN_IDS
         sync: false
+      - key: DATABASE_URL
+        sync: false   # PostgreSQL (Neon/Supabase). Qo'ymasangiz ma'lumotlar har deployda o'chadi
       - key: ALLOW_DEV
         value: "1"   # sinov uchun brauzerdan kirish. Productionda "0" qiling
+      - key: SMM_API_URL   # ixtiyoriy: SMM panel API manzili, masalan https://panel.uz/api/v2
+        sync: false
+      - key: SMM_API_KEY
+        sync: false
