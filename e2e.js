@@ -117,23 +117,37 @@ function client(id) {
   const st = await adm('/api/admin/stats'); assert.ok(st.users >= 4);
   assert.ok((await fetch(`http://localhost:${PORT}/admin`).then((r) => r.text())).includes('Poletgram admin'));
   console.log('ok - admin: tanga, ban, sozlamalar, statistika, /admin sahifa');
-  // do'kon (sinov rejimida to'lov o'tgan deb hisoblanadi)
+  // do'kon: tanga bilan
+  const POST = (p, body, id = 'alice') => fetch(`http://localhost:${PORT}${p}`, { method: 'POST', headers: { 'x-init-data': `dev:${id}::${id}`, 'content-type': 'application/json' }, body: JSON.stringify(body) }).then((r) => r.json());
   const sh = await api('/api/shop', 'alice'); assert.strictEqual(sh.products.length, 6);
   assert.ok(sh.products.find((p) => p.id === 'ig_followers').soon);
-  const bad = await fetch(`http://localhost:${PORT}/api/shop/order`, { method: 'POST', headers: { 'x-init-data': 'dev:alice::alice', 'content-type': 'application/json' }, body: JSON.stringify({ id: 'tg_views', qty: 2000, link: 'https://evil.com/x' }) }).then((r) => r.json());
-  assert.ok(bad.error);
-  const ord = (body) => fetch(`http://localhost:${PORT}/api/shop/order`, { method: 'POST', headers: { 'x-init-data': 'dev:alice::alice', 'content-type': 'application/json' }, body: JSON.stringify(body) }).then((r) => r.json());
-  assert.ok((await ord({ id: 'ig_followers', qty: 100, link: 'https://instagram.com/x' })).error);
-  assert.ok((await ord({ id: 'tg_views', qty: 99999999, link: 'https://t.me/ch/1' })).error);
-  assert.ok((await ord({ id: 'tg_views', qty: 5, link: 'https://t.me/ch/1' })).error);
-  const ok = await ord({ id: 'tg_views', qty: 2500, link: 'https://t.me/ch/1' }); assert.ok(ok.ok && ok.dev); // 2500 -> 3 paket
-  const ol = await adm('/api/admin/orders?status=paid'); const o1 = ol.list[0];
-  assert.strictEqual(o1.stars, 6); assert.strictEqual(o1.qty, 3000);
-  assert.ok((await adm('/api/admin/orders/status', 'POST', { id: o1.id, status: 'done' })).ok);
+  const P = Object.fromEntries(sh.products.map((p) => [p.id, p]));
+  assert.deepStrictEqual([P.ig_views.qty, P.ig_views.price, P.ig_likes.qty, P.ig_likes.price], [1000, 100, 100, 100]);
+  assert.deepStrictEqual([P.tg_views.qty, P.tg_views.price, P.tg_reactions.qty, P.tg_reactions.price, P.tg_followers.qty, P.tg_followers.price], [1000, 200, 100, 100, 10, 100]);
+  await adm('/api/admin/users/coins', 'POST', { id: 'devalice', amount: 2000 });
+  assert.ok((await POST('/api/shop/order', { id: 'tg_views', qty: 2000, link: 'https://evil.com/x' })).error);
+  assert.ok((await POST('/api/shop/order', { id: 'ig_followers', qty: 100, link: 'https://instagram.com/x' })).error);
+  assert.ok((await POST('/api/shop/order', { id: 'tg_views', qty: 99999999, link: 'https://t.me/ch/1' })).error);
+  assert.ok((await POST('/api/shop/order', { id: 'tg_views', qty: 5, link: 'https://t.me/ch/1' })).error);
+  const b0 = (await api('/api/me', 'alice')).user.coins;
+  const ok = await POST('/api/shop/order', { id: 'tg_views', qty: 2500, link: 'https://t.me/ch/1' }); // 3 paket = 600 tanga, 3000 ta
+  assert.ok(ok.ok); assert.strictEqual(ok.coins, b0 - 600);
+  const o1 = (await adm('/api/admin/orders?status=paid')).list[0];
+  assert.strictEqual(o1.price, 600); assert.strictEqual(o1.qty, 3000);
+  assert.ok((await adm('/api/admin/orders/refund', 'POST', { id: o1.id })).ok);
+  assert.strictEqual((await api('/api/me', 'alice')).user.coins, b0);
+  assert.ok((await adm('/api/admin/orders/refund', 'POST', { id: o1.id })).error);
+  const o2 = await POST('/api/shop/order', { id: 'ig_likes', qty: 100, link: 'https://instagram.com/p/x' }); assert.ok(o2.ok);
+  const lo = (await adm('/api/admin/orders?status=paid')).list[0];
+  assert.ok((await adm('/api/admin/orders/status', 'POST', { id: lo.id, status: 'done' })).ok);
   assert.strictEqual((await api('/api/shop', 'alice')).orders[0].status, 'done');
-  assert.ok((await adm('/api/admin/shop', 'POST', { id: 'ig_followers', title: 'Obunachi', qty: 100, stars: 2, maxPacks: 10, active: true, soon: false })).ok);
-  assert.ok((await ord({ id: 'ig_followers', qty: 100, link: 'https://instagram.com/x' })).ok);
-  console.log("ok - do'kon: 6 xizmat, havola va miqdor tekshiruvi, buyurtma, admin holati va narx tahriri");
+  const poor = await POST('/api/shop/order', { id: 'ig_likes', qty: 100, link: 'https://instagram.com/p/x' }, 'bobby'); // yangi foydalanuvchi: 50-100 tanga
+  await adm('/api/admin/users/coins', 'POST', { id: 'devbobby', amount: -(await api('/api/me', 'bobby')).user.coins + 10 });
+  assert.strictEqual((await POST('/api/shop/order', { id: 'ig_likes', qty: 100, link: 'https://instagram.com/p/x' }, 'bobby')).error, 'Tanga yetarli emas');
+  assert.ok((await adm('/api/admin/shop', 'POST', { id: 'ig_followers', title: 'Obunachi', qty: 100, price: 150, maxPacks: 10, active: true, soon: false })).ok);
+  assert.ok((await POST('/api/shop/order', { id: 'ig_followers', qty: 100, link: 'https://instagram.com/x' })).ok);
+  assert.strictEqual((await fetch(`http://localhost:${PORT}/`).then((r) => r.text())).includes('DEPOZIT'), false);
+  console.log("ok - do'kon: tanga narxlari, tekshiruvlar, yechish/qaytarish, yetarli emas, admin narx tahriri, depozit yo'q");
 
   console.log('\nHAMMA SINOVLAR O\'TDI');
   srv.kill(); process.exit(0);

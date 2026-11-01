@@ -26,19 +26,21 @@ const MOVE_MS = 60 * 1000;
 
 /* ---------------- Ma'lumotlar bazasi (JSON fayl) ---------------- */
 const DB_FILE = process.env.DB_FILE || path.join(__dirname, 'data', 'db.json');
-let db = { users: {}, ledger: [], pendingRef: {}, tasks: null, settings: {}, shop: null, orders: [] };
+let db = { users: {}, ledger: [], pendingRef: {}, tasks: null, settings: {}, shop: null, shopVer: 0, orders: [] };
 try { db = Object.assign(db, JSON.parse(fs.readFileSync(DB_FILE, 'utf8'))); } catch { /* yangi baza */ }
 db.settings = Object.assign({ welcomeCoins: 100, referralReward: 20 }, db.settings || {});
 if (!Array.isArray(db.orders)) db.orders = [];
-if (!Array.isArray(db.shop)) {
-  // Narxlar Telegram Stars'da. qty = bitta paketdagi miqdor, stars = bitta paket narxi. Admin paneldan o'zgartiriladi.
+const SHOP_VER = 2; // narxlar tangada
+if (!Array.isArray(db.shop) || db.shopVer !== SHOP_VER) {
+  // price = bitta paket narxi (tanga), qty = bitta paketdagi miqdor. Admin paneldan o'zgartiriladi.
+  db.shopVer = SHOP_VER;
   db.shop = [
-    { id: 'ig_views', platform: 'instagram', kind: 'views', title: "Ko'rish", qty: 1000, stars: 1, maxPacks: 20, active: true, soon: false },
-    { id: 'ig_followers', platform: 'instagram', kind: 'followers', title: 'Obunachi', qty: 0, stars: 0, maxPacks: 20, active: true, soon: true },
-    { id: 'ig_likes', platform: 'instagram', kind: 'likes', title: 'Like', qty: 25, stars: 1, maxPacks: 40, active: true, soon: false },
-    { id: 'tg_views', platform: 'telegram', kind: 'views', title: "Ko'rish", qty: 1000, stars: 2, maxPacks: 20, active: true, soon: false },
-    { id: 'tg_reactions', platform: 'telegram', kind: 'reactions', title: 'Reaksiya', qty: 20, stars: 1, maxPacks: 40, active: true, soon: false },
-    { id: 'tg_followers', platform: 'telegram', kind: 'followers', title: 'Obunachi', qty: 10, stars: 1, maxPacks: 50, active: true, soon: false },
+    { id: 'ig_views', platform: 'instagram', kind: 'views', title: "Ko'rish", qty: 1000, price: 100, maxPacks: 20, active: true, soon: false },
+    { id: 'ig_followers', platform: 'instagram', kind: 'followers', title: 'Obunachi', qty: 0, price: 0, maxPacks: 20, active: true, soon: true },
+    { id: 'ig_likes', platform: 'instagram', kind: 'likes', title: 'Like', qty: 100, price: 100, maxPacks: 20, active: true, soon: false },
+    { id: 'tg_views', platform: 'telegram', kind: 'views', title: "Ko'rish", qty: 1000, price: 200, maxPacks: 20, active: true, soon: false },
+    { id: 'tg_reactions', platform: 'telegram', kind: 'reactions', title: 'Reaksiya', qty: 100, price: 100, maxPacks: 20, active: true, soon: false },
+    { id: 'tg_followers', platform: 'telegram', kind: 'followers', title: 'Obunachi', qty: 10, price: 100, maxPacks: 50, active: true, soon: false },
   ];
 }
 if (!Array.isArray(db.tasks)) {
@@ -254,55 +256,40 @@ app.post('/api/tasks/claim', auth, async (req, res) => {
   res.json({ ok: true, coins: u.coins });
 });
 
-/* ---------------- Do'kon (Telegram Stars) ---------------- */
-const isDevId = (id) => String(id).startsWith('dev');
+/* ---------------- Do'kon (tanga bilan) ---------------- */
 const linkOk = (p, link) => (p.platform === 'instagram'
   ? /^https?:\/\/(www\.)?instagram\.com\/\S+$/i.test(link)
   : /^(https?:\/\/t\.me\/\S+|@[A-Za-z0-9_]{4,})$/i.test(link));
-const shopView = (p) => ({ id: p.id, platform: p.platform, kind: p.kind, title: p.title, qty: p.qty, stars: p.stars, maxPacks: p.maxPacks, soon: !!p.soon });
-const orderView = (o) => ({ id: o.id, title: o.title, qty: o.qty, stars: o.stars, status: o.status, created: o.created, platform: o.platform });
+const shopView = (p) => ({ id: p.id, platform: p.platform, kind: p.kind, title: p.title, qty: p.qty, price: p.price, maxPacks: p.maxPacks, soon: !!p.soon });
+const orderView = (o) => ({ id: o.id, title: o.title, qty: o.qty, price: o.price, status: o.status, created: o.created, platform: o.platform });
 app.get('/api/shop', auth, (req, res) => {
   res.json({
     products: db.shop.filter((p) => p.active).map(shopView),
-    orders: db.orders.filter((o) => o.uid === req.u.id && o.status !== 'unpaid').slice(-15).reverse().map(orderView),
+    orders: db.orders.filter((o) => o.uid === req.u.id).slice(-15).reverse().map(orderView),
   });
 });
-app.post('/api/shop/order', auth, async (req, res) => {
+app.post('/api/shop/order', auth, (req, res) => {
   const b = req.body || {}, u = req.u;
-  const hour = Date.now() - 3600e3;
-  db.orders = db.orders.filter((o) => o.status !== 'unpaid' || o.created > hour); // to'lanmagan eski buyurtmalar o'chadi
   const p = db.shop.find((x) => x.id === b.id);
-  if (!p || !p.active || p.soon || !p.stars) return res.json({ error: 'Xizmat hozircha mavjud emas' });
+  if (!p || !p.active || p.soon || !p.price || !p.qty) return res.json({ error: 'Xizmat hozircha mavjud emas' });
   const want = Math.round(Number(b.qty));
   const minQ = p.qty, maxQ = p.qty * p.maxPacks;
   if (!(want >= minQ && want <= maxQ)) return res.json({ error: `Miqdor ${minQ} dan ${maxQ} gacha bo'lsin` });
   const packs = Math.ceil(want / p.qty); // narx paketlar bo'yicha; mijoz to'langan paketlarning to'liq miqdorini oladi
   const link = String(b.link || '').trim().slice(0, 200);
   if (!linkOk(p, link)) return res.json({ error: p.platform === 'instagram' ? 'Instagram havolasini kiriting (https://instagram.com/...)' : 'Telegram havolasini kiriting (https://t.me/... yoki @kanal)' });
-  if (db.orders.filter((o) => o.uid === u.id && o.status === 'unpaid').length >= 5) return res.json({ error: "Juda ko'p to'lanmagan buyurtma. Birozdan so'ng urinib ko'ring" });
+  const price = p.price * packs;
+  if (u.coins < price) return res.json({ error: 'Tanga yetarli emas' });
   const order = {
     id: 'o_' + crypto.randomBytes(5).toString('hex'), uid: u.id, uname: u.name, product: p.id, platform: p.platform,
-    title: `${p.platform === 'instagram' ? 'Instagram' : 'Telegram'}: ${p.title}`, qty: p.qty * packs, packs, stars: p.stars * packs,
-    link, status: 'unpaid', created: Date.now(),
+    title: `${p.platform === 'instagram' ? 'Instagram' : 'Telegram'}: ${p.title}`, qty: p.qty * packs, packs, price,
+    link, status: 'paid', created: Date.now(), paidAt: Date.now(),
   };
+  credit(u, -price, 'shop', order.id); // balans faqat jurnal orqali o'zgaradi
   db.orders.push(order); save();
-  if (bot && !isDevId(u.id)) {
-    try {
-      const url = await bot.api.createInvoiceLink(`${order.title} ×${order.qty}`.slice(0, 32), `${order.title}: ${order.qty} ta. Havola: ${link}`.slice(0, 255),
-        order.id, '', 'XTR', [{ label: `${order.qty} ta`.slice(0, 30), amount: order.stars }]);
-      return res.json({ ok: true, url, order: order.id });
-    } catch (e) {
-      db.orders = db.orders.filter((o) => o.id !== order.id);
-      console.error('invoice error', e.message);
-      return res.json({ error: "To'lov havolasi yaratilmadi. Keyinroq urinib ko'ring" });
-    }
-  }
-  if (!BOT_TOKEN && ALLOW_DEV) { // faqat sinov rejimi (bot yo'q): to'lov o'tgan deb hisoblanadi
-    order.status = 'paid'; order.paidAt = Date.now(); save();
-    return res.json({ ok: true, dev: true, order: order.id });
-  }
-  db.orders = db.orders.filter((o) => o.id !== order.id);
-  res.json({ error: "To'lov hozircha mavjud emas" });
+  sendBalance(u);
+  for (const a of ADMIN_IDS) notify(a, `🛒 Yangi buyurtma: ${order.title} ×${order.qty}\n${price} tanga · ${order.uname}\n${order.link}`);
+  res.json({ ok: true, coins: u.coins, order: order.id });
 });
 
 /* ---------------- Admin panel API ---------------- */
@@ -424,25 +411,22 @@ app.get('/diag', async (req, res) => {
 });
 app.get('/api/admin/orders', admin, (req, res) => {
   const st = String(req.query.status || '');
-  const list = db.orders.filter((o) => (st ? o.status === st : o.status !== 'unpaid')).slice(-200).reverse();
-  res.json({ list, paidTotal: db.orders.filter((o) => ['paid', 'done'].includes(o.status)).reduce((a, o) => a + o.stars, 0) });
+  const list = db.orders.filter((o) => !st || o.status === st).slice(-200).reverse();
+  res.json({ list, spentTotal: db.orders.filter((o) => ['paid', 'done'].includes(o.status)).reduce((a, o) => a + o.price, 0) });
 });
 app.post('/api/admin/orders/status', admin, (req, res) => {
   const o = db.orders.find((x) => x.id === req.body.id);
-  if (!o) return res.json({ error: 'topilmadi' });
-  if (!['paid', 'done', 'canceled'].includes(req.body.status)) return res.json({ error: 'status' });
-  if (o.status === 'unpaid' || o.status === 'refunded') return res.json({ error: "Bu buyurtmani o'zgartirib bo'lmaydi" });
-  o.status = req.body.status; save();
-  if (o.status === 'done') notify(o.uid, `✅ Buyurtmangiz bajarildi: ${o.title} (${o.qty} ta)`);
+  if (!o || o.status !== 'paid' || req.body.status !== 'done') return res.json({ error: "O'zgartirib bo'lmaydi" });
+  o.status = 'done'; save();
+  notify(o.uid, `✅ Buyurtmangiz bajarildi: ${o.title} (${o.qty} ta)`);
   res.json({ ok: true });
 });
-app.post('/api/admin/orders/refund', admin, async (req, res) => {
-  const o = db.orders.find((x) => x.id === req.body.id);
-  if (!o || !['paid', 'canceled'].includes(o.status) || !o.chargeId) return res.json({ error: "Qaytarib bo'lmaydi (to'lov topilmadi yoki allaqachon bajarilgan)" });
-  if (!bot) return res.json({ error: 'Bot ulanmagan' });
-  try { await bot.api.refundStarPayment(Number(o.uid), o.chargeId); } catch (e) { return res.json({ error: 'Telegram: ' + e.message }); }
-  o.status = 'refunded'; save();
-  notify(o.uid, `↩️ Buyurtma bekor qilindi, ${o.stars} ⭐ qaytarildi: ${o.title}`);
+app.post('/api/admin/orders/refund', admin, (req, res) => {
+  const o = db.orders.find((x) => x.id === req.body.id), u = o && db.users[o.uid];
+  if (!o || !u || o.status !== 'paid') return res.json({ error: "Qaytarib bo'lmaydi (allaqachon bajarilgan yoki qaytarilgan)" });
+  o.status = 'refunded';
+  credit(u, o.price, 'shop_refund', o.id); sendBalance(u);
+  notify(o.uid, `↩️ Buyurtma bekor qilindi, ${o.price} tanga qaytarildi: ${o.title}`);
   res.json({ ok: true });
 });
 app.get('/api/admin/shop', admin, (req, res) => res.json({ list: db.shop }));
@@ -451,7 +435,7 @@ app.post('/api/admin/shop', admin, (req, res) => {
   if (!p) return res.json({ error: 'topilmadi' });
   const n = (x, lo, hi, d) => { const v = Math.round(Number(x)); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
   p.title = String(req.body.title || p.title).trim().slice(0, 30);
-  p.qty = n(req.body.qty, 0, 1e7, p.qty); p.stars = n(req.body.stars, 0, 100000, p.stars); p.maxPacks = n(req.body.maxPacks, 1, 1000, p.maxPacks);
+  p.qty = n(req.body.qty, 0, 1e7, p.qty); p.price = n(req.body.price, 0, 1e7, p.price); p.maxPacks = n(req.body.maxPacks, 1, 1000, p.maxPacks);
   p.active = !!req.body.active; p.soon = !!req.body.soon;
   save(); res.json({ ok: true });
 });
@@ -489,7 +473,7 @@ if (BOT_TOKEN) {
   const WELCOME = (name) => rich(
     `{game} Shashka o'ynab tanga yuting, ${name}!\n\n` +
     `{coin} Tangalarni g'alabalar, vazifalar va do'stlarni taklif qilish orqali to'plang.\n\n` +
-    `{shop} Tez orada: tangalarni {star} Stars | {game} PUBG UC | {gem} FreeFire olmos va boshqa xizmatlarga almashtirasiz.\n\n` +
+    `{shop} Do'konda tangalaringizni Instagram va Telegram xizmatlariga almashtirasiz.\nTez orada: {star} Stars | {game} PUBG UC | {gem} FreeFire olmos.\n\n` +
     `{fire} Pastdagi tugmani bosing va o'yinni boshlang!`);
   bot.command('start', async (ctx) => {
     const p = (ctx.match || '').trim();
@@ -506,18 +490,6 @@ if (BOT_TOKEN) {
       const plain = text.replace(/\s+$/, '');
       await ctx.reply(plain, { reply_markup: openKb(url) });
     }
-  });
-  bot.on('pre_checkout_query', async (ctx) => {
-    const q = ctx.preCheckoutQuery, o = db.orders.find((x) => x.id === q.invoice_payload);
-    const ok = !!o && o.status === 'unpaid' && o.uid === String(q.from.id) && q.currency === 'XTR' && q.total_amount === o.stars;
-    await ctx.answerPreCheckoutQuery(ok, ok ? undefined : 'Buyurtma topilmadi yoki eskirgan');
-  });
-  bot.on('message:successful_payment', async (ctx) => {
-    const sp = ctx.message.successful_payment, o = db.orders.find((x) => x.id === sp.invoice_payload);
-    if (!o || o.status !== 'unpaid') return;
-    o.status = 'paid'; o.paidAt = Date.now(); o.chargeId = sp.telegram_payment_charge_id; save();
-    await ctx.reply(`✅ To'lov qabul qilindi: ${o.title} (${o.qty} ta, ${o.stars} ⭐).\nBuyurtma bajarilgach xabar beramiz.`);
-    for (const a of ADMIN_IDS) notify(a, `🛒 Yangi buyurtma: ${o.title} ×${o.qty}\n${o.stars} ⭐ · ${o.uname}\n${o.link}`);
   });
   bot.command('id', (ctx) => ctx.reply(`Sizning Telegram ID: ${ctx.from.id}`));
   bot.command('admin', async (ctx) => {
