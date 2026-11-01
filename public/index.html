@@ -377,7 +377,7 @@ function setAva(el, name, photo) {
 function setCoins(c) { if (me) me.coins = c; $('#mCoins').textContent = fmt(c); $$('.bc').forEach((e) => e.textContent = fmt(c)); renderStakes(); }
 function renderMe() {
   if (!me) return;
-  $('#mName').textContent = me.name; $('#mLvl').textContent = `Lvl ${me.level} · ${me.title}`;
+  $('#mName').textContent = me.name; $('#mLvl').textContent = me.title;
   setAva($('#mAva'), me.name, me.photo); setCoins(me.coins);
 }
 async function refreshMe() { try { const d = await api('/api/me'); me = d.user; $('#mOnline').textContent = d.online + ' online'; renderMe(); } catch (e) {} }
@@ -556,7 +556,7 @@ $('#taskList').addEventListener('click', async (e) => {
 });
 async function loadRating() {
   const d = await api('/api/rating?type=' + ratingType);
-  $('#ratingList').innerHTML = d.list.map((u) => `<div class="row${u.me ? ' me' : ''}"><span class="rk">${u.rank}</span><span class="nm">${esc(u.name)}</span><span class="v">${fmt(u.value)} ${ratingType === 'wins' ? IC('trophy') : ''}</span></div>`).join('') || '<p class="hint">Hozircha bo\'sh</p>';
+  $('#ratingList').innerHTML = d.list.map((u) => `<div class="row${u.me ? ' me' : ''}"><span class="rk">${u.rank}</span><span class="nm">${esc(u.name)}</span><span class="v">${ratingType === 'level' ? esc(u.value) : fmt(u.value)} ${ratingType === 'wins' ? IC('trophy') : ''}</span></div>`).join('') || '<p class="hint">Hozircha bo\'sh</p>';
   $('#myRank').textContent = d.myRank ? `Sizning o'rningiz: ${d.myRank}` : '';
 }
 $$('[data-rt]').forEach((b) => b.onclick = () => { ratingType = b.dataset.rt; $$('[data-rt]').forEach((x) => x.classList.toggle('on', x === b)); loadRating(); });
@@ -571,8 +571,8 @@ function onState(s) {
   $('#inviteBox').style.display = 'none';
   show('game');
   $('#gWin').innerHTML = s.practice ? 'SINOV O\'YINI' : `G'OLIBGA +${s.win} <span class="coin"></span>`;
-  $('#oName').textContent = s.opp.name; $('#oLv').textContent = 'Lv ' + s.opp.level; setAva($('#oAva'), s.opp.name, s.opp.photo);
-  $('#yName').textContent = s.me.name + ' · siz'; $('#yLv').textContent = 'Lv ' + s.me.level; setAva($('#yAva'), s.me.name, s.me.photo);
+  $('#oName').textContent = s.opp.name; $('#oLv').textContent = s.opp.title; setAva($('#oAva'), s.opp.name, s.opp.photo);
+  $('#yName').textContent = s.me.name + ' · siz'; $('#yLv').textContent = s.me.title; setAva($('#yAva'), s.me.name, s.me.photo);
   renderBoard(); tick();
 }
 function renderBoard() {
