@@ -120,18 +120,19 @@ function client(id) {
   // do'kon (sinov rejimida to'lov o'tgan deb hisoblanadi)
   const sh = await api('/api/shop', 'alice'); assert.strictEqual(sh.products.length, 6);
   assert.ok(sh.products.find((p) => p.id === 'ig_followers').soon);
-  const bad = await fetch(`http://localhost:${PORT}/api/shop/order`, { method: 'POST', headers: { 'x-init-data': 'dev:alice::alice', 'content-type': 'application/json' }, body: JSON.stringify({ id: 'tg_views', packs: 2, link: 'https://evil.com/x' }) }).then((r) => r.json());
+  const bad = await fetch(`http://localhost:${PORT}/api/shop/order`, { method: 'POST', headers: { 'x-init-data': 'dev:alice::alice', 'content-type': 'application/json' }, body: JSON.stringify({ id: 'tg_views', qty: 2000, link: 'https://evil.com/x' }) }).then((r) => r.json());
   assert.ok(bad.error);
   const ord = (body) => fetch(`http://localhost:${PORT}/api/shop/order`, { method: 'POST', headers: { 'x-init-data': 'dev:alice::alice', 'content-type': 'application/json' }, body: JSON.stringify(body) }).then((r) => r.json());
-  assert.ok((await ord({ id: 'ig_followers', packs: 1, link: 'https://instagram.com/x' })).error);
-  assert.ok((await ord({ id: 'tg_views', packs: 999, link: 'https://t.me/ch/1' })).error);
-  const ok = await ord({ id: 'tg_views', packs: 3, link: 'https://t.me/ch/1' }); assert.ok(ok.ok && ok.dev);
+  assert.ok((await ord({ id: 'ig_followers', qty: 100, link: 'https://instagram.com/x' })).error);
+  assert.ok((await ord({ id: 'tg_views', qty: 99999999, link: 'https://t.me/ch/1' })).error);
+  assert.ok((await ord({ id: 'tg_views', qty: 5, link: 'https://t.me/ch/1' })).error);
+  const ok = await ord({ id: 'tg_views', qty: 2500, link: 'https://t.me/ch/1' }); assert.ok(ok.ok && ok.dev); // 2500 -> 3 paket
   const ol = await adm('/api/admin/orders?status=paid'); const o1 = ol.list[0];
   assert.strictEqual(o1.stars, 6); assert.strictEqual(o1.qty, 3000);
   assert.ok((await adm('/api/admin/orders/status', 'POST', { id: o1.id, status: 'done' })).ok);
   assert.strictEqual((await api('/api/shop', 'alice')).orders[0].status, 'done');
   assert.ok((await adm('/api/admin/shop', 'POST', { id: 'ig_followers', title: 'Obunachi', qty: 100, stars: 2, maxPacks: 10, active: true, soon: false })).ok);
-  assert.ok((await ord({ id: 'ig_followers', packs: 1, link: 'https://instagram.com/x' })).ok);
+  assert.ok((await ord({ id: 'ig_followers', qty: 100, link: 'https://instagram.com/x' })).ok);
   console.log("ok - do'kon: 6 xizmat, havola va miqdor tekshiruvi, buyurtma, admin holati va narx tahriri");
 
   console.log('\nHAMMA SINOVLAR O\'TDI');

@@ -273,8 +273,10 @@ app.post('/api/shop/order', auth, async (req, res) => {
   db.orders = db.orders.filter((o) => o.status !== 'unpaid' || o.created > hour); // to'lanmagan eski buyurtmalar o'chadi
   const p = db.shop.find((x) => x.id === b.id);
   if (!p || !p.active || p.soon || !p.stars) return res.json({ error: 'Xizmat hozircha mavjud emas' });
-  const packs = Math.round(Number(b.packs));
-  if (!(packs >= 1 && packs <= p.maxPacks)) return res.json({ error: "Miqdor noto'g'ri" });
+  const want = Math.round(Number(b.qty));
+  const minQ = p.qty, maxQ = p.qty * p.maxPacks;
+  if (!(want >= minQ && want <= maxQ)) return res.json({ error: `Miqdor ${minQ} dan ${maxQ} gacha bo'lsin` });
+  const packs = Math.ceil(want / p.qty); // narx paketlar bo'yicha; mijoz to'langan paketlarning to'liq miqdorini oladi
   const link = String(b.link || '').trim().slice(0, 200);
   if (!linkOk(p, link)) return res.json({ error: p.platform === 'instagram' ? 'Instagram havolasini kiriting (https://instagram.com/...)' : 'Telegram havolasini kiriting (https://t.me/... yoki @kanal)' });
   if (db.orders.filter((o) => o.uid === u.id && o.status === 'unpaid').length >= 5) return res.json({ error: "Juda ko'p to'lanmagan buyurtma. Birozdan so'ng urinib ko'ring" });
