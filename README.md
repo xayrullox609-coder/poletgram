@@ -24,7 +24,7 @@ Testlar: `npm test` (shashka qoidalari), `node e2e.js` (server, ws kerak).
    - `ADMIN_PASSWORD` — admin panel paroli (**uzun va noyob qiling**). Qo'yilmasa `/admin` productionda o'chiq turadi
    - `WEBAPP_URL` — Render manzili, masalan `https://poletgram.onrender.com`
    - `ALLOW_DEV=1` — brauzerdan sinash saytini yoqadi. **Ochiq ishga tushirishdan oldin `0` qiling.**
-   - Premium emojilar (ixtiyoriy): `CE_GAME`, `CE_COIN`, `CE_SHOP`, `CE_STAR`, `CE_GEM`, `CE_FIRE` — har biriga custom emoji ID'sini yozing (ID'ni @idstickerbot yoki emoji'ni @getidsbot'ga yuborib olasiz). Bo'sh qoldirsangiz oddiy emoji chiqadi. Telegram botlarga custom emoji'ni faqat bot egasi Fragment'da qo'shimcha username sotib olgan bo'lsagina ruxsat beradi.
+   - Premium emojilar (ixtiyoriy): `CE_GAME`, `CE_COIN`, `CE_SHOP`, `CE_STAR`, `CE_GEM`, `CE_FIRE`, `CE_GIFT`, `CE_GREEN`, `CE_RED`, `CE_INF`, `CE_USERS` — har biriga custom emoji ID'sini yozing (ID'ni @idstickerbot yoki emoji'ni @getidsbot'ga yuborib olasiz). Bo'sh qoldirsangiz oddiy emoji chiqadi. Telegram botlarga custom emoji'ni faqat bot egasi Fragment'da qo'shimcha username sotib olgan bo'lsagina ruxsat beradi.
 4. Deploy tugagach: sinov sayti = Render manzili. Bot webhook va menyu tugmasi avtomatik o'rnatiladi.
 
 ## 3. BotFather

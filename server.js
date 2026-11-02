@@ -416,24 +416,43 @@ app.post('/api/promo', auth, (req, res) => {
   if (p.users[u.id]) return bad('Siz bu promokodni allaqachon ishlatgansiz');
   if (p.maxUses && p.used >= p.maxUses) return bad('Promokod limiti tugagan');
   p.users[u.id] = now; p.used++;
-  credit(u, p.coins, 'promo', p.code); sendBalance(u); save();
+  credit(u, p.coins, 'promo', p.code); sendBalance(u); save(); refreshPromoPost(p);
   res.json({ ok: true, coins: p.coins, balance: u.coins });
 });
 const PROMO_CHANNEL = (process.env.PROMO_CHANNEL || '@poletgram').trim();
+function promoCaption(p) {
+  const left = p.maxUses ? Math.max(0, p.maxUses - p.used) : null;
+  const over = left === 0, off = !p.active;
+  const status = off ? "{red} O'CHIRILGAN" : over ? '{red} TUGADI' : '{green} FAOL';
+  const limit = p.maxUses ? `{users} Limit: ${p.maxUses} dan ${left} qoldi.` : '{inf} Limit cheksiz.';
+  return rich(`{gift} +${p.coins} {coin}\n\n${status}\n\n${limit}`);
+}
+const promoKb = () => { const { InlineKeyboard } = require('grammy'); return new InlineKeyboard().url('🎮 Botni ochish', `https://t.me/${BOT_USERNAME}`); };
 async function postPromo(p) {
   if (!bot) return 'Bot ishlamayapti (BOT_TOKEN)';
   try {
-    const { InputFile, InlineKeyboard } = require('grammy');
+    const { InputFile } = require('grammy');
     const img = await require('./promoimg').promoImage(p.code, p.coins);
-    const cap = `🎁 Yangi promokod!\n\n🔑 Kod: ${p.code}\n💰 ${p.coins} tanga${p.maxUses ? `\n👥 Faqat birinchi ${p.maxUses} kishi uchun` : ''}\n\nBotni oching → Promokod bo'limiga kiriting 👇`;
-    await bot.api.sendPhoto(PROMO_CHANNEL, new InputFile(img, 'promo.png'), { caption: cap, reply_markup: new InlineKeyboard().url("🎮 Botni ochish", `https://t.me/${BOT_USERNAME}`) });
-    p.posted = Date.now(); save();
+    const { text, entities } = promoCaption(p);
+    const m = await bot.api.sendPhoto(PROMO_CHANNEL, new InputFile(img, 'promo.png'), { caption: text, caption_entities: entities, reply_markup: promoKb() });
+    p.posted = Date.now(); p.msgChat = m && m.chat ? m.chat.id : PROMO_CHANNEL; p.msgId = m && m.message_id; save();
     return null;
   } catch (e) {
     return /chat not found|not enough rights|forbidden|kicked/i.test(e.message) ? `Kanalga yuborib bo'lmadi: botni ${PROMO_CHANNEL} kanaliga ADMIN qiling (post yuborish huquqi bilan)` : 'Rasm/yuborish xatosi: ' + String(e.message).slice(0, 120);
   }
 }
-app.get('/api/admin/promos', admin, (req, res) => res.json({ list: db.promos.map(({ users, ...p }) => p).reverse() }));
+// Kanaldagi postdagi "necha qoldi"ni yangilash (tez-tez bo'lsa 3 soniyada bir marta)
+const promoTimers = new Map();
+function refreshPromoPost(p) {
+  if (!bot || !p.msgId || promoTimers.has(p.code)) return;
+  promoTimers.set(p.code, setTimeout(async () => {
+    promoTimers.delete(p.code);
+    const { text, entities } = promoCaption(p);
+    if (text === p.lastCaption) return;
+    try { await bot.api.editMessageCaption(p.msgChat, p.msgId, { caption: text, caption_entities: entities, reply_markup: promoKb() }); p.lastCaption = text; save(); } catch { /* post o'chirilgan yoki matn o'zgarmagan */ }
+  }, 3000));
+}
+app.get('/api/admin/promos', admin, (req, res) => res.json({ list: db.promos.map(({ users, lastCaption, ...p }) => p).reverse() }));
 app.post('/api/admin/promos', admin, async (req, res) => {
   const b = req.body || {}, code = normCode(b.code);
   const n = (x) => Math.max(0, Math.min(1e7, Math.round(Number(x)) || 0));
@@ -443,7 +462,7 @@ app.post('/api/admin/promos', admin, async (req, res) => {
   if (b.coins !== undefined && n(b.coins)) p.coins = n(b.coins);
   if (b.maxUses !== undefined) p.maxUses = n(b.maxUses);
   if (b.active !== undefined) p.active = !!b.active;
-  save();
+  save(); refreshPromoPost(p);
   if (b.post) { const err = await postPromo(p); return res.json(err ? { ok: true, warn: err } : { ok: true, posted: true }); }
   res.json({ ok: true });
 });
@@ -623,26 +642,28 @@ function notify(uid, text) {
   if (!bot || String(uid).startsWith('dev')) return;
   bot.api.sendMessage(uid, text).catch(() => {});
 }
+// Premium (custom) emojilar: .env/Render'da CE_<NOM>=<custom_emoji_id> qo'ying. Berilmasa oddiy emoji ishlatiladi.
+// Eslatma: botlar custom emoji'ni faqat bot egasi Fragment'da qo'shimcha username sotib olgan bo'lsagina yubora oladi.
+const CE = { game: ['🎮', process.env.CE_GAME], coin: ['🪙', process.env.CE_COIN], shop: ['🏪', process.env.CE_SHOP],
+  star: ['⭐️', process.env.CE_STAR], gem: ['💎', process.env.CE_GEM], fire: ['🔥', process.env.CE_FIRE], check: ['♟', process.env.CE_CHECK],
+  gift: ['🎁', process.env.CE_GIFT], green: ['🟢', process.env.CE_GREEN], red: ['🔴', process.env.CE_RED], inf: ['♾', process.env.CE_INF], users: ['👥', process.env.CE_USERS] };
+function rich(tpl) { // {game} kabi belgilarni emoji/custom_emoji'ga almashtiradi
+  let text = '', entities = [];
+  for (const part of tpl.split(/(\{\w+\})/)) {
+    const m = part.match(/^\{(\w+)\}$/);
+    if (m && CE[m[1]]) {
+      const [fallback, id] = CE[m[1]];
+      if (id) entities.push({ type: 'custom_emoji', offset: text.length, length: fallback.length, custom_emoji_id: id });
+      text += fallback;
+    } else text += part;
+  }
+  return { text, entities };
+}
+
 if (BOT_TOKEN) {
   const { Bot, InlineKeyboard, InputFile, webhookCallback } = require('grammy');
   bot = new Bot(BOT_TOKEN);
   const openKb = (url) => new InlineKeyboard().webApp("🎮 O'ynash", url);
-  // Premium (custom) emojilar: .env/Render'da CE_<NOM>=<custom_emoji_id> qo'ying. Berilmasa oddiy emoji ishlatiladi.
-  // Eslatma: botlar custom emoji'ni faqat bot egasi Fragment'da qo'shimcha username sotib olgan bo'lsagina yubora oladi.
-  const CE = { game: ['🎮', process.env.CE_GAME], coin: ['🪙', process.env.CE_COIN], shop: ['🏪', process.env.CE_SHOP],
-    star: ['⭐️', process.env.CE_STAR], gem: ['💎', process.env.CE_GEM], fire: ['🔥', process.env.CE_FIRE], check: ['♟', process.env.CE_CHECK] };
-  function rich(tpl) { // {game} kabi belgilarni emoji/custom_emoji'ga almashtiradi
-    let text = '', entities = [];
-    for (const part of tpl.split(/(\{\w+\})/)) {
-      const m = part.match(/^\{(\w+)\}$/);
-      if (m && CE[m[1]]) {
-        const [fallback, id] = CE[m[1]];
-        if (id) entities.push({ type: 'custom_emoji', offset: text.length, length: fallback.length, custom_emoji_id: id });
-        text += fallback;
-      } else text += part;
-    }
-    return { text, entities };
-  }
   const WELCOME = (name) => rich(
     `{game} Shashka o'ynab tanga yuting, ${name}!\n\n` +
     `{coin} Tangalarni g'alabalar, vazifalar va do'stlarni taklif qilish orqali to'plang.\n\n` +
