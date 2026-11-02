@@ -85,7 +85,7 @@ input[type=checkbox]{width:auto}
 
   <section class="tab" id="t-promo">
     <div class="box"><p class="msg" style="margin-top:0">Yangi promokod: kod, necha tanga, necha kishi ishlata oladi (0 = cheksiz). Har foydalanuvchi bitta kodni faqat 1 marta ishlatadi.</p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="pCode" placeholder="KOD" style="width:130px;text-transform:uppercase"><input id="pCoins" type="number" min="1" placeholder="Tanga" style="width:90px"><input id="pMax" type="number" min="0" placeholder="Limit" style="width:90px"><button class="btn sm" id="pAdd">Qo'shish</button></div><div class="msg" id="pMsg"></div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="pCode" placeholder="KOD" style="width:130px;text-transform:uppercase"><input id="pCoins" type="number" min="1" placeholder="Tanga" style="width:90px"><input id="pMax" type="number" min="0" placeholder="Limit" style="width:90px"><label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="pPost" checked> Kanalga rasm bilan yuborish</label><button class="btn sm" id="pAdd">Qo'shish</button></div><div class="msg" id="pMsg"></div></div>
     <div class="box scroll"><table class="tbl"><thead><tr><th>Kod</th><th>Tanga</th><th>Ishlatilgan</th><th>Holat</th><th></th></tr></thead><tbody id="pList"></tbody></table></div>
   </section>
   <section class="tab" id="t-users">
@@ -179,13 +179,15 @@ async function loadPromos() {
   const d = await api('/api/admin/promos');
   $('#pList').innerHTML = d.list.map((p) => `<tr><td><b>${esc(p.code)}</b></td><td>${p.coins}</td><td>${p.used}${p.maxUses ? ' / ' + p.maxUses : ' / ∞'}</td>
     <td><span class="tag ${p.active ? 'on' : 'off'}">${p.active ? 'faol' : "o'chiq"}</span></td>
-    <td><button class="btn sm" data-pt="${esc(p.code)}" data-a="${p.active ? 0 : 1}">${p.active ? "O'chirish" : 'Yoqish'}</button> <button class="btn red sm" data-pd="${esc(p.code)}">O'chirib tashlash</button></td></tr>`).join('') || '<tr><td colspan=5 class="msg">Promokod yo\'q</td></tr>';
+    <td><button class="btn sm" data-pt="${esc(p.code)}" data-a="${p.active ? 0 : 1}">${p.active ? "O'chirish" : 'Yoqish'}</button> <button class="btn sm" data-pp="${esc(p.code)}">Kanalga yuborish</button> <button class="btn red sm" data-pd="${esc(p.code)}">O'chirib tashlash</button></td></tr>`).join('') || '<tr><td colspan=5 class="msg">Promokod yo\'q</td></tr>';
 }
 $('#pAdd').onclick = async () => {
-  const r = await api('/api/admin/promos', 'POST', { code: $('#pCode').value, coins: $('#pCoins').value, maxUses: $('#pMax').value || 0 });
-  $('#pMsg').textContent = r.error || 'Qo\'shildi ✓'; $('#pMsg').className = 'msg ' + (r.error ? 'err' : 'ok'); if (!r.error) { $('#pCode').value = ''; loadPromos(); }
+  const r = await api('/api/admin/promos', 'POST', { code: $('#pCode').value, coins: $('#pCoins').value, maxUses: $('#pMax').value || 0, post: $('#pPost').checked });
+  $('#pMsg').textContent = r.error || (r.warn ? 'Qo\'shildi, lekin: ' + r.warn : r.posted ? 'Qo\'shildi va kanalga yuborildi ✓' : 'Qo\'shildi ✓'); $('#pMsg').className = 'msg ' + (r.error || r.warn ? 'err' : 'ok'); if (!r.error) { $('#pCode').value = ''; loadPromos(); }
 };
 $('#pList').onclick = async (e) => {
+  const pp = e.target.closest('[data-pp]');
+  if (pp) { pp.disabled = true; const r = await api('/api/admin/promos/post', 'POST', { code: pp.dataset.pp }); pp.disabled = false; alert(r.error || 'Kanalga yuborildi ✓'); return; }
   const t = e.target.closest('[data-pt]'), d = e.target.closest('[data-pd]');
   if (t) { await api('/api/admin/promos', 'POST', { code: t.dataset.pt, active: t.dataset.a === '1' }); loadPromos(); }
   if (d && confirm('Promokod o\'chirib tashlansinmi?')) { await api('/api/admin/promos/delete', 'POST', { id: d.dataset.pd }); loadPromos(); }
