@@ -188,6 +188,14 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
 .q.on{display:grid}
 .spin{width:54px;height:54px;border:6px solid #ffffff33;border-top-color:var(--gold);border-radius:50%;margin:0 auto 14px;animation:sp 1s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
+.pcard{margin:18px 4px;padding:22px 20px;border-radius:26px;background:#fff;box-shadow:0 0 0 2px #8f7dff66,0 10px 40px #5b3cff55,0 0 60px #2fd0ff33;color:#1b1233}
+.pcard .ph{display:flex;align-items:center;gap:12px;font-size:21px;margin-bottom:18px}.pcard .ph .ic{width:36px;height:36px}
+.pin{width:100%;box-sizing:border-box;padding:16px 18px;border-radius:20px;border:2.5px solid #8f7dff;background:#fff;color:#1b1233;font:800 18px system-ui,sans-serif;letter-spacing:1.5px;text-transform:uppercase;outline:none}
+.pin::placeholder{color:#8a84a3;letter-spacing:1px;text-transform:none;font-weight:700}
+.pin:focus{border-color:#4f8bff;box-shadow:0 0 0 4px #4f8bff33}
+.pbtn{display:block;width:100%;margin-top:16px;padding:18px;border-radius:24px;border:0;background:linear-gradient(135deg,#6a5cff,#2fb4ff);color:#fff;font:800 19px system-ui,sans-serif;box-shadow:0 8px 24px #4f6bff66}
+.pbtn:disabled{opacity:.6}
+.pmsg{min-height:22px;margin-top:12px;text-align:center;font-weight:700;font-size:14px;color:#c0392b}.pmsg.ok{color:#14894f}
 </style>
 </head>
 <body class="inmenu">
@@ -199,6 +207,7 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
 <symbol id="i-trophy" viewBox="0 0 48 48"><path d="M14 6h20v12c0 7-4 12-10 12s-10-5-10-12z" fill="url(#gg)"/><path d="M14 10H7c0 8 3 12 8 13M34 10h7c0 8-3 12-8 13" stroke="url(#gg)" stroke-width="3" fill="none" stroke-linecap="round"/><rect x="21" y="29" width="6" height="8" fill="url(#gg)"/><rect x="13" y="36" width="22" height="7" rx="2.500" fill="url(#gg)"/><path d="M24 10.500l2.200 4.600 5 .6-3.700 3.400 1 5L24 21.700l-4.500 2.400 1-5-3.700-3.400 5-.6z" fill="#4a2c10"/></symbol>
 <symbol id="i-cash" viewBox="0 0 48 48"><rect x="3" y="11" width="42" height="26" rx="4.500" fill="url(#gg)"/><circle cx="24" cy="24" r="8" fill="none" stroke="#4a2c10" stroke-width="2.600"/><text x="24" y="29" text-anchor="middle" font-size="13" font-weight="800" font-family="Georgia,serif" fill="#4a2c10">$</text><circle cx="10" cy="24" r="2.200" fill="#4a2c10"/><circle cx="38" cy="24" r="2.200" fill="#4a2c10"/></symbol>
 <symbol id="i-shop" viewBox="0 0 48 48"><path d="M5 18l4-11h30l4 11z" fill="url(#gg)"/><path d="M5 18c0 3.500 3 5.500 6.500 5.500S18 21.500 18 18c0 3.500 2.700 5.500 6 5.500s6-2 6-5.500c0 3.500 3 5.500 6.500 5.500S43 21.500 43 18z" fill="#c9993a"/><rect x="9" y="25" width="30" height="18" rx="2" fill="url(#gg)"/><rect x="20" y="30" width="9" height="13" rx="2" fill="#4a2c10"/><rect x="12" y="29" width="5.500" height="6" rx="1" fill="#4a2c10"/><rect x="31.500" y="29" width="5.500" height="6" rx="1" fill="#4a2c10"/></symbol>
+<symbol id="i-ticket" viewBox="0 0 48 48"><path d="M5 14a3 3 0 0 1 3-3h32a3 3 0 0 1 3 3v6a4 4 0 0 0 0 8v6a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3v-6a4 4 0 0 0 0-8z" fill="url(#gg)"/><path d="M30 13v22" stroke="#2a1c10" stroke-width="2.500" stroke-dasharray="3 3" fill="none"/><path d="M17 24l3 3 6-7" stroke="#2a1c10" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 <symbol id="i-stats" viewBox="0 0 48 48"><rect x="6" y="26" width="10" height="17" rx="2.500" fill="url(#gg)"/><rect x="19" y="15" width="10" height="28" rx="2.500" fill="url(#gg)"/><rect x="32" y="5" width="10" height="38" rx="2.500" fill="url(#gg)"/></symbol>
 <symbol id="i-deposit" viewBox="0 0 48 48"><path d="M19 5h10v16h9L24 37 10 21h9z" fill="url(#gg)"/><rect x="7" y="40" width="34" height="5" rx="2.500" fill="url(#gg)"/></symbol>
 <symbol id="i-play" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="url(#gg)"/><path d="M19 14v20l17-10z" fill="#4a2c10"/></symbol>
@@ -238,7 +247,7 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
     </div>
     <div class="mm-col r">
       <div class="mm-b" data-go="friend"><div class="wood"><svg class="ic"><use href="#i-friends"/></svg></div><span>Do'st<br>bilan</span></div>
-      <div class="mm-b" data-go="stats"><div class="wood"><svg class="ic"><use href="#i-stats"/></svg></div><span>Statistika</span></div>
+      <div class="mm-b" data-go="promo"><div class="wood"><svg class="ic"><use href="#i-ticket"/></svg></div><span>Promokod</span></div>
     </div>
     <div class="mm-playw">
       <svg class="lf a" viewBox="0 0 44 32"><path d="M2 18C8 2 28 0 42 10 32 26 12 30 2 18Z" fill="#58b247" stroke="#2f7a2c" stroke-width="1.500"/><path d="M4 18C16 14 28 12 40 10" stroke="#2f7a2c" stroke-width="1.500" fill="none"/></svg><svg class="lf b" viewBox="0 0 44 32"><path d="M2 18C8 2 28 0 42 10 32 26 12 30 2 18Z" fill="#58b247" stroke="#2f7a2c" stroke-width="1.500"/><path d="M4 18C16 14 28 12 40 10" stroke="#2f7a2c" stroke-width="1.500" fill="none"/></svg><svg class="lf c" viewBox="0 0 44 32"><path d="M2 18C8 2 28 0 42 10 32 26 12 30 2 18Z" fill="#58b247" stroke="#2f7a2c" stroke-width="1.500"/><path d="M4 18C16 14 28 12 40 10" stroke="#2f7a2c" stroke-width="1.500" fill="none"/></svg><svg class="lf d" viewBox="0 0 44 32"><path d="M2 18C8 2 28 0 42 10 32 26 12 30 2 18Z" fill="#58b247" stroke="#2f7a2c" stroke-width="1.500"/><path d="M4 18C16 14 28 12 40 10" stroke="#2f7a2c" stroke-width="1.500" fill="none"/></svg><i class="st a"></i><i class="st b"></i>
@@ -301,11 +310,14 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
   <div id="plList"></div>
 </section>
 
-<section id="stats" class="screen">
-  <div class="top"><button class="back" data-go="menu">‹</button><h2><svg class="ic"><use href="#i-stats"/></svg> Statistika</h2></div>
-  <div class="row"><span class="nm">O'yinlar</span><span class="v" id="sG">0</span></div>
-  <div class="row"><span class="nm">G'alabalar</span><span class="v" id="sW">0</span></div>
-  <div class="row"><span class="nm">Mag'lubiyatlar</span><span class="v" id="sL">0</span></div>
+<section id="promo" class="screen">
+  <div class="top"><button class="back" data-go="menu">‹</button><h2><svg class="ic"><use href="#i-ticket"/></svg> Promokod</h2><span class="chip"><span class="bc">0</span> <span class="coin"></span></span></div>
+  <div class="pcard">
+    <div class="ph"><svg class="ic"><use href="#i-ticket"/></svg><b>Promokod kiriting</b></div>
+    <input id="pcIn" class="pin" type="text" placeholder="Kodni kiriting" autocomplete="off" autocapitalize="characters" maxlength="24">
+    <button class="pbtn" id="pcBtn">Faollashtirish ✨</button>
+    <div class="pmsg" id="pcMsg"></div>
+  </div>
 </section>
 
 <!-- O'YIN -->
@@ -360,9 +372,17 @@ function show(id) {
   if (id === 'tasks') loadTasks();
   if (id === 'shop') loadShop();
   if (id === 'rating') loadRating();
-  if (id === 'stats' && me) { $('#sG').textContent = me.games; $('#sW').textContent = me.wins; $('#sL').textContent = me.losses; }
+  if (id === 'promo') { $('#pcMsg').textContent = ''; $('#pcMsg').className = 'pmsg'; }
   if (tg) { try { tg.BackButton[id === 'menu' ? 'hide' : 'show'](); } catch (e) {} }
 }
+$('#pcBtn').onclick = async () => {
+  const code = $('#pcIn').value.trim(), m = $('#pcMsg'); if (!code) return;
+  $('#pcBtn').disabled = true;
+  const r = await api('/api/promo', 'POST', { code }).catch(() => ({ error: 'Tarmoq xatosi' }));
+  $('#pcBtn').disabled = false;
+  if (r.ok) { m.className = 'pmsg ok'; m.textContent = `🎉 +${r.coins} tanga qo'shildi!`; $('#pcIn').value = ''; if (me) me.coins = r.balance; $$('.bc').forEach((x) => x.textContent = r.balance); const mc = $('#mCoins'); if (mc) mc.textContent = r.balance; }
+  else { m.className = 'pmsg'; m.textContent = r.error || 'Xato'; }
+};
 document.addEventListener('click', (e) => { const t = e.target.closest('[data-go]'); if (t) show(t.dataset.go); });
 if (tg) try { tg.BackButton.onClick(() => { if (G) return; const on = document.querySelector('.screen.on'); show(on && on.id === 'shopPl' ? 'shop' : 'menu'); }); } catch (e) {}
 

@@ -83,6 +83,11 @@ input[type=checkbox]{width:auto}
     <div class="box scroll"><table class="tbl"><thead><tr><th>Nomi</th><th>Turi</th><th>Tanga</th><th>Limit</th><th>Holat</th><th></th></tr></thead><tbody id="tList"></tbody></table></div>
   </section>
 
+  <section class="tab" id="t-promo">
+    <div class="box"><p class="msg" style="margin-top:0">Yangi promokod: kod, necha tanga, necha kishi ishlata oladi (0 = cheksiz). Har foydalanuvchi bitta kodni faqat 1 marta ishlatadi.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="pCode" placeholder="KOD" style="width:130px;text-transform:uppercase"><input id="pCoins" type="number" min="1" placeholder="Tanga" style="width:90px"><input id="pMax" type="number" min="0" placeholder="Limit" style="width:90px"><button class="btn sm" id="pAdd">Qo'shish</button></div><div class="msg" id="pMsg"></div></div>
+    <div class="box scroll"><table class="tbl"><thead><tr><th>Kod</th><th>Tanga</th><th>Ishlatilgan</th><th>Holat</th><th></th></tr></thead><tbody id="pList"></tbody></table></div>
+  </section>
   <section class="tab" id="t-users">
     <div class="box"><div class="row2"><input id="uq" placeholder="Ism yoki ID bo'yicha qidirish"><button class="btn" id="uGo">Qidirish</button></div>
     <div class="msg" id="uMsg"></div></div>
@@ -117,13 +122,13 @@ async function api(path, method = 'GET', body) {
   if (r.status === 401 || r.status === 403 || r.status === 429) { const e = await r.json().catch(() => ({})); throw Object.assign(new Error(e.error || 'auth'), { auth: true }); }
   return r.json();
 }
-const TABS = [['stats', 'Statistika'], ['orders', 'Buyurtmalar'], ['shop', "Do'kon narxlari"], ['tasks', 'Vazifalar'], ['users', 'Foydalanuvchilar'], ['bc', 'Xabar yuborish'], ['set', 'Sozlamalar']];
+const TABS = [['stats', 'Statistika'], ['orders', 'Buyurtmalar'], ['shop', "Do'kon narxlari"], ['tasks', 'Vazifalar'], ['promo', 'Promokodlar'], ['users', 'Foydalanuvchilar'], ['bc', 'Xabar yuborish'], ['set', 'Sozlamalar']];
 $('#nav').innerHTML = TABS.map(([k, n]) => `<button data-t="${k}">${n}</button>`).join('');
 $('#nav').onclick = (e) => { const b = e.target.closest('[data-t]'); if (b) openTab(b.dataset.t); };
 function openTab(k) {
   document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('on', t.id === 't-' + k));
   document.querySelectorAll('#nav button').forEach((b) => b.classList.toggle('on', b.dataset.t === k));
-  ({ stats: loadStats, orders: loadOrders, shop: loadShopAdm, tasks: loadTasks, users: loadUsers, set: loadSettings, bc: loadBc })[k]();
+  ({ stats: loadStats, orders: loadOrders, shop: loadShopAdm, tasks: loadTasks, promo: loadPromos, users: loadUsers, set: loadSettings, bc: loadBc })[k]();
 }
 async function login() {
   PASS = $('#pw').value || PASS;
@@ -168,6 +173,22 @@ $('#oList').onclick = async (e) => {
   if (r && confirm('Buyurtma bekor qilinib, tanga mijozga qaytarilsinmi?')) {
     const x = await api('/api/admin/orders/refund', 'POST', { id: r.dataset.rf }); if (x.error) alert(x.error); loadOrders();
   }
+};
+/* promokodlar */
+async function loadPromos() {
+  const d = await api('/api/admin/promos');
+  $('#pList').innerHTML = d.list.map((p) => `<tr><td><b>${esc(p.code)}</b></td><td>${p.coins}</td><td>${p.used}${p.maxUses ? ' / ' + p.maxUses : ' / ∞'}</td>
+    <td><span class="tag ${p.active ? 'on' : 'off'}">${p.active ? 'faol' : "o'chiq"}</span></td>
+    <td><button class="btn sm" data-pt="${esc(p.code)}" data-a="${p.active ? 0 : 1}">${p.active ? "O'chirish" : 'Yoqish'}</button> <button class="btn red sm" data-pd="${esc(p.code)}">O'chirib tashlash</button></td></tr>`).join('') || '<tr><td colspan=5 class="msg">Promokod yo\'q</td></tr>';
+}
+$('#pAdd').onclick = async () => {
+  const r = await api('/api/admin/promos', 'POST', { code: $('#pCode').value, coins: $('#pCoins').value, maxUses: $('#pMax').value || 0 });
+  $('#pMsg').textContent = r.error || 'Qo\'shildi ✓'; $('#pMsg').className = 'msg ' + (r.error ? 'err' : 'ok'); if (!r.error) { $('#pCode').value = ''; loadPromos(); }
+};
+$('#pList').onclick = async (e) => {
+  const t = e.target.closest('[data-pt]'), d = e.target.closest('[data-pd]');
+  if (t) { await api('/api/admin/promos', 'POST', { code: t.dataset.pt, active: t.dataset.a === '1' }); loadPromos(); }
+  if (d && confirm('Promokod o\'chirib tashlansinmi?')) { await api('/api/admin/promos/delete', 'POST', { id: d.dataset.pd }); loadPromos(); }
 };
 /* do'kon narxlari */
 async function loadShopAdm() {
