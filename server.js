@@ -419,8 +419,22 @@ app.post('/api/promo', auth, (req, res) => {
   credit(u, p.coins, 'promo', p.code); sendBalance(u); save();
   res.json({ ok: true, coins: p.coins, balance: u.coins });
 });
+const PROMO_CHANNEL = (process.env.PROMO_CHANNEL || '@poletgram').trim();
+async function postPromo(p) {
+  if (!bot) return 'Bot ishlamayapti (BOT_TOKEN)';
+  try {
+    const { InputFile, InlineKeyboard } = require('grammy');
+    const img = await require('./promoimg').promoImage(p.code, p.coins);
+    const cap = `🎁 Yangi promokod!\n\n🔑 Kod: ${p.code}\n💰 ${p.coins} tanga${p.maxUses ? `\n👥 Faqat birinchi ${p.maxUses} kishi uchun` : ''}\n\nBotni oching → Promokod bo'limiga kiriting 👇`;
+    await bot.api.sendPhoto(PROMO_CHANNEL, new InputFile(img, 'promo.png'), { caption: cap, reply_markup: new InlineKeyboard().url("🎮 Botni ochish", `https://t.me/${BOT_USERNAME}`) });
+    p.posted = Date.now(); save();
+    return null;
+  } catch (e) {
+    return /chat not found|not enough rights|forbidden|kicked/i.test(e.message) ? `Kanalga yuborib bo'lmadi: botni ${PROMO_CHANNEL} kanaliga ADMIN qiling (post yuborish huquqi bilan)` : 'Rasm/yuborish xatosi: ' + String(e.message).slice(0, 120);
+  }
+}
 app.get('/api/admin/promos', admin, (req, res) => res.json({ list: db.promos.map(({ users, ...p }) => p).reverse() }));
-app.post('/api/admin/promos', admin, (req, res) => {
+app.post('/api/admin/promos', admin, async (req, res) => {
   const b = req.body || {}, code = normCode(b.code);
   const n = (x) => Math.max(0, Math.min(1e7, Math.round(Number(x)) || 0));
   if (code.length < 3) return res.json({ error: 'Kod kamida 3 ta belgi (A-Z, 0-9)' });
@@ -429,7 +443,14 @@ app.post('/api/admin/promos', admin, (req, res) => {
   if (b.coins !== undefined && n(b.coins)) p.coins = n(b.coins);
   if (b.maxUses !== undefined) p.maxUses = n(b.maxUses);
   if (b.active !== undefined) p.active = !!b.active;
-  save(); res.json({ ok: true });
+  save();
+  if (b.post) { const err = await postPromo(p); return res.json(err ? { ok: true, warn: err } : { ok: true, posted: true }); }
+  res.json({ ok: true });
+});
+app.post('/api/admin/promos/post', admin, async (req, res) => {
+  const p = db.promos.find((x) => x.code === normCode(req.body && req.body.code));
+  if (!p) return res.json({ error: 'topilmadi' });
+  const err = await postPromo(p); res.json(err ? { error: err } : { ok: true });
 });
 app.post('/api/admin/promos/delete', admin, (req, res) => {
   db.promos = db.promos.filter((x) => x.code !== normCode(req.body && req.body.id)); save(); res.json({ ok: true });

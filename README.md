@@ -62,6 +62,10 @@ Telegram botlari bir-biriga xabar yubora olmaydi, shuning uchun buyurtmalar bosh
 
 Endi mijoz buyurtma bersa, u avtomatik panelga yuboriladi; har daqiqada holat tekshiriladi: bajarilsa mijozga xabar, bekor bo'lsa tanga qaytariladi. Yuborilmasa adminga xabar keladi va Buyurtmalarda "Panelga qayta yuborish" tugmasi chiqadi. Panel ID kiritilmagan xizmatlar avvalgidek qo'lda bajariladi.
 
+## Promokodlar va kanal
+
+`/admin` → Promokodlar: kod, tanga, limit kiriting. "Kanalga rasm bilan yuborish" belgilangan bo'lsa, promokod yozilgan rasm (kod + necha tanga) `PROMO_CHANNEL` (standart `@poletgram`) kanaliga chiqadi. **Muhim:** botni o'sha kanalga ADMIN qiling (post yuborish huquqi bilan). Rasm uchun `@napi-rs/canvas` ishlatiladi, `npm install` uni o'zi o'rnatadi. Eski kodni qayta yuborish uchun jadvaldagi "Kanalga yuborish" tugmasi bor.
+
 ## Admin panel (`/admin`)
 **Telegram ichida:** botga `/id` yozing → raqamni oling → Render'da `ADMIN_IDS=sizning_id` (bir nechta bo'lsa vergul bilan) → botga `/admin` yozing → "Admin panelni ochish" tugmasi parolsiz ochadi (Telegram imzosi bilan tekshiriladi). Brauzerda esa `ADMIN_PASSWORD` bilan kiriladi.
 

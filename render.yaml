@@ -23,3 +23,5 @@ services:
         sync: false
       - key: SMM_API_KEY
         sync: false
+      - key: PROMO_CHANNEL   # promokod rasmi yuboriladigan kanal (bot shu kanalda admin bo'lishi kerak)
+        value: "@poletgram"
