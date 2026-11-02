@@ -66,6 +66,7 @@ async function loadDb() {
   // standart qiymatlar
   db.settings = Object.assign({ welcomeCoins: 100, referralReward: 20 }, db.settings || {});
   if (!Array.isArray(db.orders)) db.orders = [];
+  if (!Array.isArray(db.promos)) db.promos = [];
   if (!db.pendingRef) db.pendingRef = {};
   const SHOP_VER = 2; // narxlar tangada
   if (!Array.isArray(db.shop) || db.shopVer !== SHOP_VER) {
@@ -400,6 +401,39 @@ async function pollSmm() {
   } finally { smmPolling = false; }
 }
 if (SMM_ON) setInterval(() => pollSmm().catch(() => {}), 60000);
+
+/* ---------------- Promokodlar ---------------- */
+const promoFails = new Map();
+const normCode = (c) => String(c || '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '').slice(0, 24);
+app.post('/api/promo', auth, (req, res) => {
+  const u = req.u, now = Date.now();
+  const f = (promoFails.get(u.id) || []).filter((t) => now - t < 60000);
+  if (f.length >= 5) return res.json({ error: "Juda ko'p urinish. Bir daqiqadan keyin qayta urining" });
+  const code = normCode(req.body && req.body.code);
+  const p = db.promos.find((x) => x.code === code);
+  const bad = (m) => { f.push(now); promoFails.set(u.id, f); return res.json({ error: m }); };
+  if (!code || !p || !p.active) return bad("Bunday promokod yo'q yoki faol emas");
+  if (p.users[u.id]) return bad('Siz bu promokodni allaqachon ishlatgansiz');
+  if (p.maxUses && p.used >= p.maxUses) return bad('Promokod limiti tugagan');
+  p.users[u.id] = now; p.used++;
+  credit(u, p.coins, 'promo', p.code); sendBalance(u); save();
+  res.json({ ok: true, coins: p.coins, balance: u.coins });
+});
+app.get('/api/admin/promos', admin, (req, res) => res.json({ list: db.promos.map(({ users, ...p }) => p).reverse() }));
+app.post('/api/admin/promos', admin, (req, res) => {
+  const b = req.body || {}, code = normCode(b.code);
+  const n = (x) => Math.max(0, Math.min(1e7, Math.round(Number(x)) || 0));
+  if (code.length < 3) return res.json({ error: 'Kod kamida 3 ta belgi (A-Z, 0-9)' });
+  let p = db.promos.find((x) => x.code === code);
+  if (!p) { if (!n(b.coins)) return res.json({ error: 'Tanga miqdorini kiriting' }); p = { code, coins: 0, maxUses: 0, used: 0, active: true, users: {}, created: Date.now() }; db.promos.push(p); }
+  if (b.coins !== undefined && n(b.coins)) p.coins = n(b.coins);
+  if (b.maxUses !== undefined) p.maxUses = n(b.maxUses);
+  if (b.active !== undefined) p.active = !!b.active;
+  save(); res.json({ ok: true });
+});
+app.post('/api/admin/promos/delete', admin, (req, res) => {
+  db.promos = db.promos.filter((x) => x.code !== normCode(req.body && req.body.id)); save(); res.json({ ok: true });
+});
 
 /* ---------------- Admin panel API ---------------- */
 const adminFails = new Map();
