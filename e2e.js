@@ -149,6 +149,43 @@ function client(id) {
   assert.strictEqual((await fetch(`http://localhost:${PORT}/`).then((r) => r.text())).includes('DEPOZIT'), false);
   console.log("ok - do'kon: tanga narxlari, tekshiruvlar, yechish/qaytarish, yetarli emas, admin narx tahriri, depozit yo'q");
 
+  // Hudud o'yini: ikki o'yinchi oxirigacha o'ynaydi
+  const h1 = await client('hu1'), h2 = await client('hu2');
+  h1.send({ t: 'queue', stake: 20, kind: 'hu' }); await h1.wait('queued');
+  h2.send({ t: 'queue', stake: 20, kind: 'hu' });
+  await h1.wait('state'); await h2.wait('state');
+  assert.strictEqual(h1.state.kind, 'hu'); assert.ok(h1.state.board.h && h1.state.board.own);
+  h1.state.turn === h1.state.you ? h1.send({ t: 'move', line: ['h', 99, 0] }) : h2.send({ t: 'move', line: ['h', 99, 0] });
+  await Promise.race([h1.wait('err'), h2.wait('err')]);
+  const free = (st) => { for (const k of ['h', 'v']) for (let r = 0; r < st.board[k].length; r++) for (let c = 0; c < st.board[k][r].length; c++) if (!st.board[k][r][c]) return [k, r, c]; return null; };
+  let hover = null;
+  for (let i = 0; i < 80 && !hover; i++) {
+    const mover = h1.state.turn === h1.state.you ? h1 : h2, ln = free(mover.state); if (!ln) break;
+    mover.send({ t: 'move', line: ln }); await sleep(35);
+    hover = h1.msgs.find((m) => m.t === 'over');
+  }
+  const ho1 = await h1.wait('over'), ho2 = await h2.wait('over');
+  assert.strictEqual(ho1.reason, 'boxes'); assert.notStrictEqual(ho1.result, ho2.result);
+  const sc = h1.state.score; assert.strictEqual(sc.w + sc.b, 25);
+  assert.strictEqual(Math.abs(ho1.delta), 20); assert.strictEqual(ho1.delta, -ho2.delta); // g'olib +20 (x2), yutqazgan -20
+  console.log("ok - hudud: matchmaking, noto'g'ri chiziq rad, to'liq o'yin, g'olib x2");
+  h1.send({ t: 'practice', kind: 'hu' }); const ps = await h1.wait('state'); assert.strictEqual(ps.kind, 'hu');
+  h1.send({ t: 'resign' }); await h1.wait('over');
+  console.log("ok - hudud: bot bilan sinov");
+
+  // Hudud (real vaqt)
+  const i1 = await client('io1'), i2 = await client('io2');
+  i1.send({ t: 'io_join' }); const init = await i1.wait('io_init');
+  assert.ok(init.own.length === init.w * init.h && init.pl.length === 5 && init.pl.filter((p) => !p.b).length === 1);
+  i2.send({ t: 'io_join' }); const init2 = await i2.wait('io_init'); assert.strictEqual(init2.pl.filter((p) => !p.b).length, 2); assert.strictEqual(init2.pl.length, 5);
+  const t1 = await i1.wait('io'); assert.ok(t1.p.length === 5 && t1.tl > 170000);
+  const pl2 = await i1.wait('io_players'); assert.ok(pl2.pl.length >= 5);
+  i1.send({ t: 'io_dir', a: 1.2 }); await sleep(400);
+  const t2 = await i1.wait('io'); assert.ok(t2.p.find((p) => p[0] === init.you)[3] === 1);
+  i1.send({ t: 'queue', stake: 3 }); await i1.wait('err'); // hududda turib boshqa o'yinga kirib bo'lmaydi
+  i2.send({ t: 'io_leave' }); i1.send({ t: 'io_leave' }); await sleep(200);
+  console.log("ok - hudud (real vaqt): xona, botlar, ikki o'yinchi, yo'nalish, chiqish");
+
   console.log('\nHAMMA SINOVLAR O\'TDI');
   srv.kill(); process.exit(0);
 })().catch((e) => { console.error('XATO:', e.message); srv.kill(); process.exit(1); });

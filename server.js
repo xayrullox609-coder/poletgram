@@ -5,6 +5,8 @@ const fs = require('fs');
 const path = require('path');
 const { WebSocketServer } = require('ws');
 const G = require('./game');
+const HU = require('./kataklar');
+const TERR = require('./territory');
 
 const PORT = process.env.PORT || 3000;
 const BOT_TOKEN = (process.env.BOT_TOKEN || '').trim();
@@ -735,7 +737,8 @@ function stateFor(g, uid) {
   const oppId = you === 'w' ? g.players.b : g.players.w;
   return {
     t: 'state', id: g.id, board: g.board, turn: g.turn, you,
-    moves: g.turn === you && !g.over ? g.moves.map((m) => m.path) : [],
+    moves: g.kind === 'hu' ? [] : g.turn === you && !g.over ? g.moves.map((m) => m.path) : [],
+    kind: g.kind, score: g.kind === 'hu' ? HU.score(g.board) : null,
     me: pubUser(db.users[uid]), opp: pubUser(oppId === 'bot' ? 'bot' : db.users[oppId]),
     clocks, moveLeft: Math.max(0, MOVE_MS - el), stake: g.stake, win: Math.floor(g.stake * WIN_MULT),
     practice: g.practice, last: g.last || null,
@@ -745,12 +748,12 @@ function broadcast(g) {
   for (const c of ['w', 'b']) if (g.players[c] !== 'bot') send(g.players[c], stateFor(g, g.players[c]));
 }
 
-function createGame(uw, ub, stake, practice) {
+function createGame(uw, ub, stake, practice, kind = 'dr') {
   const g = {
-    id: gidSeq++, players: { w: uw, b: ub }, stake, practice, board: G.initial(), turn: 'w',
+    id: gidSeq++, kind, players: { w: uw, b: ub }, stake, practice, board: kind === 'hu' ? HU.initial() : G.initial(), turn: 'w',
     clock: { w: TOTAL_MS, b: TOTAL_MS }, turnStart: Date.now(), quiet: 0, over: false, moves: [], last: null,
   };
-  g.moves = G.legal(g.board, 'w');
+  g.moves = kind === 'hu' ? [] : G.legal(g.board, 'w');
   games.set(g.id, g);
   for (const c of ['w', 'b']) if (g.players[c] !== 'bot') userGame.set(g.players[c], g.id);
   broadcast(g);
@@ -784,7 +787,28 @@ function finish(g, winner, reason) {
   games.delete(g.id);
 }
 
+const aiPick = (g) => (g.kind === 'hu' ? HU.aiMove(g.board) : G.aiMove(g.board, g.turn));
+function botTurn(g, from) {
+  setTimeout(() => {
+    if (g.over) return;
+    const m = aiPick(g);
+    if (m) advance(g, m); else finish(g, from, 'nomoves');
+  }, 600 + Math.random() * 700);
+}
+function advanceHu(g, ln) {
+  const mover = g.turn, el = Date.now() - g.turnStart;
+  g.clock[mover] = Math.max(0, g.clock[mover] - el);
+  const n = HU.apply(g.board, mover, ln);
+  g.last = { line: ln };
+  const sc = HU.score(g.board);
+  if (sc.w + sc.b === HU.N * HU.N) { broadcast(g); return finish(g, sc.w > sc.b ? 'w' : 'b', 'boxes'); }
+  if (!n) g.turn = mover === 'w' ? 'b' : 'w'; // katak egallagan yana yuradi
+  g.turnStart = Date.now();
+  broadcast(g);
+  if (g.players[g.turn] === 'bot') botTurn(g, mover);
+}
 function advance(g, move) {
+  if (g.kind === 'hu') return advanceHu(g, move);
   const mover = g.turn;
   const el = Date.now() - g.turnStart;
   g.clock[mover] = Math.max(0, g.clock[mover] - el);
@@ -797,13 +821,7 @@ function advance(g, move) {
   if (!g.moves.length) return finish(g, mover, 'nomoves');
   if (g.quiet >= 30) return finish(g, null, 'draw');
   broadcast(g);
-  if (g.players[g.turn] === 'bot') {
-    setTimeout(() => {
-      if (g.over) return;
-      const m = G.aiMove(g.board, g.turn);
-      if (m) advance(g, m); else finish(g, mover, 'nomoves');
-    }, 600 + Math.random() * 700);
-  }
+  if (g.players[g.turn] === 'bot') botTurn(g, mover);
 }
 
 setInterval(() => {
@@ -823,15 +841,15 @@ setInterval(() => {
 function hold(u, stake) { credit(u, -stake, 'stake_hold'); sendBalance(u); }
 function refund(u, stake) { credit(u, stake, 'stake_refund'); sendBalance(u); }
 function busy(uid) {
-  if (userGame.has(uid)) return true;
+  if (userGame.has(uid) || ioOf.has(uid)) return true;
   for (const q of queues.values()) if (q.includes(uid)) return true;
   for (const r of rooms.values()) if (r.host === uid) return true;
   return false;
 }
 function leaveQueue(uid) {
-  for (const [stake, q] of queues) {
+  for (const [key, q] of queues) {
     const i = q.indexOf(uid);
-    if (i >= 0) { q.splice(i, 1); refund(db.users[uid], stake); return true; }
+    if (i >= 0) { q.splice(i, 1); refund(db.users[uid], Number(key.split(':')[1])); return true; }
   }
   return false;
 }
@@ -846,7 +864,53 @@ function cancelRoomOf(uid) {
   for (const [code, r] of rooms) if (r.host === uid) { cancelRoom(code); return true; }
   return false;
 }
+const kindOf = (m) => (m.kind === 'hu' ? 'hu' : 'dr');
 function randomColors(a, b) { return Math.random() < 0.5 ? [a, b] : [b, a]; }
+
+/* ---------------- Hudud (real vaqt, ko'p o'yinchi) ---------------- */
+const ioRooms = new Set();
+const ioOf = new Map(); // uid -> {room, pid}
+const ioInfo = (r) => [...r.players.values()].map((p) => ({ id: p.id, n: p.name, c: p.color, b: p.bot ? 1 : 0 }));
+function ioBroadcast(r, msg) { for (const p of r.humans()) send(p.uid, msg); }
+function ioInit(r, p) { send(p.uid, { t: 'io_init', w: TERR.W, h: TERR.H, r: TERR.R, you: p.id, own: Array.from(r.own), pl: ioInfo(r), tl: Math.round(r.timeLeft) }); }
+function ioLeave(uid) {
+  const e = ioOf.get(uid); if (!e) return;
+  ioOf.delete(uid); e.room.remove(e.pid); e.room.fill();
+  if (!e.room.humans().length) ioRooms.delete(e.room); else ioBroadcast(e.room, { t: 'io_players', pl: ioInfo(e.room) });
+}
+function ioJoin(uid) {
+  const u = db.users[uid];
+  let room = [...ioRooms].find((r) => r.humans().length < 10);
+  if (!room) { room = new TERR.Room(); room.last = Date.now(); room.tick = 0; room.endSent = false; ioRooms.add(room); }
+  const p = room.add(String(u.name || 'Siz').slice(0, 14), uid, false); room.fill();
+  ioOf.set(uid, { room, pid: p.id });
+  ioInit(room, p);
+  ioBroadcast(room, { t: 'io_players', pl: ioInfo(room) });
+}
+setInterval(() => {
+  const now = Date.now();
+  for (const r of ioRooms) {
+    const dt = Math.min(0.1, (now - r.last) / 1000); r.last = now;
+    if (r.ended) {
+      if (!r.endSent) {
+        r.endSent = true; r.resetAt = now + 8000;
+        const rank = r.ranking().slice(0, 6);
+        for (const p of r.humans()) send(p.uid, { t: 'io_end', rank, you: p.id, mine: r.ranking().findIndex((x) => x.id === p.id) + 1 });
+      } else if (now >= r.resetAt) {
+        r.reset(); r.fill(); r.endSent = false;
+        for (const p of r.humans()) ioInit(r, p);
+        ioBroadcast(r, { t: 'io_players', pl: ioInfo(r) });
+      }
+      continue;
+    }
+    r.step(dt); r.tick++;
+    const msg = { t: 'io', tl: Math.round(r.timeLeft), p: [], tr: [], d: r.changes };
+    r.changes = [];
+    for (const p of r.players.values()) { msg.p.push([p.id, +p.x.toFixed(2), +p.y.toFixed(2), p.alive ? 1 : 0]); if (p.alive && p.trail.length) msg.tr.push([p.id, p.trail]); }
+    if (r.tick % 5 === 0) { const c = r.counts(); msg.sc = [...c.entries()]; }
+    ioBroadcast(r, msg);
+  }
+}, 66);
 
 function handle(ws, m) {
   if (m.t === 'auth') {
@@ -874,12 +938,13 @@ function handle(ws, m) {
       if (busy(uid)) return err("Siz allaqachon o'yindasiz");
       if (u.coins < stake) return err('Tanga yetarli emas');
       hold(u, stake);
-      const q = queues.get(stake) || [];
-      queues.set(stake, q);
+      const kind = kindOf(m), qk = kind + ':' + stake;
+      const q = queues.get(qk) || [];
+      queues.set(qk, q);
       const opp = q.shift();
       if (opp && opp !== uid) {
         const [w, b] = randomColors(opp, uid);
-        createGame(w, b, stake, false);
+        createGame(w, b, stake, false, kind);
       } else {
         q.push(uid);
         ws.send(JSON.stringify({ t: 'queued' }));
@@ -893,9 +958,9 @@ function handle(ws, m) {
     case 'practice': {
       if (busy(uid)) return err("Siz allaqachon o'yindasiz");
       const [w, b] = randomColors(uid, 'bot');
-      const g = createGame(w, b, 0, true);
+      const g = createGame(w, b, 0, true, kindOf(m));
       if (g.players[g.turn] === 'bot') {
-        setTimeout(() => { if (!g.over) { const mv = G.aiMove(g.board, g.turn); if (mv) advance(g, mv); } }, 800);
+        setTimeout(() => { if (!g.over) { const mv = aiPick(g); if (mv) advance(g, mv); } }, 800);
       }
       break;
     }
@@ -906,7 +971,7 @@ function handle(ws, m) {
       if (u.coins < stake) return err('Tanga yetarli emas');
       hold(u, stake);
       const code = crypto.randomBytes(4).toString('hex');
-      rooms.set(code, { host: uid, stake, t: Date.now() });
+      rooms.set(code, { host: uid, stake, kind: kindOf(m), t: Date.now() });
       const base = BASE_URL || ws.origin || '';
       const link = BOT_USERNAME && BOT_TOKEN ? `https://t.me/${BOT_USERNAME}?start=g_${code}` : `${base}/?join=${code}`;
       ws.send(JSON.stringify({ t: 'invite', code, stake, link }));
@@ -921,7 +986,7 @@ function handle(ws, m) {
       rooms.delete(String(m.code));
       hold(u, r.stake);
       const [w, b] = randomColors(r.host, uid);
-      createGame(w, b, r.stake, false);
+      createGame(w, b, r.stake, false, r.kind || 'dr');
       if (!conns.has(r.host)) notify(r.host, "♟ Do'stingiz o'yinga qo'shildi! Poletgram'ni oching.");
       break;
     }
@@ -930,6 +995,10 @@ function handle(ws, m) {
       if (!g || g.over) return err("O'yin topilmadi");
       const color = g.players.w === uid ? 'w' : 'b';
       if (g.turn !== color) return err('Sizning navbatingiz emas');
+      if (g.kind === 'hu') {
+        if (!HU.valid(g.board, m.line)) { ws.send(JSON.stringify(stateFor(g, uid))); return err("Noto'g'ri yurish"); }
+        advance(g, m.line); break;
+      }
       const key = JSON.stringify(m.path);
       const mv = g.moves.find((x) => JSON.stringify(x.path) === key);
       if (!mv) { ws.send(JSON.stringify(stateFor(g, uid))); return err("Noto'g'ri yurish"); }
@@ -943,6 +1012,16 @@ function handle(ws, m) {
       finish(g, color === 'w' ? 'b' : 'w', 'resign');
       break;
     }
+    case 'io_join': {
+      if (busy(uid)) return err("Siz allaqachon o'yindasiz");
+      ioJoin(uid); break;
+    }
+    case 'io_dir': {
+      const e = ioOf.get(uid), a = Number(m.a);
+      if (e && Number.isFinite(a)) { const p = e.room.players.get(e.pid); if (p) p.want = Math.max(-7, Math.min(7, a)); }
+      break;
+    }
+    case 'io_leave': ioLeave(uid); break;
     case 'emoji': {
       const g = games.get(userGame.get(uid));
       if (!g) return;
@@ -969,7 +1048,7 @@ wss.on('connection', (ws, req) => {
     const uid = ws.uid;
     if (!uid) return;
     const s = conns.get(uid);
-    if (s) { s.delete(ws); if (!s.size) { conns.delete(uid); leaveQueue(uid); } }
+    if (s) { s.delete(ws); if (!s.size) { conns.delete(uid); leaveQueue(uid); ioLeave(uid); } }
   });
 });
 setInterval(() => {

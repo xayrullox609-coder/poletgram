@@ -66,6 +66,12 @@ Endi mijoz buyurtma bersa, u avtomatik panelga yuboriladi; har daqiqada holat te
 
 `/admin` → Promokodlar: kod, tanga, limit kiriting. "Kanalga rasm bilan yuborish" belgilangan bo'lsa, promokod yozilgan rasm (kod + necha tanga) `PROMO_CHANNEL` (standart `@poletgram`) kanaliga chiqadi. **Muhim:** botni o'sha kanalga ADMIN qiling (post yuborish huquqi bilan). Rasm uchun `@napi-rs/canvas` ishlatiladi, `npm install` uni o'zi o'rnatadi. Eski kodni qayta yuborish uchun jadvaldagi "Kanalga yuborish" tugmasi bor.
 
+## O'yinlar
+
+Menyuda PLAY tugmasi tepasida o'yin tanlanadi:
+- **Shashka** va **Kataklar** (nuqtalar va kataklar, 5x5): 1v1, tasodifiy raqib / do'st havolasi / bot bilan sinov, tikish ×2.
+- **Hudud** (real vaqt, ko'p o'yinchi): joystik bilan yuring, o'z hududingizdan chiqib iz qoldiring va qaytib kelib o'rab oling. Boshqa o'yinchining izini kessangiz u yo'qoladi, o'z izingizga tegsangiz o'zingiz. Raund 3 daqiqa, eng ko'p % egallagan g'olib. Odam kam bo'lsa xona botlar bilan to'ldiriladi (jami kamida 5 o'yinchi). Hozircha tangasiz (tikish yo'q). Qoidalar `territory.js` da.
+
 ## Admin panel (`/admin`)
 **Telegram ichida:** botga `/id` yozing → raqamni oling → Render'da `ADMIN_IDS=sizning_id` (bir nechta bo'lsa vergul bilan) → botga `/admin` yozing → "Admin panelni ochish" tugmasi parolsiz ochadi (Telegram imzosi bilan tekshiriladi). Brauzerda esa `ADMIN_PASSWORD` bilan kiriladi.
 

@@ -63,4 +63,50 @@ t('bot to\'liq o\'yinni xatosiz o\'ynaydi', () => {
   }
   console.log('   yurishlar:', plies);
 });
+
+const HU = require('./kataklar');
+t('hudud: katak egallash va qo\'shimcha yurish', () => {
+  const s = HU.initial();
+  assert.strictEqual(HU.apply(s, 'w', ['h', 0, 0]), 0); assert.strictEqual(HU.apply(s, 'b', ['h', 1, 0]), 0);
+  assert.strictEqual(HU.apply(s, 'w', ['v', 0, 0]), 0); assert.strictEqual(HU.apply(s, 'b', ['v', 0, 1]), 1);
+  assert.strictEqual(s.own[0][0], 'b'); assert.deepStrictEqual(HU.score(s), { w: 0, b: 1 });
+  assert.ok(!HU.valid(s, ['v', 0, 1]) && !HU.valid(s, ['h', 6, 0]) && !HU.valid(s, ['x', 0, 0]) && HU.valid(s, ['h', 5, 4]));
+});
+t('hudud: bir chiziq ikki katakni yopishi mumkin', () => {
+  const s = HU.initial(); const L = [['h', 0, 0], ['v', 0, 0], ['v', 0, 1], ['h', 2, 0], ['v', 1, 0], ['v', 1, 1]];
+  for (const l of L) HU.apply(s, 'w', l); assert.strictEqual(HU.apply(s, 'b', ['h', 1, 0]), 2); assert.strictEqual(HU.score(s).b, 2);
+});
+t('hudud: bot to\'liq o\'yinni o\'ynaydi, 25 katak taqsimlanadi', () => {
+  const s = HU.initial(); let turn = 'w', moves = 0;
+  while (HU.legal(s).length) { const m = HU.aiMove(s); assert.ok(HU.valid(s, m)); if (HU.apply(s, turn, m) === 0) turn = turn === 'w' ? 'b' : 'w'; moves++; }
+  const sc = HU.score(s); assert.strictEqual(sc.w + sc.b, 25); assert.strictEqual(moves, 60);
+});
+
+const TR = require('./territory');
+const drive = (r, p, steps) => { for (const [a, secs] of steps) { p.want = a; for (let i = 0; i < Math.round(secs / 0.05); i++) { r.step(0.05); if (!p.alive) return false; } } return true; };
+t('hudud: iz bilan o\'rab olingan joy egallanadi', () => {
+  const r = new TR.Room(), me = r.add('A', 1, false); me.ang = me.want = 0;
+  const b = r.counts().get(me.id); assert.strictEqual(b, 25);
+  assert.ok(drive(r, me, [[0, 1.6], [Math.PI / 2, 1.0], [Math.PI, 1.7], [-Math.PI / 2, 1.4]]));
+  assert.ok(r.counts().get(me.id) > 60, 'hudud kengaydi');
+});
+t('hudud: raqib izini kesgan uni yo\'q qiladi', () => {
+  const r = new TR.Room(), a = r.add('A', 1, false), c = r.add('B', 2, false);
+  const k = TR.idx(10, 10); r.trail[k] = a.id; a.trail.push(k); r.own[TR.idx(40, 40)] = a.id;
+  r.enter(c, k); assert.ok(!a.alive && c.kills === 1); assert.notStrictEqual(r.trail[k], a.id);
+  assert.ok(![...r.own].includes(a.id), 'o\'lgan o\'yinchi hududi o\'chadi');
+});
+t('hudud: o\'z iziga tegish o\'ldiradi, yaqin iz kataklari kechiriladi', () => {
+  const r = new TR.Room(), a = r.add('A', 1, false);
+  const cells = [TR.idx(5, 5), TR.idx(6, 5), TR.idx(7, 5), TR.idx(8, 5), TR.idx(9, 5)]; cells.forEach((c) => { r.trail[c] = a.id; a.trail.push(c); });
+  r.enter(a, cells[4]); assert.ok(a.alive); r.enter(a, cells[0]); assert.ok(!a.alive);
+});
+t('hudud: botlar to\'liq raundni xatosiz o\'ynaydi, hududlar to\'g\'ri sanaladi', () => {
+  const r = new TR.Room(); r.add('Inson', 1, false); r.fill(); assert.strictEqual(r.players.size, 5);
+  let ticks = 0; while (!r.ended && ticks < 5000) { r.step(0.066); ticks++; for (const p of r.players.values()) if (p.alive) assert.ok(r.inside(Math.floor(p.x), Math.floor(p.y))); }
+  assert.ok(r.ended); const rk = r.ranking(); assert.ok(rk[0].cells >= rk[rk.length - 1].cells);
+  assert.ok(rk.reduce((x, y) => x + y.cells, 0) <= r.playable);
+  console.log('   raund:', ticks, 'tik; g\'olib', rk[0].name, rk[0].pct + '%');
+  r.add('Ikkinchi', 2, false); r.add('3', 3, false); r.fill(); assert.strictEqual(r.bots().length, 2);
+});
 console.log(n + ' test o\'tdi');
