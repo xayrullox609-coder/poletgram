@@ -196,6 +196,28 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
 .pbtn{display:block;width:100%;margin-top:16px;padding:18px;border-radius:24px;border:0;background:linear-gradient(135deg,#6a5cff,#2fb4ff);color:#fff;font:800 19px system-ui,sans-serif;box-shadow:0 8px 24px #4f6bff66}
 .pbtn:disabled{opacity:.6}
 .pmsg{min-height:22px;margin-top:12px;text-align:center;font-weight:700;font-size:14px;color:#c0392b}.pmsg.ok{color:#14894f}
+.mm-games{position:absolute;left:0;right:0;bottom:calc(6% + 112px);display:flex;justify-content:center;gap:14px;z-index:3}
+.mm-g{display:flex;flex-direction:column;align-items:center;gap:4px;width:70px;opacity:.75;transition:.15s}
+.mm-g .gi{width:58px;height:58px;border-radius:16px;display:grid;place-items:center;background:#1c1450cc;border:2px solid #6b4a25;overflow:hidden}
+.mm-g span{font:700 12px system-ui,sans-serif;color:#e4e0ff;text-shadow:0 1px 3px #000,0 0 6px #000}
+.mm-g.on{opacity:1;transform:translateY(-3px)}.mm-g.on .gi{border-color:#f0cf7a;box-shadow:0 0 14px #f0cf7aaa}
+.mm-g.soon{opacity:.38;pointer-events:none}.mm-g svg{width:46px;height:46px}
+#hboard{display:none;width:min(100%,480px);width:min(100%,480px,calc(100dvh - 330px));min-width:260px;aspect-ratio:1/1;margin:10px 0;border:6px solid #2b1c10;border-radius:14px;box-shadow:0 0 0 2px #7a5a2d,0 10px 30px #000a;background:radial-gradient(circle at 50% 40%,#2b2470,#150f35);touch-action:manipulation}
+#hboard svg{width:100%;height:100%;display:block}#hboard .hit{cursor:pointer}
+.gname{text-align:center;margin:-4px 0 10px;color:var(--gold);font-weight:800;letter-spacing:1px}
+@media (max-height:700px){.mm-games{bottom:calc(4% + 86px)}.mm-g{width:60px}.mm-g .gi{width:48px;height:48px}.mm-g svg{width:38px;height:38px}}
+#io.screen{padding:0;overflow:hidden;background:#12161f;z-index:5}
+#ioc{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block}
+#ioHud{position:absolute;left:0;right:0;top:0;display:flex;gap:6px;box-sizing:border-box;align-items:flex-start;padding:10px;pointer-events:none;font-family:system-ui,sans-serif}
+.io-me{display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:20px;background:#0b0e14cc;color:#fff;font-size:14px;white-space:nowrap}
+.io-me i{width:16px;height:16px;border-radius:50%;background:#4aa8ff;display:block}.io-me span{color:#9aa4b8;font-weight:700}
+.io-t{padding:8px 12px;border-radius:20px;background:#0b0e14cc;color:#fff;font:800 17px system-ui,sans-serif}
+.io-lb{margin-left:auto;padding:6px 10px;border-radius:14px;background:#0b0e14cc;color:#fff;font-size:12px;min-width:112px;max-width:42vw}.io-lb div{white-space:nowrap;overflow:hidden}
+.io-lb div{display:flex;align-items:center;gap:7px;padding:2px 0}.io-lb i{width:11px;height:11px;border-radius:50%;flex:none}.io-lb b{margin-left:auto;color:#aeb6c8;font-weight:600;padding-left:8px}.io-lb .me{font-weight:800}
+#ioExit{position:absolute;left:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));width:44px;height:44px;border-radius:50%;border:0;background:#0b0e14cc;color:#fff;font-size:18px}
+#ioMsg{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);text-align:center;color:#fff;font:800 22px system-ui,sans-serif;text-shadow:0 2px 8px #000;display:none;background:#0b0e14dd;padding:18px 22px;border-radius:20px;min-width:230px}
+#ioMsg small{display:block;font:600 14px system-ui,sans-serif;color:#aeb6c8;margin-top:6px}
+#ioMsg table{margin:10px auto 0;border-collapse:collapse;font:600 14px system-ui,sans-serif;text-align:left}#ioMsg td{padding:3px 8px}
 </style>
 </head>
 <body class="inmenu">
@@ -249,6 +271,11 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
       <div class="mm-b" data-go="friend"><div class="wood"><svg class="ic"><use href="#i-friends"/></svg></div><span>Do'st<br>bilan</span></div>
       <div class="mm-b" data-go="promo"><div class="wood"><svg class="ic"><use href="#i-ticket"/></svg></div><span>Promokod</span></div>
     </div>
+    <div class="mm-games" id="mGames">
+      <div class="mm-g on" data-game="dr"><div class="gi"><svg viewBox="0 0 48 48"><rect x="4" y="4" width="40" height="40" rx="6" fill="#e8d3ac"/><path d="M4 4h10v10H4zM24 4h10v10H24zM14 14h10v10H14zM34 14h10v10H34zM4 24h10v10H4zM24 24h10v10H24zM14 34h10v10H14zM34 34h10v10H34z" fill="#3a2a1e"/><circle cx="19" cy="29" r="7" fill="#f6ead0" stroke="#8a6a3a" stroke-width="2"/><circle cx="39" cy="9" r="6" fill="#222" stroke="#000" stroke-width="2"/></svg></div><span>Shashka</span></div>
+      <div class="mm-g" data-game="hu"><div class="gi"><svg viewBox="0 0 48 48"><path d="M4 8h22v20H4z" fill="#ff4d6d"/><path d="M26 8h18v14H26z" fill="#3d8bff"/><path d="M26 22h18v20H26zM4 28h22v14H4z" fill="#3ddc84"/><path d="M26 8v34M4 28h40" stroke="#150f35" stroke-width="3"/></svg></div><span>Kataklar</span></div>
+      <div class="mm-g" data-game="io"><div class="gi"><svg viewBox="0 0 48 48"><rect width="48" height="48" fill="#161b26"/><path d="M6 34c0-9 6-16 15-16s13 5 14 12-4 13-14 13S6 42 6 34z" fill="#4aa8ff"/><path d="M30 12c4-4 12-3 12 4s-6 9-10 8-5-8-2-12z" fill="#ff5d5d"/><path d="M22 14c0-5 5-8 9-6" stroke="#f2c230" stroke-width="3" fill="none" stroke-linecap="round"/></svg></div><span>Hudud</span></div>
+    </div>
     <div class="mm-playw">
       <svg class="lf a" viewBox="0 0 44 32"><path d="M2 18C8 2 28 0 42 10 32 26 12 30 2 18Z" fill="#58b247" stroke="#2f7a2c" stroke-width="1.500"/><path d="M4 18C16 14 28 12 40 10" stroke="#2f7a2c" stroke-width="1.500" fill="none"/></svg><svg class="lf b" viewBox="0 0 44 32"><path d="M2 18C8 2 28 0 42 10 32 26 12 30 2 18Z" fill="#58b247" stroke="#2f7a2c" stroke-width="1.500"/><path d="M4 18C16 14 28 12 40 10" stroke="#2f7a2c" stroke-width="1.500" fill="none"/></svg><svg class="lf c" viewBox="0 0 44 32"><path d="M2 18C8 2 28 0 42 10 32 26 12 30 2 18Z" fill="#58b247" stroke="#2f7a2c" stroke-width="1.500"/><path d="M4 18C16 14 28 12 40 10" stroke="#2f7a2c" stroke-width="1.500" fill="none"/></svg><svg class="lf d" viewBox="0 0 44 32"><path d="M2 18C8 2 28 0 42 10 32 26 12 30 2 18Z" fill="#58b247" stroke="#2f7a2c" stroke-width="1.500"/><path d="M4 18C16 14 28 12 40 10" stroke="#2f7a2c" stroke-width="1.500" fill="none"/></svg><i class="st a"></i><i class="st b"></i>
       <button class="mm-play wood" data-go="play">PLAY</button>
@@ -259,6 +286,7 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
 <!-- PLAY -->
 <section id="play" class="screen">
   <div class="top"><button class="back" data-go="menu">‹</button><h2><svg class="ic"><use href="#i-play"/></svg> O'ynash</h2><span class="chip"><span class="bc">0</span> <span class="coin"></span></span></div>
+  <div class="gname" id="gnPlay"></div>
   <h2 style="text-align:center;margin:6px 0 12px">Nechta tanga tikasiz?</h2>
   <div class="stakes" id="stakesPlay"></div>
   <p class="hint">Tikilgan summadan g'olib <b style="color:var(--gold)">×2</b> oladi. Durangda qaytariladi.</p>
@@ -269,6 +297,7 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
 <!-- DO'ST -->
 <section id="friend" class="screen">
   <div class="top"><button class="back" data-go="menu">‹</button><h2><svg class="ic"><use href="#i-friends"/></svg> Do'st bilan o'ynash</h2><span class="chip"><span class="bc">0</span> <span class="coin"></span></span></div>
+  <div class="gname" id="gnFriend"></div>
   <h2 style="text-align:center;margin:6px 0 12px">Nechta tanga tikasiz?</h2>
   <div class="stakes" id="stakesFriend"></div>
   <p class="hint">Do'stingizga havola yuboring — u havolani ochishi bilan o'yin <b style="color:var(--gold)">avtomatik</b> boshlanadi. G'olib <b style="color:var(--gold)">×2</b> oladi.</p>
@@ -325,9 +354,21 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
   <div class="gwin" id="gWin"></div>
   <div class="pl" id="plOpp"><div class="ava sm" id="oAva"></div><div><div><span class="nm" id="oName"></span><span class="lv" id="oLv"></span></div><div class="sub" id="oSub"></div></div><div class="clk" id="oClk">6:00</div><span class="em" id="oEm"></span></div>
   <div id="board"></div>
+  <div id="hboard"></div>
   <div class="turn" id="turn"></div>
   <div class="pl" id="plMe"><div class="ava sm" id="yAva"></div><div><div><span class="nm" id="yName"></span><span class="lv" id="yLv"></span></div><div class="sub" id="ySub"></div></div><div class="clk" id="yClk">6:00</div></div>
   <div class="gbar"><button class="btn dark" id="btnResign"><svg class="ic"><use href="#i-flag"/></svg> Taslim</button><button class="btn dark" style="flex:none;width:60px" id="btnEmoji">😀</button></div>
+</section>
+
+<section id="io" class="screen">
+  <canvas id="ioc"></canvas>
+  <div id="ioHud">
+    <div class="io-me"><i id="ioDot"></i><b id="ioPct">0%</b><span id="ioRank"></span></div>
+    <div class="io-t" id="ioTime">3:00</div>
+    <div class="io-lb" id="ioLb"></div>
+  </div>
+  <button id="ioExit" aria-label="Chiqish">✕</button>
+  <div id="ioMsg"></div>
 </section>
 
 <div class="q" id="queue"><div><div class="spin"></div><h2>Raqib qidirilmoqda…</h2><p class="hint" id="qHint"></p><button class="btn dark" id="btnQP" style="display:none">Bot bilan sinab ko'rish</button><button class="btn dark" id="btnQC">Bekor qilish</button></div></div>
@@ -362,9 +403,15 @@ let joinCode = qs.get('join') || (startParam.startsWith('g_') ? startParam.slice
 const $ = (s) => document.querySelector(s), $$ = (s) => [...document.querySelectorAll(s)];
 const fmt = (x) => (Math.round(x * 10) / 10).toString();
 let me = null, ws = null, G = null, STAKES = [3, 20, 100, 300, 1000], stake = 3, lastMode = 'random', ratingType = 'wins';
+let curGame = 'dr'; try { const sg = localStorage.getItem('pg_game'); if (sg === 'hu' || sg === 'io') curGame = sg; } catch (e) {}
+const GNAME = { dr: 'SHASHKA', hu: 'KATAKLAR', io: 'HUDUD' };
+function setGame(k) { curGame = k; const pb = document.querySelector('.mm-play'); if (pb) pb.dataset.go = k === 'io' ? 'ioplay' : 'play'; try { localStorage.setItem('pg_game', k); } catch (e) {}
+  $$('#mGames [data-game]').forEach((x) => x.classList.toggle('on', x.dataset.game === k)); $('#gnPlay').textContent = $('#gnFriend').textContent = GNAME[k]; }
 
 function toast(t) { const e = $('#toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.display = 'none', 2600); }
 function show(id) {
+  if (id === 'ioplay') { send({ t: 'io_join' }); return; }
+  if (IO && id !== 'io') { send({ t: 'io_leave' }); IO = null; }
   document.body.classList.toggle('inmenu', id === 'menu');
   $$('.screen').forEach((s) => s.classList.toggle('on', s.id === id));
   if (id === 'menu') refreshMe();
@@ -442,22 +489,28 @@ function onMsg(m) {
     case 'invite': showInvite(m); break;
     case 'invite_cancelled': $('#inviteBox').style.display = 'none'; break;
     case 'state': onState(m); break;
+    case 'io_init': onIoInit(m); break;
+    case 'io': onIo(m); break;
+    case 'io_players': if (IO) { IO.pl = {}; m.pl.forEach((p) => IO.pl[p.id] = p); } break;
+    case 'io_end': onIoEnd(m); break;
     case 'over': onOver(m); break;
     case 'emoji': { const el = $('#oEm'); el.textContent = m.e; clearTimeout(onMsg.et); onMsg.et = setTimeout(() => el.textContent = '', 2500); break; }
   }
 }
 
 /* ---- Tugmalar ---- */
-$('#btnRandom').onclick = () => { lastMode = 'random'; send({ t: 'queue', stake }); };
-$('#btnPractice').onclick = () => { lastMode = 'practice'; send({ t: 'practice' }); };
-$('#btnQP').onclick = () => { send({ t: 'cancel' }); setTimeout(() => { lastMode = 'practice'; send({ t: 'practice' }); }, 250); };
+$('#mGames').addEventListener('click', (e) => { const g = e.target.closest('[data-game]'); if (g) setGame(g.dataset.game); });
+setGame(curGame);
+$('#btnRandom').onclick = () => { lastMode = 'random'; send({ t: 'queue', stake, kind: curGame }); };
+$('#btnPractice').onclick = () => { lastMode = 'practice'; send({ t: 'practice', kind: curGame }); };
+$('#btnQP').onclick = () => { send({ t: 'cancel' }); setTimeout(() => { lastMode = 'practice'; send({ t: 'practice', kind: curGame }); }, 250); };
 $('#btnQC').onclick = () => { clearTimeout(onMsg.qt); send({ t: 'cancel' }); };
-$('#btnInvite').onclick = () => { lastMode = 'friend'; send({ t: 'invite', stake }); };
+$('#btnInvite').onclick = () => { lastMode = 'friend'; send({ t: 'invite', stake, kind: curGame }); };
 function showInvite(m) {
   const box = $('#inviteBox'); box.style.display = 'block';
   box.innerHTML = `Havola tayyor. Do'stingiz qo'shilishini kuting (10 daqiqa).<br><small style="word-break:break-all">${m.link}</small><br><button class="btn dark" id="btnCancelInv">Bekor qilish</button>`;
   $('#btnCancelInv').onclick = () => send({ t: 'cancel' });
-  const text = `Poletgram'da shashka o'ynaymiz! Stavka: ${m.stake} tanga`;
+  const text = `Poletgram'da ${curGame === 'hu' ? 'Hudud' : 'shashka'} o'ynaymiz! Stavka: ${m.stake} tanga`;
   const share = 'https://t.me/share/url?url=' + encodeURIComponent(m.link) + '&text=' + encodeURIComponent(text);
   if (tg && tg.openTelegramLink) tg.openTelegramLink(share);
   else { try { navigator.clipboard.writeText(m.link); toast('Havola nusxalandi. Boshqa tabda oching.'); } catch (e) { window.open(share, '_blank'); } }
@@ -465,7 +518,7 @@ function showInvite(m) {
 $('#btnResign').onclick = () => { if (confirm('Taslim bo\'lasizmi?')) send({ t: 'resign' }); };
 $('#btnEmoji').onclick = () => { const e = ['😀', '😎', '😡', '😭', '👍', '🔥'][Math.floor(Math.random() * 6)]; send({ t: 'emoji', e }); toast('Yuborildi ' + e); };
 $('#mAgain').onclick = () => { $('#modal').classList.remove('on'); G = null;
-  if (lastMode === 'practice') send({ t: 'practice' }); else if (lastMode === 'friend') { show('friend'); } else send({ t: 'queue', stake }); };
+  if (lastMode === 'practice') send({ t: 'practice', kind: curGame }); else if (lastMode === 'friend') { show('friend'); } else send({ t: 'queue', stake, kind: curGame }); };
 $('#mMenu').onclick = () => { $('#modal').classList.remove('on'); G = null; show('menu'); };
 
 
@@ -593,7 +646,9 @@ function onState(s) {
   $('#gWin').innerHTML = s.practice ? 'SINOV O\'YINI' : `G'OLIBGA +${s.win} <span class="coin"></span>`;
   $('#oName').textContent = s.opp.name; $('#oLv').textContent = s.opp.title; setAva($('#oAva'), s.opp.name, s.opp.photo);
   $('#yName').textContent = s.me.name + ' · siz'; $('#yLv').textContent = s.me.title; setAva($('#yAva'), s.me.name, s.me.photo);
-  renderBoard(); tick();
+  curGame = s.kind === 'hu' ? 'hu' : 'dr'; $('#board').style.display = curGame === 'hu' ? 'none' : ''; $('#hboard').style.display = curGame === 'hu' ? 'block' : '';
+  if (curGame === 'hu') renderHu(); else renderBoard();
+  tick();
 }
 function renderBoard() {
   if (!G) return;
@@ -614,6 +669,33 @@ function renderBoard() {
   const t = $('#turn'); t.className = 'turn' + (my ? '' : ' opp'); t.textContent = my ? 'Sizning navbatingiz' : 'Raqib yuryapti…';
   $('#plMe').classList.toggle('act', my); $('#plOpp').classList.toggle('act', !my);
 }
+const HC = { w: '#3d8bff', b: '#ff4d6d' };
+function renderHu() {
+  if (!G || G.kind !== 'hu') return;
+  const B = G.board, N = 5, P = (i) => 10 + 20 * i, my = G.turn === G.you, last = G.last && G.last.line ? G.last.line.join() : '';
+  let boxes = '', lines = '', hits = '', dots = '';
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (B.own[r][c]) boxes += `<rect x="${P(c) + 1.5}" y="${P(r) + 1.5}" width="17" height="17" rx="3" fill="${HC[B.own[r][c]]}" fill-opacity=".6"/><circle cx="${P(c) + 10}" cy="${P(r) + 10}" r="3" fill="#fff" fill-opacity=".85"/>`;
+  const ln = (k, r, c) => {
+    const v = B[k][r][c], x1 = P(c), y1 = P(r), x2 = k === 'h' ? x1 + 20 : x1, y2 = k === 'v' ? y1 + 20 : y1;
+    if (v) lines += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${v === 1 ? HC.w : HC.b}" stroke-width="${last === k + ',' + r + ',' + c ? 4.6 : 3.2}" stroke-linecap="round"/>`;
+    else { lines += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#ffffff30" stroke-width="1.4" stroke-dasharray="1.5 2.5" stroke-linecap="round"/>`;
+      if (my) hits += k === 'h' ? `<line class="hit" data-k="h" data-r="${r}" data-c="${c}" x1="${x1 + 3}" y1="${y1}" x2="${x2 - 3}" y2="${y2}" stroke="transparent" stroke-width="9" stroke-linecap="round"/>` : `<line class="hit" data-k="v" data-r="${r}" data-c="${c}" x1="${x1}" y1="${y1 + 3}" x2="${x2}" y2="${y2 - 3}" stroke="transparent" stroke-width="9" stroke-linecap="round"/>`; }
+  };
+  for (let r = 0; r <= N; r++) for (let c = 0; c < N; c++) ln('h', r, c);
+  for (let r = 0; r < N; r++) for (let c = 0; c <= N; c++) ln('v', r, c);
+  for (let r = 0; r <= N; r++) for (let c = 0; c <= N; c++) dots += `<circle cx="${P(c)}" cy="${P(r)}" r="2.6" fill="#f0cf7a"/>`;
+  $('#hboard').innerHTML = `<svg viewBox="0 0 120 120">${boxes}${lines}${dots}${hits}</svg>`;
+  const mine = G.score ? G.score[G.you] : 0, opp = G.score ? G.score[G.you === 'w' ? 'b' : 'w'] : 0, mc = HC[G.you], oc = HC[G.you === 'w' ? 'b' : 'w'];
+  const t = $('#turn'); t.className = 'turn' + (my ? '' : ' opp');
+  t.innerHTML = `${my ? 'Sizning navbatingiz' : 'Raqib yuryapti…'}<br><b style="color:${mc}">● ${mine}</b> : <b style="color:${oc}">● ${opp}</b> <small>(25 kataklikdan)</small>`;
+  $('#plMe').classList.toggle('act', my); $('#plOpp').classList.toggle('act', !my);
+}
+$('#hboard').addEventListener('click', (e) => {
+  const h = e.target.closest('.hit'); if (!h || !G || G.kind !== 'hu' || G.turn !== G.you) return;
+  const k = h.dataset.k, r = +h.dataset.r, c = +h.dataset.c;
+  send({ t: 'move', line: [k, r, c] });
+  G.board[k][r][c] = G.you === 'w' ? 1 : 2; G.turn = G.you === 'w' ? 'b' : 'w'; G.last = { line: [k, r, c] }; renderHu(); // server to'g'rilaydi
+});
 const match = (m, pre) => pre.every((s, i) => m[i] && m[i][0] === s[0] && m[i][1] === s[1]);
 $('#board').addEventListener('click', (e) => {
   const sq = e.target.closest('.sq'); if (!sq || !G || G.turn !== G.you) return;
@@ -653,13 +735,103 @@ function onOver(m) {
   const mb = $('#mbox'); mb.className = 'mbox ' + (m.result === 'win' ? 'win' : m.result === 'draw' ? 'draw' : '');
   $('#mIcon').innerHTML = IC(m.result === 'win' ? 'trophy' : m.result === 'draw' ? 'draw' : 'lose');
   $('#mTitle').textContent = m.result === 'win' ? "G'ALABA" : m.result === 'draw' ? 'DURANG' : "MAG'LUBIYAT";
-  const why = { nomoves: m.result === 'win' ? 'Raqibda yurish qolmadi' : 'Sizda yurish qolmadi', resign: m.result === 'win' ? 'Raqib taslim bo\'ldi' : 'Siz taslim bo\'ldingiz', timeout: 'Vaqt tugadi', movetimeout: 'Yurish vaqti tugadi', draw: 'Durang e\'lon qilindi' };
+  const why = { nomoves: m.result === 'win' ? 'Raqibda yurish qolmadi' : 'Sizda yurish qolmadi', resign: m.result === 'win' ? 'Raqib taslim bo\'ldi' : 'Siz taslim bo\'ldingiz', timeout: 'Vaqt tugadi', movetimeout: 'Yurish vaqti tugadi', draw: 'Durang e\'lon qilindi', boxes: m.result === 'win' ? 'Ko\'proq hudud egalladingiz' : 'Raqib ko\'proq hudud egalladi' };
   $('#mSub').textContent = why[m.reason] || '';
   $('#mAmt').innerHTML = m.practice ? 'Sinov o\'yini' : (m.delta > 0 ? '+' : '') + (m.delta === 0 ? 'Tikilgan tanga qaytarildi' : m.delta + ' <span class="coin"></span>');
   setCoins(m.coins);
   $('#modal').classList.add('on');
 }
 
+/* ---- Hudud (real vaqt) ---- */
+const IOCOL = ['#4aa8ff', '#ff5d5d', '#f2c230', '#7bd23a', '#ff6fb1', '#a678ff', '#2fd0c0', '#ff9a3c', '#8de0ff', '#c86bff', '#ffd2a0', '#9aff9a'];
+let IO = null, ioJoy = null, ioLastDir = { a: 0, t: 0 }, ioRaf = 0;
+const ioCol = (id) => IOCOL[(IO && IO.pl[id] ? IO.pl[id].c : id - 1) % 12];
+function onIoInit(m) {
+  const pl = {}; m.pl.forEach((p) => pl[p.id] = p);
+  const prev = IO && IO.you === m.you ? IO : null;
+  IO = { w: m.w, h: m.h, r: m.r, you: m.you, own: Uint8Array.from(m.own), pl, pos: prev ? prev.pos : {}, trails: {}, hist: {}, tl: m.tl, at: Date.now(), sc: {}, play: (() => { let n = 0; for (let y = 0; y < m.h; y++) for (let x = 0; x < m.w; x++) if (Math.hypot(x + 0.5 - m.w / 2, y + 0.5 - m.h / 2) <= m.r) n++; return n; })(), alive: true, cam: null, ended: false, hudAt: 0 };
+  $('#ioMsg').style.display = 'none'; $('#ioDot').style.background = ioCol(m.you);
+  $('#queue').classList.remove('on'); show('io'); resizeIo(); cancelAnimationFrame(ioRaf); ioRaf = requestAnimationFrame(ioFrame);
+}
+function onIo(m) {
+  if (!IO) return;
+  IO.tl = m.tl; IO.at = Date.now();
+  for (let i = 0; i < m.d.length; i += 2) IO.own[m.d[i]] = m.d[i + 1];
+  for (const [id, x, y, a] of m.p) { const q = IO.pos[id]; if (!q || (!q.alive && a)) IO.pos[id] = { x, y, tx: x, ty: y, alive: !!a }; else { q.tx = x; q.ty = y; q.alive = !!a; } }
+  IO.trails = {}; for (const [id, t] of m.tr) IO.trails[id] = t;
+  for (const [id, x, y, a] of m.p) { const hs = IO.hist[id] || (IO.hist[id] = []); if (IO.trails[id] && a) { const l = hs[hs.length - 1]; if (!l || Math.hypot(l[0] - x, l[1] - y) > 0.12) hs.push([x, y]); } else hs.length = 0; }
+  if (m.sc) { IO.sc = {}; m.sc.forEach(([id, n]) => IO.sc[id] = n); }
+  const me = IO.pos[IO.you]; if (me && me.alive !== IO.alive) { IO.alive = me.alive; ioNote(me.alive ? '' : "Yo'q bo'ldingiz<small>Hozir qayta tug'ilasiz…</small>"); }
+}
+function ioNote(h) { const e = $('#ioMsg'); e.innerHTML = h; e.style.display = h ? 'block' : 'none'; }
+function onIoEnd(m) {
+  if (!IO) return; IO.ended = true;
+  const rows = m.rank.map((r, i) => `<tr style="color:${IOCOL[r.color % 12]};${r.id === m.you ? 'font-weight:900;text-decoration:underline' : ''}"><td>${i + 1}.</td><td>${esc(r.name)}</td><td>${r.pct}%</td></tr>`).join('');
+  ioNote(`Raund tugadi!<br><span style="font-size:17px;color:#f0cf7a">Sizning o'rningiz: ${m.mine}</span><table>${rows}</table><small>Yangi raund boshlanmoqda…</small>`);
+}
+function resizeIo() { const c = $('#ioc'), d = Math.min(2, window.devicePixelRatio || 1); c.width = c.clientWidth * d; c.height = c.clientHeight * d; c.dpr = d; }
+window.addEventListener('resize', () => { if (IO) resizeIo(); });
+let ioPrevT = 0;
+function ioFrame(t) {
+  if (!IO) return; ioRaf = requestAnimationFrame(ioFrame);
+  const dt = Math.min(0.1, (t - ioPrevT) / 1000 || 0.016); ioPrevT = t;
+  const k = 1 - Math.exp(-dt * 16);
+  for (const id in IO.pos) { const q = IO.pos[id]; q.x += (q.tx - q.x) * k; q.y += (q.ty - q.y) * k; }
+  const c = $('#ioc'), g = c.getContext('2d'), W = c.width, H = c.height, cell = W / 26, me = IO.pos[IO.you];
+  if (me) { if (!IO.cam) IO.cam = { x: me.x, y: me.y }; const kc = 1 - Math.exp(-dt * 8); IO.cam.x += (me.x - IO.cam.x) * kc; IO.cam.y += (me.y - IO.cam.y) * kc; }
+  const cam = IO.cam || { x: IO.w / 2, y: IO.h / 2 }, ox = W / 2 - cam.x * cell, oy = H / 2 - cam.y * cell;
+  g.fillStyle = '#10141c'; g.fillRect(0, 0, W, H);
+  g.beginPath(); g.arc(ox + IO.w / 2 * cell, oy + IO.h / 2 * cell, (IO.r + 0.5) * cell, 0, 6.2832); g.fillStyle = '#171d29'; g.fill(); g.lineWidth = cell * 0.35; g.strokeStyle = '#2b3547'; g.stroke();
+  const x0 = Math.max(0, Math.floor(cam.x - W / cell / 2) - 1), x1 = Math.min(IO.w - 1, Math.ceil(cam.x + W / cell / 2) + 1), y0 = Math.max(0, Math.floor(cam.y - H / cell / 2) - 1), y1 = Math.min(IO.h - 1, Math.ceil(cam.y + H / cell / 2) + 1);
+  g.fillStyle = '#ffffff10';
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const o = IO.own[y * IO.w + x]; if (!o) { g.fillRect(ox + (x + 0.5) * cell - 1, oy + (y + 0.5) * cell - 1, 2, 2); continue; } }
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const o = IO.own[y * IO.w + x]; if (!o) continue;
+    const col = ioCol(o), px = ox + x * cell, py = oy + y * cell;
+    const edge = y + 1 >= IO.h || IO.own[(y + 1) * IO.w + x] !== o;
+    if (edge) { g.fillStyle = '#000'; g.globalAlpha = 0.35; g.fillRect(px, py + cell * 0.8, cell + 0.5, cell * 0.22); g.globalAlpha = 1; }
+    g.fillStyle = col; g.globalAlpha = o === IO.you ? 0.95 : 0.85; g.fillRect(px, py, cell + 0.5, edge ? cell * 0.85 + 0.5 : cell + 0.5); g.globalAlpha = 1;
+  }
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  for (const id in IO.trails) {
+    const q = IO.pos[id], tr = IO.trails[id]; if (!tr.length) continue;
+    const hs = IO.hist[id] || []; g.beginPath();
+    const f = tr[0], sx = ox + ((f % IO.w) + 0.5) * cell, sy = oy + (((f / IO.w) | 0) + 0.5) * cell; g.moveTo(sx, sy);
+    if (hs.length > 1) { hs.forEach(([hx, hy]) => g.lineTo(ox + hx * cell, oy + hy * cell)); }
+    else tr.forEach((cc, i) => { if (i) g.lineTo(ox + ((cc % IO.w) + 0.5) * cell, oy + (((cc / IO.w) | 0) + 0.5) * cell); });
+    if (q) g.lineTo(ox + q.x * cell, oy + q.y * cell);
+    g.strokeStyle = ioCol(+id); g.globalAlpha = 0.85; g.lineWidth = cell * 0.5; g.stroke(); g.globalAlpha = 1;
+  }
+  for (const id in IO.pos) {
+    const q = IO.pos[id]; if (!q.alive) continue; const px = ox + q.x * cell, py = oy + q.y * cell;
+    g.beginPath(); g.arc(px, py, cell * 0.52, 0, 6.2832); g.fillStyle = ioCol(+id); g.fill(); g.lineWidth = cell * 0.14; g.strokeStyle = '#fff'; g.stroke();
+    if (+id !== IO.you && IO.pl[id]) { g.font = `700 ${Math.round(cell * 0.62)}px system-ui,sans-serif`; g.textAlign = 'center'; g.fillStyle = '#fff'; g.strokeStyle = '#000a'; g.lineWidth = 3; g.strokeText(IO.pl[id].n, px, py - cell * 0.85); g.fillText(IO.pl[id].n, px, py - cell * 0.85); }
+  }
+  if (ioJoy) { const d = c.dpr; g.beginPath(); g.arc(ioJoy.x * d, ioJoy.y * d, 52 * d, 0, 6.2832); g.strokeStyle = '#ffffff55'; g.lineWidth = 2 * d; g.stroke(); g.beginPath(); g.arc(ioJoy.kx * d, ioJoy.ky * d, 22 * d, 0, 6.2832); g.fillStyle = '#ffffff55'; g.fill(); }
+  if (Date.now() - IO.hudAt > 300) { IO.hudAt = Date.now(); ioHud(); }
+}
+function ioHud() {
+  const ms = Math.max(0, IO.tl - (Date.now() - IO.at));
+  $('#ioTime').textContent = mmss(ms);
+  const cells = Object.entries(IO.sc).map(([id, n]) => ({ id: +id, n })).sort((a, b) => b.n - a.n), P = IO.play;
+  const pct = (n) => (n * 100 / P).toFixed(1);
+  const mine = IO.sc[IO.you] || 0; $('#ioPct').textContent = pct(mine) + '%'; $('#ioRank').textContent = '#' + (cells.findIndex((x) => x.id === IO.you) + 1 || '');
+  $('#ioLb').innerHTML = cells.slice(0, 5).map((x) => `<div class="${x.id === IO.you ? 'me' : ''}"><i style="background:${ioCol(x.id)}"></i>${IO.pl[x.id] ? esc(x.id === IO.you ? 'Siz' : IO.pl[x.id].n) : ''}<b>${pct(x.n)}%</b></div>`).join('');
+}
+function ioSendDir(a) { const now = Date.now(); if (Math.abs(a - ioLastDir.a) > 0.05 && now - ioLastDir.t > 60) { ioLastDir = { a, t: now }; send({ t: 'io_dir', a }); } }
+(function () {
+  const c = $('#ioc');
+  const pos = (e) => { const r = c.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  c.addEventListener('pointerdown', (e) => { const p = pos(e); ioJoy = { x: p.x, y: p.y, kx: p.x, ky: p.y }; try { c.setPointerCapture(e.pointerId); } catch (x) {} });
+  c.addEventListener('pointermove', (e) => {
+    if (!ioJoy) return; const p = pos(e); let dx = p.x - ioJoy.x, dy = p.y - ioJoy.y; const d = Math.hypot(dx, dy);
+    if (d > 52) { dx *= 52 / d; dy *= 52 / d; }
+    ioJoy.kx = ioJoy.x + dx; ioJoy.ky = ioJoy.y + dy; if (d > 8) ioSendDir(Math.atan2(dy, dx));
+  });
+  const up = () => { ioJoy = null; }; c.addEventListener('pointerup', up); c.addEventListener('pointercancel', up);
+  window.addEventListener('keydown', (e) => { if (!IO) return; const m = { ArrowRight: 0, d: 0, ArrowDown: Math.PI / 2, s: Math.PI / 2, ArrowLeft: Math.PI, a: Math.PI, ArrowUp: -Math.PI / 2, w: -Math.PI / 2 }[e.key]; if (m !== undefined) { ioLastDir = { a: 99, t: 0 }; ioSendDir(m); } });
+  $('#ioExit').onclick = () => show('menu');
+})();
 connect();
 </script>
 </body>
