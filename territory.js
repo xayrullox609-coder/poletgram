@@ -3,13 +3,14 @@
 // Hamma hisob-kitob serverda.
 const W = 64, H = 64, CX = 32, CY = 32, R = 31; // aylana maydon
 const SPEED = 5.2, TURN = 7.5; // katak/soniya, radian/soniya
-const ROUND_MS = 180000, RESPAWN_S = 2.5, MIN_PLAYERS = 5;
+const ROUND_MS = Number(process.env.HUDUD_ROUND_MS) || 180000, RESPAWN_S = 2.5, MIN_PLAYERS = 5;
 const NAMES = ['Aziz', 'Bobur', 'Dilnoza', 'Jasur', 'Malika', 'Sardor', 'Nodira', 'Otabek', 'Zafar', 'Lola', 'Rustam', 'Madina', 'Sherzod', 'Kamola', 'Anvar', 'Gulnora'];
 const idx = (x, y) => y * W + x;
 const norm = (a) => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
 
 class Room {
-  constructor() {
+  constructor(opts = {}) {
+    this.elim = !!opts.elim; this.stake = opts.stake || 0; this.cd = 0; // elim: tikilgan xona, o'lgan qayta tug'ilmaydi, botsiz
     this.mask = new Uint8Array(W * H); this.playable = 0;
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (Math.hypot(x + 0.5 - CX, y + 0.5 - CY) <= R) { this.mask[idx(x, y)] = 1; this.playable++; }
     this.players = new Map(); this.changes = []; this.reset();
@@ -75,18 +76,20 @@ class Room {
   }
   ranking() {
     const c = this.counts();
-    return [...this.players.values()].map((p) => ({ id: p.id, name: p.name, bot: p.bot, color: p.color, cells: c.get(p.id), pct: +(c.get(p.id) * 100 / this.playable).toFixed(1), kills: p.kills }))
+    return [...this.players.values()].map((p) => ({ id: p.id, name: p.name, bot: p.bot, color: p.color, alive: p.alive, cells: c.get(p.id), pct: +(c.get(p.id) * 100 / this.playable).toFixed(1), kills: p.kills }))
       .sort((a, b) => b.cells - a.cells);
   }
   step(dt) {
     if (this.ended) return;
+    if (this.cd > 0) { this.cd -= dt; return; } // boshlanishidan oldingi sanash
     this.timeLeft -= dt * 1000;
     for (const p of this.players.values()) {
-      if (!p.alive) { p.dead -= dt; if (p.dead <= 0) this.spawn(p); continue; }
+      if (!p.alive) { if (!this.elim) { p.dead -= dt; if (p.dead <= 0) this.spawn(p); } continue; }
       if (p.bot) this.think(p, dt);
       this.move(p, dt);
     }
     if (this.timeLeft <= 0) { this.timeLeft = 0; this.ended = true; }
+    if (this.elim && [...this.players.values()].filter((p) => p.alive).length <= 1) this.ended = true; // 1 kishi qolsa tugaydi
   }
   move(p, dt) {
     const da = norm(p.want - p.ang), mx = TURN * dt;
@@ -167,4 +170,6 @@ class Room {
     }
   }
 }
-module.exports = { Room, W, H, R, CX, CY, SPEED, ROUND_MS, MIN_PLAYERS, idx };
+// Tikilgan Hudud: stavka 3 tanga, 6 kishi (5 tada ham boshlanadi). O'yinchi soni -> [3+ tirik, 2 tirik, 1 tirik] mukofotlari. Yig'indi = bank.
+const PAYOUT = { 6: { 3: [10, 5, 3], 2: [11, 7], 1: [18] }, 5: { 3: [8, 4, 3], 2: [9, 6], 1: [15] } };
+module.exports = { PAYOUT, Room, W, H, R, CX, CY, SPEED, ROUND_MS, MIN_PLAYERS, idx };

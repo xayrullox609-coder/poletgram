@@ -109,4 +109,11 @@ t('hudud: botlar to\'liq raundni xatosiz o\'ynaydi, hududlar to\'g\'ri sanaladi'
   console.log('   raund:', ticks, 'tik; g\'olib', rk[0].name, rk[0].pct + '%');
   r.add('Ikkinchi', 2, false); r.add('3', 3, false); r.fill(); assert.strictEqual(r.bots().length, 2);
 });
+t('hudud (tikilgan): o\'lgan qayta tug\'ilmaydi, 1 kishi qolsa tugaydi, mukofotlar bankka teng', () => {
+  const r = new TR.Room({ elim: true, stake: 3 }); const ps = [1, 2, 3, 4, 5, 6].map((i) => r.add('P' + i, i, false)); r.cd = 0;
+  r.kill(ps[0], null); for (let i = 0; i < 100; i++) r.step(0.05); assert.ok(!ps[0].alive, 'qayta tug\'ilmadi'); assert.ok(!r.ended);
+  [1, 2, 3, 4].forEach((i) => r.kill(ps[i], null)); r.step(0.05); assert.ok(r.ended, '1 kishi qolsa tugaydi');
+  for (const n of [5, 6]) for (const k of [1, 2, 3]) assert.strictEqual(TR.PAYOUT[n][k].reduce((a, b) => a + b, 0), 3 * n);
+  assert.deepStrictEqual(TR.PAYOUT[6], { 3: [10, 5, 3], 2: [11, 7], 1: [18] });
+});
 console.log(n + ' test o\'tdi');

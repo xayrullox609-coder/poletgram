@@ -680,7 +680,7 @@ if (BOT_TOKEN) {
     const { text, entities } = WELCOME(ctx.from.first_name);
     const opts = { caption: text, caption_entities: entities, reply_markup: openKb(url) };
     try {
-      await ctx.replyWithPhoto(new InputFile(path.join(__dirname, 'public', 'coin.jpg')), opts);
+      await ctx.replyWithPhoto(new InputFile(path.join(__dirname, 'public', 'start.jpg')), opts);
     } catch (e) { // custom emoji yoki rasm xatosi bo'lsa oddiy matn
       console.error('start photo error', e.message);
       const plain = text.replace(/\s+$/, '');
@@ -849,7 +849,7 @@ function busy(uid) {
 function leaveQueue(uid) {
   for (const [key, q] of queues) {
     const i = q.indexOf(uid);
-    if (i >= 0) { q.splice(i, 1); refund(db.users[uid], Number(key.split(':')[1])); return true; }
+    if (i >= 0) { q.splice(i, 1); refund(db.users[uid], Number(key.split(':')[1])); if (key.startsWith('io:')) { ioWait.delete(uid); ioNotifyWait(); } return true; }
   }
   return false;
 }
@@ -868,29 +868,70 @@ const kindOf = (m) => (m.kind === 'hu' ? 'hu' : 'dr');
 function randomColors(a, b) { return Math.random() < 0.5 ? [a, b] : [b, a]; }
 
 /* ---------------- Hudud (real vaqt, ko'p o'yinchi) ---------------- */
+const IO_STAKE = 3, IO_MIN = 5, IO_MAX = 6, IO_WAIT_MS = Number(process.env.HUDUD_WAIT_MS) || 45000;
 const ioRooms = new Set();
 const ioOf = new Map(); // uid -> {room, pid}
+const ioWait = new Map(); // uid -> navbatga kirgan vaqt
 const ioInfo = (r) => [...r.players.values()].map((p) => ({ id: p.id, n: p.name, c: p.color, b: p.bot ? 1 : 0 }));
-function ioBroadcast(r, msg) { for (const p of r.humans()) send(p.uid, msg); }
-function ioInit(r, p) { send(p.uid, { t: 'io_init', w: TERR.W, h: TERR.H, r: TERR.R, you: p.id, own: Array.from(r.own), pl: ioInfo(r), tl: Math.round(r.timeLeft) }); }
+function ioBroadcast(r, msg) { for (const p of r.humans()) if (!p.left) send(p.uid, msg); }
+function ioInit(r, p) { send(p.uid, { t: 'io_init', w: TERR.W, h: TERR.H, r: TERR.R, you: p.id, own: Array.from(r.own), pl: ioInfo(r), tl: Math.round(r.timeLeft), st: r.elim ? 1 : 0, cd: Math.max(0, r.cd) }); }
+function ioNotifyWait() {
+  const q = queues.get('io:' + IO_STAKE) || [];
+  for (const uid of q) send(uid, { t: 'io_wait', n: q.length, need: IO_MIN, max: IO_MAX });
+}
+// Tikilgan xona: navbatda 6 kishi to'lsa, yoki kamida 5 kishi 45 soniya kutsa boshlanadi
+function ioTryStart() {
+  const key = 'io:' + IO_STAKE, q = queues.get(key) || [];
+  const ready = q.length >= IO_MAX || (q.length >= IO_MIN && Date.now() - ioWait.get(q[0]) >= IO_WAIT_MS);
+  if (!ready) return;
+  const uids = q.splice(0, IO_MAX);
+  const room = new TERR.Room({ elim: true, stake: IO_STAKE }); room.last = Date.now(); room.tick = 0; room.endSent = false; room.cd = 4;
+  for (const uid of uids) { ioWait.delete(uid); const p = room.add(String(db.users[uid].name || 'Siz').slice(0, 14), uid, false); ioOf.set(uid, { room, pid: p.id }); }
+  ioRooms.add(room);
+  for (const p of room.humans()) ioInit(room, p);
+  ioNotifyWait();
+}
 function ioLeave(uid) {
   const e = ioOf.get(uid); if (!e) return;
-  ioOf.delete(uid); e.room.remove(e.pid); e.room.fill();
+  ioOf.delete(uid);
+  if (e.room.elim) { const p = e.room.players.get(e.pid); if (p) { p.left = true; e.room.kill(p, null); } return; } // uzilgan: yo'q bo'ldi, stavka qaytmaydi
+  e.room.remove(e.pid); e.room.fill();
   if (!e.room.humans().length) ioRooms.delete(e.room); else ioBroadcast(e.room, { t: 'io_players', pl: ioInfo(e.room) });
 }
-function ioJoin(uid) {
+function ioJoin(uid) { // tikilmaydigan sinov xonasi (botlar bilan, qayta tug'iladi)
   const u = db.users[uid];
-  let room = [...ioRooms].find((r) => r.humans().length < 10);
+  let room = [...ioRooms].find((r) => !r.elim && r.humans().length < 10);
   if (!room) { room = new TERR.Room(); room.last = Date.now(); room.tick = 0; room.endSent = false; ioRooms.add(room); }
   const p = room.add(String(u.name || 'Siz').slice(0, 14), uid, false); room.fill();
   ioOf.set(uid, { room, pid: p.id });
   ioInit(room, p);
   ioBroadcast(room, { t: 'io_players', pl: ioInfo(room) });
 }
+// Tikilgan raund tugadi: mukofotlarni taqsimlaydi
+function ioFinish(r) {
+  const all = [...r.players.values()], N = all.length, table = TERR.PAYOUT[N] || TERR.PAYOUT[5];
+  const rk = r.ranking(), cellsOf = new Map(rk.map((x) => [x.id, x.cells]));
+  const alive = all.filter((p) => p.alive).sort((x, y) => cellsOf.get(y.id) - cellsOf.get(x.id));
+  const award = new Map(); let place = [];
+  if (!alive.length) all.forEach((p) => award.set(p.id, r.stake)); // hamma bir vaqtda yo'q bo'lsa: stavka qaytadi
+  else { const pay = alive.length >= 3 ? table[3] : table[alive.length]; alive.forEach((p, i) => award.set(p.id, pay[i] || 0)); place = alive.map((p) => p.id); }
+  const order = [...place, ...all.filter((p) => !place.includes(p.id)).sort((x, y) => cellsOf.get(y.id) - cellsOf.get(x.id)).map((p) => p.id)];
+  const rank = order.map((id) => { const x = rk.find((y) => y.id === id); return { ...x, pay: award.get(id) || 0 }; });
+  for (const p of all) {
+    const u = db.users[p.uid]; if (!u) continue; const pay = award.get(p.id) || 0;
+    if (pay > 0) credit(u, pay, 'win', 'hudud');
+    u.games++; if (alive.length && place[0] === p.id) u.wins++; else if (pay >= r.stake) u.draws = (u.draws || 0) + 1; else u.losses++;
+    ioOf.delete(p.uid); sendBalance(u);
+    if (!p.left) send(p.uid, { t: 'io_end', staked: 1, rank, you: p.id, mine: order.indexOf(p.id) + 1, payout: pay, delta: pay - r.stake, coins: u.coins });
+  }
+  save();
+}
+setInterval(ioTryStart, 1000);
 setInterval(() => {
   const now = Date.now();
-  for (const r of ioRooms) {
+  for (const r of [...ioRooms]) {
     const dt = Math.min(0.1, (now - r.last) / 1000); r.last = now;
+    if (r.elim && r.ended) { ioFinish(r); ioRooms.delete(r); continue; }
     if (r.ended) {
       if (!r.endSent) {
         r.endSent = true; r.resetAt = now + 8000;
@@ -904,11 +945,12 @@ setInterval(() => {
       continue;
     }
     r.step(dt); r.tick++;
-    const msg = { t: 'io', tl: Math.round(r.timeLeft), p: [], tr: [], d: r.changes };
+    const msg = { t: 'io', tl: Math.round(r.timeLeft), cd: Math.max(0, +r.cd.toFixed(1)), p: [], tr: [], d: r.changes };
     r.changes = [];
     for (const p of r.players.values()) { msg.p.push([p.id, +p.x.toFixed(2), +p.y.toFixed(2), p.alive ? 1 : 0]); if (p.alive && p.trail.length) msg.tr.push([p.id, p.trail]); }
     if (r.tick % 5 === 0) { const c = r.counts(); msg.sc = [...c.entries()]; }
     ioBroadcast(r, msg);
+    if (r.elim && r.ended) { ioBroadcast(r, { t: 'io', tl: 0, cd: 0, p: msg.p, tr: [], d: [] }); }
   }
 }, 66);
 
@@ -1010,6 +1052,14 @@ function handle(ws, m) {
       if (!g) return;
       const color = g.players.w === uid ? 'w' : 'b';
       finish(g, color === 'w' ? 'b' : 'w', 'resign');
+      break;
+    }
+    case 'io_queue': {
+      if (busy(uid)) return err("Siz allaqachon o'yindasiz");
+      if (u.coins < IO_STAKE) return err('Tanga yetarli emas');
+      hold(u, IO_STAKE);
+      const key = 'io:' + IO_STAKE, q = queues.get(key) || []; queues.set(key, q);
+      q.push(uid); ioWait.set(uid, Date.now()); ioNotifyWait(); ioTryStart();
       break;
     }
     case 'io_join': {
