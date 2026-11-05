@@ -218,6 +218,8 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
 #ioMsg{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);text-align:center;color:#fff;font:800 22px system-ui,sans-serif;text-shadow:0 2px 8px #000;display:none;background:#0b0e14dd;padding:18px 22px;border-radius:20px;min-width:230px}
 #ioMsg small{display:block;font:600 14px system-ui,sans-serif;color:#aeb6c8;margin-top:6px}
 #ioMsg table{margin:10px auto 0;border-collapse:collapse;font:600 14px system-ui,sans-serif;text-align:left}#ioMsg td{padding:3px 8px}
+.iopr{display:grid;gap:6px}.iopr div{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:14px;background:#f1eefc;font-weight:700}.iopr b{color:#6a5cff;font-size:18px}.iopr .sub{font-size:13px;background:#faf9ff}
+#ioMsg.top{top:20%}#ioMsg button{margin-top:14px;padding:12px 26px;border-radius:16px;border:0;background:linear-gradient(135deg,#6a5cff,#2fb4ff);color:#fff;font:800 16px system-ui,sans-serif}
 </style>
 </head>
 <body class="inmenu">
@@ -360,6 +362,22 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
   <div class="gbar"><button class="btn dark" id="btnResign"><svg class="ic"><use href="#i-flag"/></svg> Taslim</button><button class="btn dark" style="flex:none;width:60px" id="btnEmoji">😀</button></div>
 </section>
 
+<section id="ioplay" class="screen">
+  <div class="top"><button class="back" data-go="menu">‹</button><h2>Hudud</h2><span class="chip"><span class="bc">0</span> <span class="coin"></span></span></div>
+  <div class="gname">HUDUD</div>
+  <div class="pcard" style="margin-top:6px">
+    <div style="font-weight:800;font-size:17px;margin-bottom:8px">3 tanga tikiladi · 5–6 o'yinchi</div>
+    <div class="iopr">
+      <div><span>🥇 1-o'rin</span><b>10</b></div><div><span>🥈 2-o'rin</span><b>5</b></div><div><span>🥉 3-o'rin</span><b>3</b></div>
+      <div class="sub"><span>Ikki kishi qolsa (1-o'rin / 2-o'rin)</span><b>11 / 7</b></div>
+      <div class="sub"><span>Bir kishi qolsa</span><b>18</b></div>
+    </div>
+    <p style="font-size:13px;color:#4a4566;margin:10px 0 0">O'lgan o'yinchi qayta tug'ilmaydi. Raund 3:00. Bir kishi qolsa o'yin tugaydi. 5 kishi bo'lsa mukofotlar bankka qarab kamayadi (8/4/3).</p>
+    <button class="pbtn" id="btnIoQ">Raqib qidirish · 3 tanga</button>
+    <button class="pbtn" id="btnIoP" style="background:#e9e6f7;color:#3b3366;box-shadow:none;margin-top:10px;font-size:16px">Bot bilan sinov (tikilmaydi)</button>
+  </div>
+</section>
+
 <section id="io" class="screen">
   <canvas id="ioc"></canvas>
   <div id="ioHud">
@@ -410,7 +428,6 @@ function setGame(k) { curGame = k; const pb = document.querySelector('.mm-play')
 
 function toast(t) { const e = $('#toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.display = 'none', 2600); }
 function show(id) {
-  if (id === 'ioplay') { send({ t: 'io_join' }); return; }
   if (IO && id !== 'io') { send({ t: 'io_leave' }); IO = null; }
   document.body.classList.toggle('inmenu', id === 'menu');
   $$('.screen').forEach((s) => s.classList.toggle('on', s.id === id));
@@ -493,6 +510,7 @@ function onMsg(m) {
     case 'io': onIo(m); break;
     case 'io_players': if (IO) { IO.pl = {}; m.pl.forEach((p) => IO.pl[p.id] = p); } break;
     case 'io_end': onIoEnd(m); break;
+    case 'io_wait': $('#queue').classList.add('on'); $('#btnQP').style.display = 'none'; clearTimeout(onMsg.qt); $('#qHint').textContent = `Kutilmoqda: ${m.n}/${m.max} o'yinchi (kamida ${m.need}). 3 tanga tikilgan.`; break;
     case 'over': onOver(m); break;
     case 'emoji': { const el = $('#oEm'); el.textContent = m.e; clearTimeout(onMsg.et); onMsg.et = setTimeout(() => el.textContent = '', 2500); break; }
   }
@@ -749,23 +767,33 @@ const ioCol = (id) => IOCOL[(IO && IO.pl[id] ? IO.pl[id].c : id - 1) % 12];
 function onIoInit(m) {
   const pl = {}; m.pl.forEach((p) => pl[p.id] = p);
   const prev = IO && IO.you === m.you ? IO : null;
-  IO = { w: m.w, h: m.h, r: m.r, you: m.you, own: Uint8Array.from(m.own), pl, pos: prev ? prev.pos : {}, trails: {}, hist: {}, tl: m.tl, at: Date.now(), sc: {}, play: (() => { let n = 0; for (let y = 0; y < m.h; y++) for (let x = 0; x < m.w; x++) if (Math.hypot(x + 0.5 - m.w / 2, y + 0.5 - m.h / 2) <= m.r) n++; return n; })(), alive: true, cam: null, ended: false, hudAt: 0 };
-  $('#ioMsg').style.display = 'none'; $('#ioDot').style.background = ioCol(m.you);
+  IO = { w: m.w, h: m.h, r: m.r, you: m.you, own: Uint8Array.from(m.own), pl, pos: prev ? prev.pos : {}, trails: {}, hist: {}, tl: m.tl, at: Date.now(), sc: {}, play: (() => { let n = 0; for (let y = 0; y < m.h; y++) for (let x = 0; x < m.w; x++) if (Math.hypot(x + 0.5 - m.w / 2, y + 0.5 - m.h / 2) <= m.r) n++; return n; })(), alive: true, cam: null, ended: false, hudAt: 0, st: !!m.st, cd: m.cd || 0 };
+  ioNote(m.cd > 0 ? ioCd(m.cd) : ''); $('#ioDot').style.background = ioCol(m.you);
   $('#queue').classList.remove('on'); show('io'); resizeIo(); cancelAnimationFrame(ioRaf); ioRaf = requestAnimationFrame(ioFrame);
 }
 function onIo(m) {
   if (!IO) return;
   IO.tl = m.tl; IO.at = Date.now();
+  if (m.cd > 0) { IO.cd = m.cd; ioNote(ioCd(m.cd)); } else if (IO.cd > 0) { IO.cd = 0; ioNote(''); }
   for (let i = 0; i < m.d.length; i += 2) IO.own[m.d[i]] = m.d[i + 1];
   for (const [id, x, y, a] of m.p) { const q = IO.pos[id]; if (!q || (!q.alive && a)) IO.pos[id] = { x, y, tx: x, ty: y, alive: !!a }; else { q.tx = x; q.ty = y; q.alive = !!a; } }
   IO.trails = {}; for (const [id, t] of m.tr) IO.trails[id] = t;
   for (const [id, x, y, a] of m.p) { const hs = IO.hist[id] || (IO.hist[id] = []); if (IO.trails[id] && a) { const l = hs[hs.length - 1]; if (!l || Math.hypot(l[0] - x, l[1] - y) > 0.12) hs.push([x, y]); } else hs.length = 0; }
   if (m.sc) { IO.sc = {}; m.sc.forEach(([id, n]) => IO.sc[id] = n); }
-  const me = IO.pos[IO.you]; if (me && me.alive !== IO.alive) { IO.alive = me.alive; ioNote(me.alive ? '' : "Yo'q bo'ldingiz<small>Hozir qayta tug'ilasiz…</small>"); }
+  const me = IO.pos[IO.you]; if (me && me.alive !== IO.alive) { IO.alive = me.alive; if (IO.st) ioNote(me.alive ? '' : "Siz yo'q bo'ldingiz<small>Qayta tug'ilmaysiz. Raund tugashini kuzating</small>", true); else ioNote(me.alive ? '' : "Yo'q bo'ldingiz<small>Hozir qayta tug'ilasiz…</small>"); }
 }
-function ioNote(h) { const e = $('#ioMsg'); e.innerHTML = h; e.style.display = h ? 'block' : 'none'; }
+function ioNote(h, top) { const e = $('#ioMsg'); e.innerHTML = h; e.classList.toggle('top', !!top); e.style.display = h ? 'block' : 'none'; }
+const ioCd = (c) => `Tayyor bo'ling!<br><span style="font-size:44px;color:#f0cf7a">${Math.ceil(c)}</span>`;
 function onIoEnd(m) {
   if (!IO) return; IO.ended = true;
+  if (m.staked) {
+    const rows2 = m.rank.map((r, i) => `<tr style="color:${IOCOL[r.color % 12]};${r.id === m.you ? 'font-weight:900;text-decoration:underline' : ''}"><td>${i + 1}.</td><td>${esc(r.name)}</td><td>${r.alive ? r.pct + '%' : "yo'q bo'ldi"}</td><td>${r.pay ? '+' + r.pay : '0'}</td></tr>`).join('');
+    const win = m.delta > 0, even = m.delta === 0;
+    ioNote(`O'yin tugadi!<br><span style="font-size:19px;color:${win ? '#7be07b' : even ? '#f0cf7a' : '#ff8a8a'}">${m.payout > 0 ? '+' + m.payout + ' tanga yutdingiz' : '−3 tanga'} · ${m.mine}-o'rin</span><table>${rows2}</table><button id="ioBack">Menyuga</button>`);
+    $('#ioBack').onclick = () => show('menu');
+    if (me) { me.coins = m.coins; } $$('.bc').forEach((x) => x.textContent = m.coins);
+    return;
+  }
   const rows = m.rank.map((r, i) => `<tr style="color:${IOCOL[r.color % 12]};${r.id === m.you ? 'font-weight:900;text-decoration:underline' : ''}"><td>${i + 1}.</td><td>${esc(r.name)}</td><td>${r.pct}%</td></tr>`).join('');
   ioNote(`Raund tugadi!<br><span style="font-size:17px;color:#f0cf7a">Sizning o'rningiz: ${m.mine}</span><table>${rows}</table><small>Yangi raund boshlanmoqda…</small>`);
 }
@@ -831,6 +859,8 @@ function ioSendDir(a) { const now = Date.now(); if (Math.abs(a - ioLastDir.a) > 
   const up = () => { ioJoy = null; }; c.addEventListener('pointerup', up); c.addEventListener('pointercancel', up);
   window.addEventListener('keydown', (e) => { if (!IO) return; const m = { ArrowRight: 0, d: 0, ArrowDown: Math.PI / 2, s: Math.PI / 2, ArrowLeft: Math.PI, a: Math.PI, ArrowUp: -Math.PI / 2, w: -Math.PI / 2 }[e.key]; if (m !== undefined) { ioLastDir = { a: 99, t: 0 }; ioSendDir(m); } });
   $('#ioExit').onclick = () => show('menu');
+  $('#btnIoQ').onclick = () => send({ t: 'io_queue' });
+  $('#btnIoP').onclick = () => send({ t: 'io_join' });
 })();
 connect();
 </script>
