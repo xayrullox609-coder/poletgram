@@ -454,12 +454,9 @@ async function refreshMe() { try { const d = await api('/api/me'); me = d.user; 
 function ioPay(n, alive, st) { const T = { 3: [10, 5, 3], 2: [11, 7], 1: [18] }[alive >= 3 ? 3 : alive], o = T.map((x) => Math.floor(x * st / 3)); o[0] += n * st - o.reduce((a, b) => a + b, 0); return o; }
 function playInfo() {
   const io = curGame === 'io', box = $('#ioPrize'); if (!box) return;
-  box.style.display = io ? 'grid' : 'none';
-  $('#playHint').innerHTML = io ? `Hudud: 6 o'yinchi (kamida 5). <b style="color:var(--gold)">${stake}</b> tanga tikiladi, o'lgan qayta tug'ilmaydi. Raund 3:00.` : 'Tikilgan summadan g\'olib <b style="color:var(--gold)">×2</b> oladi. Durangda qaytariladi.';
+  box.style.display = 'none';
+  $('#playHint').innerHTML = io ? `Hudud: 6 o'yinchi (kamida 5). O'lgan qayta tug'ilmaydi. Raund 3:00.` : 'Tikilgan summadan g\'olib <b style="color:var(--gold)">×2</b> oladi. Durangda qaytariladi.';
   $('#btnRandom').textContent = io ? 'Raqib qidirish' : 'Tasodifiy raqib';
-  if (!io) return;
-  const a = ioPay(6, 3, stake), b = ioPay(6, 2, stake), c = ioPay(6, 1, stake);
-  box.innerHTML = `<div><span>🥇 1-o'rin</span><b>${a[0]}</b></div><div><span>🥈 2-o'rin</span><b>${a[1]}</b></div><div><span>🥉 3-o'rin</span><b>${a[2]}</b></div><div class="sub"><span>Ikki kishi qolsa (1-o'rin / 2-o'rin)</span><b>${b[0]} / ${b[1]}</b></div><div class="sub"><span>Bir kishi qolsa</span><b>${c[0]}</b></div>`;
 }
 function renderStakes() {
   playInfo();
@@ -776,7 +773,7 @@ function onIo(m) {
   IO.trails = {}; for (const [id, t] of m.tr) IO.trails[id] = t;
   for (const [id, x, y, a] of m.p) { const hs = IO.hist[id] || (IO.hist[id] = []); if (IO.trails[id] && a) { const l = hs[hs.length - 1]; if (!l || Math.hypot(l[0] - x, l[1] - y) > 0.12) hs.push([x, y]); } else hs.length = 0; }
   if (m.sc) { IO.sc = {}; m.sc.forEach(([id, n]) => IO.sc[id] = n); }
-  const me = IO.pos[IO.you]; if (me && me.alive !== IO.alive) { IO.alive = me.alive; if (IO.st) ioNote(me.alive ? '' : "Siz yo'q bo'ldingiz<small>Qayta tug'ilmaysiz. Raund tugashini kuzating</small>", true); else ioNote(me.alive ? '' : "Yo'q bo'ldingiz<small>Hozir qayta tug'ilasiz…</small>"); }
+  const me = IO.pos[IO.you]; if (me && me.alive !== IO.alive) { IO.alive = me.alive; if (IO.st) ioNote(me.alive ? '' : "Siz yo'q bo'ldingiz<small>Qayta tug'ilmaysiz. Raund tugashini kuzating</small>", true); else if (!me.alive) { ioNote(`Siz yo'q bo'ldingiz<small>Qayta tug'ilmaysiz</small><button id="ioAgain">Qayta o'ynash</button> <button id="ioBack2">Menyuga</button>`, true); $('#ioAgain').onclick = () => { send({ t: 'io_leave' }); IO = null; send({ t: 'io_join' }); }; $('#ioBack2').onclick = () => show('menu'); } }
 }
 function ioNote(h, top) { const e = $('#ioMsg'); e.innerHTML = h; e.classList.toggle('top', !!top); e.style.display = h ? 'block' : 'none'; }
 const ioCd = (c) => `Tayyor bo'ling!<br><span style="font-size:44px;color:#f0cf7a">${Math.ceil(c)}</span>`;
@@ -831,7 +828,7 @@ function ioFrame(t) {
     g.beginPath(); g.arc(px, py, cell * 0.52, 0, 6.2832); g.fillStyle = ioCol(+id); g.fill(); g.lineWidth = cell * 0.14; g.strokeStyle = '#fff'; g.stroke();
     if (+id !== IO.you && IO.pl[id]) { g.font = `700 ${Math.round(cell * 0.62)}px system-ui,sans-serif`; g.textAlign = 'center'; g.fillStyle = '#fff'; g.strokeStyle = '#000a'; g.lineWidth = 3; g.strokeText(IO.pl[id].n, px, py - cell * 0.85); g.fillText(IO.pl[id].n, px, py - cell * 0.85); }
   }
-  if (ioJoy) { const d = c.dpr; g.beginPath(); g.arc(ioJoy.x * d, ioJoy.y * d, 52 * d, 0, 6.2832); g.strokeStyle = '#ffffff55'; g.lineWidth = 2 * d; g.stroke(); g.beginPath(); g.arc(ioJoy.kx * d, ioJoy.ky * d, 22 * d, 0, 6.2832); g.fillStyle = '#ffffff55'; g.fill(); }
+  if (ioJoy) { const d = c.dpr; g.beginPath(); g.arc(ioJoy.x * d, ioJoy.y * d, 60 * d, 0, 6.2832); g.strokeStyle = '#ffffff55'; g.lineWidth = 2 * d; g.stroke(); g.beginPath(); g.arc(ioJoy.kx * d, ioJoy.ky * d, 22 * d, 0, 6.2832); g.fillStyle = '#ffffff55'; g.fill(); }
   if (Date.now() - IO.hudAt > 300) { IO.hudAt = Date.now(); ioHud(); }
 }
 function ioHud() {
@@ -842,15 +839,16 @@ function ioHud() {
   const mine = IO.sc[IO.you] || 0; $('#ioPct').textContent = pct(mine) + '%'; $('#ioRank').textContent = '#' + (cells.findIndex((x) => x.id === IO.you) + 1 || '');
   $('#ioLb').innerHTML = cells.slice(0, 5).map((x) => `<div class="${x.id === IO.you ? 'me' : ''}"><i style="background:${ioCol(x.id)}"></i>${IO.pl[x.id] ? esc(x.id === IO.you ? 'Siz' : IO.pl[x.id].n) : ''}<b>${pct(x.n)}%</b></div>`).join('');
 }
-function ioSendDir(a) { const now = Date.now(); if (Math.abs(a - ioLastDir.a) > 0.05 && now - ioLastDir.t > 60) { ioLastDir = { a, t: now }; send({ t: 'io_dir', a }); } }
+function ioSendDir(a) { const now = Date.now(); if (Math.abs(a - ioLastDir.a) > 0.03 && now - ioLastDir.t > 50) { ioLastDir = { a, t: now }; send({ t: 'io_dir', a }); } }
 (function () {
   const c = $('#ioc');
   const pos = (e) => { const r = c.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
   c.addEventListener('pointerdown', (e) => { const p = pos(e); ioJoy = { x: p.x, y: p.y, kx: p.x, ky: p.y }; try { c.setPointerCapture(e.pointerId); } catch (x) {} });
   c.addEventListener('pointermove', (e) => {
     if (!ioJoy) return; const p = pos(e); let dx = p.x - ioJoy.x, dy = p.y - ioJoy.y; const d = Math.hypot(dx, dy);
-    if (d > 52) { dx *= 52 / d; dy *= 52 / d; }
-    ioJoy.kx = ioJoy.x + dx; ioJoy.ky = ioJoy.y + dy; if (d > 8) ioSendDir(Math.atan2(dy, dx));
+    if (d > 60) { dx *= 60 / d; dy *= 60 / d; }
+    ioJoy.kx = ioJoy.x + dx; ioJoy.ky = ioJoy.y + dy;
+    if (d > 14) { const a = Math.atan2(dy, dx); ioJoy.a = ioJoy.a === undefined ? a : ioJoy.a + Math.atan2(Math.sin(a - ioJoy.a), Math.cos(a - ioJoy.a)) * 0.45; ioSendDir(ioJoy.a); }
   });
   const up = () => { ioJoy = null; }; c.addEventListener('pointerup', up); c.addEventListener('pointercancel', up);
   window.addEventListener('keydown', (e) => { if (!IO) return; const m = { ArrowRight: 0, d: 0, ArrowDown: Math.PI / 2, s: Math.PI / 2, ArrowLeft: Math.PI, a: Math.PI, ArrowUp: -Math.PI / 2, w: -Math.PI / 2 }[e.key]; if (m !== undefined) { ioLastDir = { a: 99, t: 0 }; ioSendDir(m); } });
