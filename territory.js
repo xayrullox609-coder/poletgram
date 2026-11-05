@@ -2,7 +2,7 @@
 // o'rab olingan joy sizniki bo'ladi. Boshqa o'yinchining izini kesib o'tsangiz u yo'qoladi, o'z izingizga tegsangiz o'zingiz.
 // Hamma hisob-kitob serverda.
 const W = 64, H = 64, CX = 32, CY = 32, R = 31; // aylana maydon
-const SPEED = 7.6, TURN = 12; // katak/soniya, radian/soniya
+const SPEED = 6.2, TURN = 8.5; // katak/soniya, radian/soniya
 const ROUND_MS = Number(process.env.HUDUD_ROUND_MS) || 180000, RESPAWN_S = 2.5, MIN_PLAYERS = 5;
 const NAMES = ['Aziz', 'Bobur', 'Dilnoza', 'Jasur', 'Malika', 'Sardor', 'Nodira', 'Otabek', 'Zafar', 'Lola', 'Rustam', 'Madina', 'Sherzod', 'Kamola', 'Anvar', 'Gulnora'];
 const idx = (x, y) => y * W + x;
@@ -84,7 +84,7 @@ class Room {
     if (this.cd > 0) { this.cd -= dt; return; } // boshlanishidan oldingi sanash
     this.timeLeft -= dt * 1000;
     for (const p of this.players.values()) {
-      if (!p.alive) { if (!this.elim) { p.dead -= dt; if (p.dead <= 0) this.spawn(p); } continue; }
+      if (!p.alive) { if (p.bot && !this.elim) { p.dead -= dt; if (p.dead <= 0) this.spawn(p); } continue; } // odamlar qayta tug'ilmaydi, botlar tug'iladi
       if (p.bot) this.think(p, dt);
       this.move(p, dt);
     }

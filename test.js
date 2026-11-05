@@ -87,7 +87,7 @@ const drive = (r, p, steps) => { for (const [a, secs] of steps) { p.want = a; fo
 t('hudud: iz bilan o\'rab olingan joy egallanadi', () => {
   const r = new TR.Room(), me = r.add('A', 1, false); me.ang = me.want = 0;
   const b = r.counts().get(me.id); assert.strictEqual(b, 25);
-  assert.ok(drive(r, me, [[0, 1.1], [Math.PI / 2, 0.7], [Math.PI, 1.2], [-Math.PI / 2, 1.0]]));
+  assert.ok(drive(r, me, [[0, 1.3], [Math.PI / 2, 0.85], [Math.PI, 1.45], [-Math.PI / 2, 1.2]]));
   assert.ok(r.counts().get(me.id) > 60, 'hudud kengaydi');
 });
 t('hudud: raqib izini kesgan uni yo\'q qiladi', () => {
