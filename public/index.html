@@ -218,7 +218,7 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
 #ioMsg{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);text-align:center;color:#fff;font:800 22px system-ui,sans-serif;text-shadow:0 2px 8px #000;display:none;background:#0b0e14dd;padding:18px 22px;border-radius:20px;min-width:230px}
 #ioMsg small{display:block;font:600 14px system-ui,sans-serif;color:#aeb6c8;margin-top:6px}
 #ioMsg table{margin:10px auto 0;border-collapse:collapse;font:600 14px system-ui,sans-serif;text-align:left}#ioMsg td{padding:3px 8px}
-.iopr{display:grid;gap:6px}.iopr div{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:14px;background:#f1eefc;font-weight:700}.iopr b{color:#6a5cff;font-size:18px}.iopr .sub{font-size:13px;background:#faf9ff}
+#ioPrize{display:grid;gap:6px;margin:4px 2px 12px}#ioPrize div{display:flex;justify-content:space-between;align-items:center;padding:9px 14px;border-radius:14px;background:#00000055;border:1px solid #6b4a25;color:#f0e6c8;font-weight:700}#ioPrize b{color:var(--gold);font-size:18px}#ioPrize .sub{font-size:13px;font-weight:600}
 #ioMsg.top{top:20%}#ioMsg button{margin-top:14px;padding:12px 26px;border-radius:16px;border:0;background:linear-gradient(135deg,#6a5cff,#2fb4ff);color:#fff;font:800 16px system-ui,sans-serif}
 </style>
 </head>
@@ -291,7 +291,8 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
   <div class="gname" id="gnPlay"></div>
   <h2 style="text-align:center;margin:6px 0 12px">Nechta tanga tikasiz?</h2>
   <div class="stakes" id="stakesPlay"></div>
-  <p class="hint">Tikilgan summadan g'olib <b style="color:var(--gold)">×2</b> oladi. Durangda qaytariladi.</p>
+  <p class="hint" id="playHint">Tikilgan summadan g'olib <b style="color:var(--gold)">×2</b> oladi. Durangda qaytariladi.</p>
+  <div class="iopr" id="ioPrize" style="display:none"></div>
   <button class="btn" id="btnRandom">Tasodifiy raqib</button>
   <button class="btn dark" id="btnPractice">Bot bilan sinov (tikilmaydi)</button>
 </section>
@@ -362,22 +363,6 @@ h2 .ic{width:1.1em;height:1.1em;margin-right:4px}
   <div class="gbar"><button class="btn dark" id="btnResign"><svg class="ic"><use href="#i-flag"/></svg> Taslim</button><button class="btn dark" style="flex:none;width:60px" id="btnEmoji">😀</button></div>
 </section>
 
-<section id="ioplay" class="screen">
-  <div class="top"><button class="back" data-go="menu">‹</button><h2>Hudud</h2><span class="chip"><span class="bc">0</span> <span class="coin"></span></span></div>
-  <div class="gname">HUDUD</div>
-  <div class="pcard" style="margin-top:6px">
-    <div style="font-weight:800;font-size:17px;margin-bottom:8px">3 tanga tikiladi · 5–6 o'yinchi</div>
-    <div class="iopr">
-      <div><span>🥇 1-o'rin</span><b>10</b></div><div><span>🥈 2-o'rin</span><b>5</b></div><div><span>🥉 3-o'rin</span><b>3</b></div>
-      <div class="sub"><span>Ikki kishi qolsa (1-o'rin / 2-o'rin)</span><b>11 / 7</b></div>
-      <div class="sub"><span>Bir kishi qolsa</span><b>18</b></div>
-    </div>
-    <p style="font-size:13px;color:#4a4566;margin:10px 0 0">O'lgan o'yinchi qayta tug'ilmaydi. Raund 3:00. Bir kishi qolsa o'yin tugaydi. 5 kishi bo'lsa mukofotlar bankka qarab kamayadi (8/4/3).</p>
-    <button class="pbtn" id="btnIoQ">Raqib qidirish · 3 tanga</button>
-    <button class="pbtn" id="btnIoP" style="background:#e9e6f7;color:#3b3366;box-shadow:none;margin-top:10px;font-size:16px">Bot bilan sinov (tikilmaydi)</button>
-  </div>
-</section>
-
 <section id="io" class="screen">
   <canvas id="ioc"></canvas>
   <div id="ioHud">
@@ -423,8 +408,8 @@ const fmt = (x) => (Math.round(x * 10) / 10).toString();
 let me = null, ws = null, G = null, STAKES = [3, 20, 100, 300, 1000], stake = 3, lastMode = 'random', ratingType = 'wins';
 let curGame = 'dr'; try { const sg = localStorage.getItem('pg_game'); if (sg === 'hu' || sg === 'io') curGame = sg; } catch (e) {}
 const GNAME = { dr: 'SHASHKA', hu: 'KATAKLAR', io: 'HUDUD' };
-function setGame(k) { curGame = k; const pb = document.querySelector('.mm-play'); if (pb) pb.dataset.go = k === 'io' ? 'ioplay' : 'play'; try { localStorage.setItem('pg_game', k); } catch (e) {}
-  $$('#mGames [data-game]').forEach((x) => x.classList.toggle('on', x.dataset.game === k)); $('#gnPlay').textContent = $('#gnFriend').textContent = GNAME[k]; }
+function setGame(k) { curGame = k; try { localStorage.setItem('pg_game', k); } catch (e) {}
+  $$('#mGames [data-game]').forEach((x) => x.classList.toggle('on', x.dataset.game === k)); $('#gnPlay').textContent = GNAME[k]; $('#gnFriend').textContent = GNAME[k === 'io' ? 'dr' : k]; if (typeof playInfo === 'function' && $('#ioPrize')) playInfo(); }
 
 function toast(t) { const e = $('#toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.display = 'none', 2600); }
 function show(id) {
@@ -466,7 +451,18 @@ function renderMe() {
 }
 async function refreshMe() { try { const d = await api('/api/me'); me = d.user; $('#mOnline').textContent = d.online + ' online'; renderMe(); } catch (e) {} }
 
+function ioPay(n, alive, st) { const T = { 3: [10, 5, 3], 2: [11, 7], 1: [18] }[alive >= 3 ? 3 : alive], o = T.map((x) => Math.floor(x * st / 3)); o[0] += n * st - o.reduce((a, b) => a + b, 0); return o; }
+function playInfo() {
+  const io = curGame === 'io', box = $('#ioPrize'); if (!box) return;
+  box.style.display = io ? 'grid' : 'none';
+  $('#playHint').innerHTML = io ? `Hudud: 6 o'yinchi (kamida 5). <b style="color:var(--gold)">${stake}</b> tanga tikiladi, o'lgan qayta tug'ilmaydi. Raund 3:00.` : 'Tikilgan summadan g\'olib <b style="color:var(--gold)">×2</b> oladi. Durangda qaytariladi.';
+  $('#btnRandom').textContent = io ? 'Raqib qidirish' : 'Tasodifiy raqib';
+  if (!io) return;
+  const a = ioPay(6, 3, stake), b = ioPay(6, 2, stake), c = ioPay(6, 1, stake);
+  box.innerHTML = `<div><span>🥇 1-o'rin</span><b>${a[0]}</b></div><div><span>🥈 2-o'rin</span><b>${a[1]}</b></div><div><span>🥉 3-o'rin</span><b>${a[2]}</b></div><div class="sub"><span>Ikki kishi qolsa (1-o'rin / 2-o'rin)</span><b>${b[0]} / ${b[1]}</b></div><div class="sub"><span>Bir kishi qolsa</span><b>${c[0]}</b></div>`;
+}
 function renderStakes() {
+  playInfo();
   for (const id of ['#stakesPlay', '#stakesFriend']) {
     const box = $(id); if (!box) continue;
     box.innerHTML = '';
@@ -510,7 +506,7 @@ function onMsg(m) {
     case 'io': onIo(m); break;
     case 'io_players': if (IO) { IO.pl = {}; m.pl.forEach((p) => IO.pl[p.id] = p); } break;
     case 'io_end': onIoEnd(m); break;
-    case 'io_wait': $('#queue').classList.add('on'); $('#btnQP').style.display = 'none'; clearTimeout(onMsg.qt); $('#qHint').textContent = `Kutilmoqda: ${m.n}/${m.max} o'yinchi (kamida ${m.need}). 3 tanga tikilgan.`; break;
+    case 'io_wait': $('#queue').classList.add('on'); $('#btnQP').style.display = 'none'; clearTimeout(onMsg.qt); $('#qHint').textContent = `Kutilmoqda: ${m.n}/${m.max} o'yinchi (kamida ${m.need}). ${m.stake} tanga tikilgan.`; break;
     case 'over': onOver(m); break;
     case 'emoji': { const el = $('#oEm'); el.textContent = m.e; clearTimeout(onMsg.et); onMsg.et = setTimeout(() => el.textContent = '', 2500); break; }
   }
@@ -519,16 +515,16 @@ function onMsg(m) {
 /* ---- Tugmalar ---- */
 $('#mGames').addEventListener('click', (e) => { const g = e.target.closest('[data-game]'); if (g) setGame(g.dataset.game); });
 setGame(curGame);
-$('#btnRandom').onclick = () => { lastMode = 'random'; send({ t: 'queue', stake, kind: curGame }); };
-$('#btnPractice').onclick = () => { lastMode = 'practice'; send({ t: 'practice', kind: curGame }); };
+$('#btnRandom').onclick = () => { lastMode = 'random'; if (curGame === 'io') send({ t: 'io_queue', stake }); else send({ t: 'queue', stake, kind: curGame }); };
+$('#btnPractice').onclick = () => { lastMode = 'practice'; if (curGame === 'io') send({ t: 'io_join' }); else send({ t: 'practice', kind: curGame }); };
 $('#btnQP').onclick = () => { send({ t: 'cancel' }); setTimeout(() => { lastMode = 'practice'; send({ t: 'practice', kind: curGame }); }, 250); };
 $('#btnQC').onclick = () => { clearTimeout(onMsg.qt); send({ t: 'cancel' }); };
-$('#btnInvite').onclick = () => { lastMode = 'friend'; send({ t: 'invite', stake, kind: curGame }); };
+$('#btnInvite').onclick = () => { lastMode = 'friend'; send({ t: 'invite', stake, kind: curGame === 'io' ? 'dr' : curGame }); };
 function showInvite(m) {
   const box = $('#inviteBox'); box.style.display = 'block';
   box.innerHTML = `Havola tayyor. Do'stingiz qo'shilishini kuting (10 daqiqa).<br><small style="word-break:break-all">${m.link}</small><br><button class="btn dark" id="btnCancelInv">Bekor qilish</button>`;
   $('#btnCancelInv').onclick = () => send({ t: 'cancel' });
-  const text = `Poletgram'da ${curGame === 'hu' ? 'Hudud' : 'shashka'} o'ynaymiz! Stavka: ${m.stake} tanga`;
+  const text = `Poletgram'da ${curGame === 'hu' ? 'Kataklar' : 'shashka'} o'ynaymiz! Stavka: ${m.stake} tanga`;
   const share = 'https://t.me/share/url?url=' + encodeURIComponent(m.link) + '&text=' + encodeURIComponent(text);
   if (tg && tg.openTelegramLink) tg.openTelegramLink(share);
   else { try { navigator.clipboard.writeText(m.link); toast('Havola nusxalandi. Boshqa tabda oching.'); } catch (e) { window.open(share, '_blank'); } }
@@ -789,7 +785,7 @@ function onIoEnd(m) {
   if (m.staked) {
     const rows2 = m.rank.map((r, i) => `<tr style="color:${IOCOL[r.color % 12]};${r.id === m.you ? 'font-weight:900;text-decoration:underline' : ''}"><td>${i + 1}.</td><td>${esc(r.name)}</td><td>${r.alive ? r.pct + '%' : "yo'q bo'ldi"}</td><td>${r.pay ? '+' + r.pay : '0'}</td></tr>`).join('');
     const win = m.delta > 0, even = m.delta === 0;
-    ioNote(`O'yin tugadi!<br><span style="font-size:19px;color:${win ? '#7be07b' : even ? '#f0cf7a' : '#ff8a8a'}">${m.payout > 0 ? '+' + m.payout + ' tanga yutdingiz' : '−3 tanga'} · ${m.mine}-o'rin</span><table>${rows2}</table><button id="ioBack">Menyuga</button>`);
+    ioNote(`O'yin tugadi!<br><span style="font-size:19px;color:${win ? '#7be07b' : even ? '#f0cf7a' : '#ff8a8a'}">${m.payout > 0 ? '+' + m.payout + ' tanga yutdingiz' : '−' + m.stake + ' tanga'} · ${m.mine}-o'rin</span><table>${rows2}</table><button id="ioBack">Menyuga</button>`);
     $('#ioBack').onclick = () => show('menu');
     if (me) { me.coins = m.coins; } $$('.bc').forEach((x) => x.textContent = m.coins);
     return;
@@ -859,8 +855,6 @@ function ioSendDir(a) { const now = Date.now(); if (Math.abs(a - ioLastDir.a) > 
   const up = () => { ioJoy = null; }; c.addEventListener('pointerup', up); c.addEventListener('pointercancel', up);
   window.addEventListener('keydown', (e) => { if (!IO) return; const m = { ArrowRight: 0, d: 0, ArrowDown: Math.PI / 2, s: Math.PI / 2, ArrowLeft: Math.PI, a: Math.PI, ArrowUp: -Math.PI / 2, w: -Math.PI / 2 }[e.key]; if (m !== undefined) { ioLastDir = { a: 99, t: 0 }; ioSendDir(m); } });
   $('#ioExit').onclick = () => show('menu');
-  $('#btnIoQ').onclick = () => send({ t: 'io_queue' });
-  $('#btnIoP').onclick = () => send({ t: 'io_join' });
 })();
 connect();
 </script>
