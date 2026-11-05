@@ -71,8 +71,8 @@ Endi mijoz buyurtma bersa, u avtomatik panelga yuboriladi; har daqiqada holat te
 Menyuda PLAY tugmasi tepasida o'yin tanlanadi:
 - **Shashka** va **Kataklar** (nuqtalar va kataklar, 5x5): 1v1, tasodifiy raqib / do'st havolasi / bot bilan sinov, tikish ×2.
 - **Hudud** (real vaqt, ko'p o'yinchi): joystik bilan yuring, o'z hududingizdan chiqib iz qoldiring va qaytib kelib o'rab oling. Boshqa o'yinchining izini kessangiz u yo'qoladi, o'z izingizga tegsangiz o'zingiz.
-  - **Tikilgan o'yin (3 tanga):** 6 kishi to'lsa (yoki kamida 5 kishi 45 soniya kutsa) boshlanadi, botlarsiz. O'lgan yoki uzilgan qayta tug'ilmaydi, stavkasi qaytmaydi. Raund 3:00; 1 kishi qolsa darrov tugaydi.
-  - **Mukofot (6 kishi, bank 18):** 3+ tirik qolsa hudud bo'yicha 1-o'rin 10, 2-o'rin 5, 3-o'rin 3; 2 kishi qolsa 11 / 7; 1 kishi qolsa 18. Qolganlari 0. 5 kishilik o'yinda bank 15: 8/4/3, 9/6, 15. Mukofotlar yig'indisi doim bankka teng.
+  - **Tikilgan o'yin (3 / 20 / 100 / 300 / 1000 tanga, Shashkadagi kabi tanlanadi):** 6 kishi to'lsa (yoki kamida 5 kishi 45 soniya kutsa) boshlanadi, botlarsiz. O'lgan yoki uzilgan qayta tug'ilmaydi, stavkasi qaytmaydi. Raund 3:00; 1 kishi qolsa darrov tugaydi.
+  - **Mukofot (3 tanga uchun, 6 kishi, bank 18; boshqa stavkada shu nisbatda, qoldiq 1-o'ringa):** 3+ tirik qolsa hudud bo'yicha 1-o'rin 10, 2-o'rin 5, 3-o'rin 3; 2 kishi qolsa 11 / 7; 1 kishi qolsa 18. Qolganlari 0. 5 kishilik o'yinda bank 15: 8/4/3, 9/6, 15. Mukofotlar yig'indisi doim bankka teng.
   - **Bot bilan sinov:** tikilmaydi, botlar bor, o'lgan qayta tug'iladi.
   - Qoidalar va jadval `territory.js` da (`PAYOUT`).
 

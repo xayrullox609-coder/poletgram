@@ -87,7 +87,7 @@ const drive = (r, p, steps) => { for (const [a, secs] of steps) { p.want = a; fo
 t('hudud: iz bilan o\'rab olingan joy egallanadi', () => {
   const r = new TR.Room(), me = r.add('A', 1, false); me.ang = me.want = 0;
   const b = r.counts().get(me.id); assert.strictEqual(b, 25);
-  assert.ok(drive(r, me, [[0, 1.6], [Math.PI / 2, 1.0], [Math.PI, 1.7], [-Math.PI / 2, 1.4]]));
+  assert.ok(drive(r, me, [[0, 1.1], [Math.PI / 2, 0.7], [Math.PI, 1.2], [-Math.PI / 2, 1.0]]));
   assert.ok(r.counts().get(me.id) > 60, 'hudud kengaydi');
 });
 t('hudud: raqib izini kesgan uni yo\'q qiladi', () => {
@@ -108,6 +108,10 @@ t('hudud: botlar to\'liq raundni xatosiz o\'ynaydi, hududlar to\'g\'ri sanaladi'
   assert.ok(rk.reduce((x, y) => x + y.cells, 0) <= r.playable);
   console.log('   raund:', ticks, 'tik; g\'olib', rk[0].name, rk[0].pct + '%');
   r.add('Ikkinchi', 2, false); r.add('3', 3, false); r.fill(); assert.strictEqual(r.bots().length, 2);
+});
+t('hudud: stavkaga qarab mukofotlar bankka teng', () => {
+  for (const st of [3, 20, 100, 300, 1000]) for (const N of [5, 6]) for (const k of [1, 2, 3, 4]) { const p = TR.payouts(N, k, st); assert.strictEqual(p.reduce((a, b) => a + b, 0), N * st); assert.ok(p.every((x) => x >= 0)); }
+  assert.deepStrictEqual(TR.payouts(6, 3, 3), [10, 5, 3]); assert.deepStrictEqual(TR.payouts(6, 2, 20), [74, 46]); assert.deepStrictEqual(TR.payouts(6, 1, 100), [600]);
 });
 t('hudud (tikilgan): o\'lgan qayta tug\'ilmaydi, 1 kishi qolsa tugaydi, mukofotlar bankka teng', () => {
   const r = new TR.Room({ elim: true, stake: 3 }); const ps = [1, 2, 3, 4, 5, 6].map((i) => r.add('P' + i, i, false)); r.cd = 0;

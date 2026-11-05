@@ -868,7 +868,7 @@ const kindOf = (m) => (m.kind === 'hu' ? 'hu' : 'dr');
 function randomColors(a, b) { return Math.random() < 0.5 ? [a, b] : [b, a]; }
 
 /* ---------------- Hudud (real vaqt, ko'p o'yinchi) ---------------- */
-const IO_STAKE = 3, IO_MIN = 5, IO_MAX = 6, IO_WAIT_MS = Number(process.env.HUDUD_WAIT_MS) || 45000;
+const IO_MIN = 5, IO_MAX = 6, IO_WAIT_MS = Number(process.env.HUDUD_WAIT_MS) || 45000;
 const ioRooms = new Set();
 const ioOf = new Map(); // uid -> {room, pid}
 const ioWait = new Map(); // uid -> navbatga kirgan vaqt
@@ -876,16 +876,16 @@ const ioInfo = (r) => [...r.players.values()].map((p) => ({ id: p.id, n: p.name,
 function ioBroadcast(r, msg) { for (const p of r.humans()) if (!p.left) send(p.uid, msg); }
 function ioInit(r, p) { send(p.uid, { t: 'io_init', w: TERR.W, h: TERR.H, r: TERR.R, you: p.id, own: Array.from(r.own), pl: ioInfo(r), tl: Math.round(r.timeLeft), st: r.elim ? 1 : 0, cd: Math.max(0, r.cd) }); }
 function ioNotifyWait() {
-  const q = queues.get('io:' + IO_STAKE) || [];
-  for (const uid of q) send(uid, { t: 'io_wait', n: q.length, need: IO_MIN, max: IO_MAX });
+  for (const [key, q] of queues) if (key.startsWith('io:')) for (const uid of q) send(uid, { t: 'io_wait', n: q.length, need: IO_MIN, max: IO_MAX, stake: Number(key.slice(3)) });
 }
 // Tikilgan xona: navbatda 6 kishi to'lsa, yoki kamida 5 kishi 45 soniya kutsa boshlanadi
-function ioTryStart() {
-  const key = 'io:' + IO_STAKE, q = queues.get(key) || [];
+function ioTryStart() { for (const [key, q] of queues) if (key.startsWith('io:')) ioStartQueue(key, q); }
+function ioStartQueue(key, q) {
+  const stake = Number(key.slice(3));
   const ready = q.length >= IO_MAX || (q.length >= IO_MIN && Date.now() - ioWait.get(q[0]) >= IO_WAIT_MS);
   if (!ready) return;
   const uids = q.splice(0, IO_MAX);
-  const room = new TERR.Room({ elim: true, stake: IO_STAKE }); room.last = Date.now(); room.tick = 0; room.endSent = false; room.cd = 4;
+  const room = new TERR.Room({ elim: true, stake }); room.last = Date.now(); room.tick = 0; room.endSent = false; room.cd = 4;
   for (const uid of uids) { ioWait.delete(uid); const p = room.add(String(db.users[uid].name || 'Siz').slice(0, 14), uid, false); ioOf.set(uid, { room, pid: p.id }); }
   ioRooms.add(room);
   for (const p of room.humans()) ioInit(room, p);
@@ -909,12 +909,12 @@ function ioJoin(uid) { // tikilmaydigan sinov xonasi (botlar bilan, qayta tug'il
 }
 // Tikilgan raund tugadi: mukofotlarni taqsimlaydi
 function ioFinish(r) {
-  const all = [...r.players.values()], N = all.length, table = TERR.PAYOUT[N] || TERR.PAYOUT[5];
+  const all = [...r.players.values()], N = all.length;
   const rk = r.ranking(), cellsOf = new Map(rk.map((x) => [x.id, x.cells]));
   const alive = all.filter((p) => p.alive).sort((x, y) => cellsOf.get(y.id) - cellsOf.get(x.id));
   const award = new Map(); let place = [];
   if (!alive.length) all.forEach((p) => award.set(p.id, r.stake)); // hamma bir vaqtda yo'q bo'lsa: stavka qaytadi
-  else { const pay = alive.length >= 3 ? table[3] : table[alive.length]; alive.forEach((p, i) => award.set(p.id, pay[i] || 0)); place = alive.map((p) => p.id); }
+  else { const pay = TERR.payouts(N, alive.length, r.stake); alive.forEach((p, i) => award.set(p.id, pay[i] || 0)); place = alive.map((p) => p.id); }
   const order = [...place, ...all.filter((p) => !place.includes(p.id)).sort((x, y) => cellsOf.get(y.id) - cellsOf.get(x.id)).map((p) => p.id)];
   const rank = order.map((id) => { const x = rk.find((y) => y.id === id); return { ...x, pay: award.get(id) || 0 }; });
   for (const p of all) {
@@ -922,7 +922,7 @@ function ioFinish(r) {
     if (pay > 0) credit(u, pay, 'win', 'hudud');
     u.games++; if (alive.length && place[0] === p.id) u.wins++; else if (pay >= r.stake) u.draws = (u.draws || 0) + 1; else u.losses++;
     ioOf.delete(p.uid); sendBalance(u);
-    if (!p.left) send(p.uid, { t: 'io_end', staked: 1, rank, you: p.id, mine: order.indexOf(p.id) + 1, payout: pay, delta: pay - r.stake, coins: u.coins });
+    if (!p.left) send(p.uid, { t: 'io_end', staked: 1, stake: r.stake, rank, you: p.id, mine: order.indexOf(p.id) + 1, payout: pay, delta: pay - r.stake, coins: u.coins });
   }
   save();
 }
@@ -1056,9 +1056,11 @@ function handle(ws, m) {
     }
     case 'io_queue': {
       if (busy(uid)) return err("Siz allaqachon o'yindasiz");
-      if (u.coins < IO_STAKE) return err('Tanga yetarli emas');
-      hold(u, IO_STAKE);
-      const key = 'io:' + IO_STAKE, q = queues.get(key) || []; queues.set(key, q);
+      const stake = Number(m.stake);
+      if (!STAKES.includes(stake)) return err("Noto'g'ri stavka");
+      if (u.coins < stake) return err('Tanga yetarli emas');
+      hold(u, stake);
+      const key = 'io:' + stake, q = queues.get(key) || []; queues.set(key, q);
       q.push(uid); ioWait.set(uid, Date.now()); ioNotifyWait(); ioTryStart();
       break;
     }

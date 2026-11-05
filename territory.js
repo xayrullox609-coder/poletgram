@@ -2,7 +2,7 @@
 // o'rab olingan joy sizniki bo'ladi. Boshqa o'yinchining izini kesib o'tsangiz u yo'qoladi, o'z izingizga tegsangiz o'zingiz.
 // Hamma hisob-kitob serverda.
 const W = 64, H = 64, CX = 32, CY = 32, R = 31; // aylana maydon
-const SPEED = 5.2, TURN = 7.5; // katak/soniya, radian/soniya
+const SPEED = 7.6, TURN = 12; // katak/soniya, radian/soniya
 const ROUND_MS = Number(process.env.HUDUD_ROUND_MS) || 180000, RESPAWN_S = 2.5, MIN_PLAYERS = 5;
 const NAMES = ['Aziz', 'Bobur', 'Dilnoza', 'Jasur', 'Malika', 'Sardor', 'Nodira', 'Otabek', 'Zafar', 'Lola', 'Rustam', 'Madina', 'Sherzod', 'Kamola', 'Anvar', 'Gulnora'];
 const idx = (x, y) => y * W + x;
@@ -172,4 +172,10 @@ class Room {
 }
 // Tikilgan Hudud: stavka 3 tanga, 6 kishi (5 tada ham boshlanadi). O'yinchi soni -> [3+ tirik, 2 tirik, 1 tirik] mukofotlari. Yig'indi = bank.
 const PAYOUT = { 6: { 3: [10, 5, 3], 2: [11, 7], 1: [18] }, 5: { 3: [8, 4, 3], 2: [9, 6], 1: [15] } };
-module.exports = { PAYOUT, Room, W, H, R, CX, CY, SPEED, ROUND_MS, MIN_PLAYERS, idx };
+// stavkaga qarab mukofotlar: 3 tangalik jadval S/3 ga ko'paytiriladi, butun songa yaxlitlanadi, qoldiq 1-o'ringa; yig'indi = bank
+function payouts(N, nAlive, stake) {
+  const base = (PAYOUT[N] || PAYOUT[5])[nAlive >= 3 ? 3 : nAlive]; if (!base) return [];
+  const pot = N * stake, out = base.map((x) => Math.floor(x * stake / 3));
+  out[0] += pot - out.reduce((a, b) => a + b, 0); return out;
+}
+module.exports = { payouts, PAYOUT, Room, W, H, R, CX, CY, SPEED, ROUND_MS, MIN_PLAYERS, idx };

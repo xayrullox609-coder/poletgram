@@ -192,26 +192,31 @@ function client(id) {
     const mk = async (tag) => { const ids = [1, 2, 3, 4, 5, 6].map((i) => tag + i), cs = []; for (const id of ids) cs.push(await client(id)); const before = []; for (const id of ids) before.push(await coinsOf(id)); return { ids, cs, before }; };
     // 1) navbat va bekor qilish: tikilgan tanga qaytadi
     const solo = await client('hq1'), b0 = await coinsOf('hq1');
-    solo.send({ t: 'io_queue' }); const w1 = await solo.wait('io_wait'); assert.strictEqual(w1.n, 1);
+    solo.send({ t: 'io_queue', stake: 3 }); const w1 = await solo.wait('io_wait'); assert.strictEqual(w1.n, 1);
     assert.strictEqual(await coinsOf('hq1'), b0 - 3); solo.send({ t: 'cancel' }); await solo.wait('cancelled'); assert.strictEqual(await coinsOf('hq1'), b0);
     // 2) 6 kishi: 5 tasi uziladi -> oxirgi qolgan 18 tanga oladi
-    let G1 = await mk('ha'); G1.cs.forEach((c) => c.send({ t: 'io_queue' }));
+    let G1 = await mk('ha'); G1.cs.forEach((c) => c.send({ t: 'io_queue', stake: 3 }));
     const inits = await Promise.all(G1.cs.map((c) => c.wait('io_init'))); assert.ok(inits.every((i) => i.st === 1 && i.pl.length === 6 && i.cd > 0));
     for (let i = 1; i < 6; i++) G1.cs[i].send({ t: 'io_leave' });
     const e1 = await G1.cs[0].wait('io_end', 9000); assert.strictEqual(e1.payout, 18); assert.strictEqual(e1.delta, 15); assert.strictEqual(e1.mine, 1);
     assert.strictEqual(await coinsOf(G1.ids[0]), G1.before[0] + 15); assert.strictEqual(await coinsOf(G1.ids[3]), G1.before[3] - 3);
     console.log("ok - hudud tikilgan: navbat/bekor (qaytarildi), 5 kishi uzildi -> oxirgi 18 tanga");
     // 3) 6 kishi, 4 tasi uziladi, 2 tasi qoladi -> 3:00 tugagach 11 va 7
-    let G2 = await mk('hb'); G2.cs.forEach((c) => c.send({ t: 'io_queue' })); await Promise.all(G2.cs.map((c) => c.wait('io_init')));
+    let G2 = await mk('hb'); G2.cs.forEach((c) => c.send({ t: 'io_queue', stake: 3 })); await Promise.all(G2.cs.map((c) => c.wait('io_init')));
     for (let i = 2; i < 6; i++) G2.cs[i].send({ t: 'io_leave' });
     const [f0, f1] = await Promise.all([G2.cs[0].wait('io_end', 25000), G2.cs[1].wait('io_end', 25000)]);
     assert.deepStrictEqual([f0.payout, f1.payout].sort((a, b) => b - a), [11, 7]);
     // 4) 6 kishi hammasi qoladi -> 10 / 5 / 3, qolganlari 0, jami 18
-    let G3 = await mk('hc'); G3.cs.forEach((c) => c.send({ t: 'io_queue' })); await Promise.all(G3.cs.map((c) => c.wait('io_init')));
+    let G3 = await mk('hc'); G3.cs.forEach((c) => c.send({ t: 'io_queue', stake: 3 })); await Promise.all(G3.cs.map((c) => c.wait('io_init')));
     const ends = await Promise.all(G3.cs.map((c) => c.wait('io_end', 25000))), pays = ends.map((x) => x.payout).sort((a, b) => b - a);
     assert.deepStrictEqual(pays, [10, 5, 3, 0, 0, 0]);
     const after = []; for (const id of G3.ids) after.push(await coinsOf(id)); assert.strictEqual(after.reduce((a, b) => a + b, 0) - G3.before.reduce((a, b) => a + b, 0), 0);
     console.log("ok - hudud tikilgan: 2 kishi qolsa 11/7, hamma qolsa 10/5/3, coin yig'indisi o'zgarmaydi");
+    // 5) 20 tanga stavka: mukofotlar S/3 ga mutanosib, yig'indi bank (120) ga teng
+    let G4 = await mk('hd'); G4.cs.forEach((c) => c.send({ t: 'io_queue', stake: 20 })); await Promise.all(G4.cs.map((c) => c.wait('io_init')));
+    const ends4 = await Promise.all(G4.cs.map((c) => c.wait('io_end', 25000))), p4 = ends4.map((x) => x.payout).sort((a, b) => b - a);
+    assert.deepStrictEqual(p4, [67, 33, 20, 0, 0, 0]); assert.strictEqual(p4.reduce((a, b) => a + b, 0), 120);
+    console.log("ok - hudud 20 tanga stavka: 67/33/20, jami 120");
   }
 
   console.log('\nHAMMA SINOVLAR O\'TDI');
